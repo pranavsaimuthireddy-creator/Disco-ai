@@ -3,8 +3,16 @@ const input = document.getElementById("msg");
 const send = document.getElementById("send");
 const mic = document.getElementById("mic");
 
-// Put your Gemini API key here
-const API_KEY = "YOUR_API_KEY_HERE";
+// Ask for API key when website opens
+let API_KEY = localStorage.getItem("disco_api_key");
+
+if (!API_KEY) {
+    API_KEY = prompt("Enter your Gemini API Key:");
+
+    if (API_KEY) {
+        localStorage.setItem("disco_api_key", API_KEY);
+    }
+}
 
 const MODEL = "gemini-3.6-flash";
 
@@ -18,11 +26,9 @@ async function askGemini(question) {
             `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify({
                     contents: [{
                         parts: [{
@@ -63,8 +69,6 @@ async function askGemini(question) {
     }
 }
 
-
-// SEND BUTTON
 send.onclick = () => {
 
     const text = input.value.trim();
@@ -78,8 +82,6 @@ send.onclick = () => {
     askGemini(text);
 };
 
-
-// ENTER KEY
 input.addEventListener("keydown", (event) => {
 
     if (event.key === "Enter") {
@@ -88,57 +90,13 @@ input.addEventListener("keydown", (event) => {
 
 });
 
-
-// VOICE INPUT
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-if (SpeechRecognition) {
-
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = "en-IN";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    mic.onclick = () => {
-        recognition.start();
-        mic.innerText = "🔴";
-    };
-
-    recognition.onresult = (event) => {
-
-        const text =
-            event.results[0][0].transcript;
-
-        input.value = text;
-
-        mic.innerText = "🎙️";
-
-        send.click();
-    };
-
-    recognition.onerror = () => {
-        mic.innerText = "🎙️";
-    };
-
-    recognition.onend = () => {
-        mic.innerText = "🎙️";
-    };
-
-}
-
-
-// VOICE REPLY
 function speak(text) {
 
     if (!("speechSynthesis" in window)) return;
 
     speechSynthesis.cancel();
 
-    const voice =
-        new SpeechSynthesisUtterance(text);
+    const voice = new SpeechSynthesisUtterance(text);
 
     voice.lang = "en-IN";
     voice.rate = 1;
@@ -147,8 +105,6 @@ function speak(text) {
     speechSynthesis.speak(voice);
 }
 
-
-// ADD MESSAGE
 function add(text, who) {
 
     const div = document.createElement("div");
