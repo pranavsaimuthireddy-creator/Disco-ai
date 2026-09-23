@@ -1,1 +1,146 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
 
+body {
+    min-height: 100vh;
+    background: #020609;
+    color: white;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+    border-bottom: 1px solid #00ffff;
+}
+
+header h1 {
+    color: #00ffff;
+    font-size: 35px;
+    letter-spacing: 7px;
+    text-shadow: 0 0 15px #00ffff;
+}
+
+header p {
+    color: #00ffff;
+    margin-top: 8px;
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+
+.core {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 35px auto 10px;
+}
+
+.ring {
+    position: absolute;
+    border: 2px solid #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #00ffff;
+}
+
+.r1 {
+    inset: 0;
+    border-top-color: transparent;
+    animation: spin 4s linear infinite;
+}
+
+.r2 {
+    inset: 20px;
+    border-bottom-color: transparent;
+    animation: spin 2s linear infinite reverse;
+}
+
+.center {
+    position: absolute;
+    inset: 55px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 30px #00ffff;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.core-text {
+    text-align: center;
+    color: #39ff88;
+    margin-bottom: 25px;
+}
+
+.status,
+.chat {
+    border: 1px solid #00ffff;
+    padding: 15px;
+    margin-bottom: 20px;
+    background: rgba(0, 255, 255, 0.03);
+}
+
+.status h2 {
+    color: #00ffff;
+    margin-bottom: 15px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    margin: 7px 0;
+    background: #071216;
+}
+
+.on {
+    color: #39ff88;
+}
+
+.off {
+    color: #ff304f;
+}
+
+.chat {
+    min-height: 120px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.msg {
+    margin: 8px 0;
+    padding: 8px;
+}
+
+.input-area {
+    display: flex;
+    gap: 8px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px;
+    background: #020609;
+    border: 1px solid #00ffff;
+    color: white;
+    outline: none;
+}
+
+button {
+    padding: 12px 15px;
+    border: none;
+    background: #00ffff;
+    color: #001014;
+    font-weight: bold;
+}
+
+button:active {
+    transform: scale(0.95);
+}
