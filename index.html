@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>D.I.S.C.O AI</title>
 
@@ -12,86 +13,258 @@
 
 <body>
 
+    <!-- FUTURISTIC BACKGROUND -->
+    <div class="scanlines"></div>
+
     <!-- HEADER -->
     <header>
+
+        <div class="top-bar">
+
+            <span class="menu-icon">☰</span>
+
+            <span class="system-online">
+                ● SYSTEM ONLINE
+            </span>
+
+            <span class="bot-icon">◉</span>
+
+        </div>
+
         <h1>D.I.S.C.O</h1>
+
         <p>MOBILE AI SYSTEM</p>
+
     </header>
 
 
-    <!-- AI CORE -->
-    <div class="core">
-        <div class="ring r1"></div>
-        <div class="ring r2"></div>
-        <div class="center"></div>
-    </div>
+    <!-- CORE -->
+    <section class="core-section">
 
-    <p class="core-text">
-        ● CORE ACTIVE
-    </p>
+        <div class="core">
+
+            <div class="core-ring ring-outer"></div>
+
+            <div class="core-ring ring-middle"></div>
+
+            <div class="core-ring ring-inner"></div>
+
+            <div class="core-lines"></div>
+
+            <div class="core-centre">
+
+                <strong>D.I.S.C.O</strong>
+
+                <span>CORE ACTIVE</span>
+
+                <i></i>
+
+            </div>
+
+        </div>
+
+    </section>
 
 
     <!-- SYSTEM STATUS -->
-    <section class="status">
+    <section class="panel status-panel">
 
-        <h2>SYSTEM STATUS</h2>
-
-        <div class="row">
-            <span>AI CORE</span>
-            <b class="on">● ONLINE</b>
+        <div class="panel-title">
+            <span>〽</span>
+            SYSTEM STATUS
         </div>
 
-        <div class="row">
-            <span>NETWORK</span>
-            <b class="on">● ONLINE</b>
+        <div class="status-grid">
+
+            <div class="status-card">
+
+                <div class="status-icon">▣</div>
+
+                <h3>AI CORE</h3>
+
+                <span class="status-online">
+                    ● ONLINE
+                </span>
+
+            </div>
+
+
+            <div class="status-card">
+
+                <div class="status-icon">⌁</div>
+
+                <h3>NETWORK</h3>
+
+                <span class="status-online">
+                    ● ONLINE
+                </span>
+
+            </div>
+
+
+            <div class="status-card">
+
+                <div class="status-icon">♬</div>
+
+                <h3>VOICE</h3>
+
+                <span class="status-online">
+                    ● READY
+                </span>
+
+            </div>
+
+
+            <div
+                class="status-card memory-card"
+                id="memory-status">
+
+                <div class="status-icon">
+                    🧠
+                </div>
+
+                <h3>MEMORY</h3>
+
+                <span class="status-locked">
+                    ● LOCKED
+                </span>
+
+            </div>
+
         </div>
 
-        <div class="row">
-            <span>VOICE</span>
-            <b class="on">● READY</b>
+    </section>
+
+
+    <!-- MEMORY VAULT -->
+    <section class="memory-vault">
+
+        <div class="vault-header">
+            <span>🔒</span>
+            MEMORY VAULT
         </div>
 
-        <div class="row">
-            <span>MEMORY</span>
-            <b class="off">● LOCKED</b>
+
+        <!-- LOCKED -->
+        <div id="memory-lock-screen">
+
+            <h2>MEMORY LOCKED</h2>
+
+            <p>
+                D.I.S.C.O memory system is protected.
+            </p>
+
+            <div class="big-lock">
+                🔒
+            </div>
+
+            <button id="unlock-memory"
+                    class="unlock-button">
+
+                🔓 UNLOCK MEMORY
+
+            </button>
+
+        </div>
+
+
+        <!-- UNLOCKED -->
+        <div id="memory-unlocked"
+             style="display:none;">
+
+            <h2 class="memory-online-title">
+                MEMORY ONLINE
+            </h2>
+
+            <p>
+                D.I.S.C.O memory system is active.
+            </p>
+
+            <div class="big-lock memory-glow">
+                🧠
+            </div>
+
+            <button id="lock-memory"
+                    class="lock-button">
+
+                🔒 LOCK MEMORY
+
+            </button>
+
         </div>
 
     </section>
 
 
     <!-- CHAT -->
-    <section class="chat" id="chat">
+    <section class="chat-panel">
 
-        <div class="msg ai">
-            D.I.S.C.O: Systems online. How may I assist you, Boss?
+        <div class="chat-terminal">
+
+            <div class="terminal-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="chat"
+                 id="chat">
+
+                <div class="msg ai">
+                    D.I.S.C.O: Systems online.
+                    How may I assist you, Boss?
+                </div>
+
+            </div>
+
         </div>
 
     </section>
 
 
     <!-- INPUT -->
-    <div class="input-area">
+    <section class="input-section">
 
-        <input
-            id="msg"
-            type="text"
-            placeholder="Ask D.I.S.C.O..."
-            autocomplete="off"
-        >
+        <div class="input-area">
 
-        <div id="button-area"></div>
+            <input
+                id="msg"
+                type="text"
+                placeholder="Ask D.I.S.C.O..."
+                autocomplete="off"
+            >
 
-    </div>
+            <div id="button-area"></div>
+
+        </div>
+
+    </section>
 
 
-    <!-- LOAD MIC BUTTON FILE -->
+    <!-- FOOTER -->
+    <footer>
+
+        <span>‹‹</span>
+
+        <strong>
+            D.I.S.C.O: ALWAYS WITH YOU
+        </strong>
+
+        <span>››</span>
+
+    </footer>
+
+
+    <!-- LOAD BUTTONS -->
     <script>
 
         fetch("mic-button.html")
             .then(response => response.text())
             .then(html => {
 
-                document.getElementById("button-area").innerHTML = html;
+                document.getElementById(
+                    "button-area"
+                ).innerHTML = html;
 
                 const script =
                     document.createElement("script");
@@ -104,7 +277,7 @@
             .catch(error => {
 
                 console.error(
-                    "Could not load mic-button.html:",
+                    "Button loading error:",
                     error
                 );
 
