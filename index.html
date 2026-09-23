@@ -2,22 +2,35 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>D.I.S.C.O AI</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
     <div class="scanlines"></div>
 
+
     <!-- HEADER -->
+
     <header>
 
         <div class="top-bar">
+
             <span class="menu-icon">☰</span>
 
             <span class="system-online">
@@ -25,7 +38,9 @@
             </span>
 
             <span class="bot-icon">◉</span>
+
         </div>
+
 
         <h1>D.I.S.C.O</h1>
 
@@ -35,15 +50,19 @@
 
 
     <!-- CORE -->
+
     <section class="core-section">
 
         <div class="core">
 
             <div class="core-ring ring-outer"></div>
+
             <div class="core-ring ring-middle"></div>
+
             <div class="core-ring ring-inner"></div>
 
             <div class="core-lines"></div>
+
 
             <div class="core-centre">
 
@@ -61,11 +80,13 @@
 
 
     <!-- SYSTEM STATUS -->
+
     <section class="panel status-panel">
 
         <div class="panel-title">
             ⚡ SYSTEM STATUS
         </div>
+
 
         <div class="status-grid">
 
@@ -126,17 +147,24 @@
 
 
     <!-- CHAT -->
+
     <section class="chat-panel">
 
         <div class="chat-terminal">
 
             <div class="terminal-dots">
+
                 <span></span>
                 <span></span>
                 <span></span>
+
             </div>
 
-            <div class="chat" id="chat">
+
+            <div
+                class="chat"
+                id="chat"
+            >
 
                 <div class="msg ai">
                     D.I.S.C.O: Systems online.
@@ -151,6 +179,7 @@
 
 
     <!-- INPUT -->
+
     <section class="input-section">
 
         <div class="input-area">
@@ -162,56 +191,15 @@
                 autocomplete="off"
             >
 
-            <div id="button-area"></div>
 
-        </div>
+            <div id="button-area">
 
-    </section>
+                <button id="send">
+                    SEND
+                </button>
 
+                <button id="mic">
+                    🎙️
+                </button>
 
-    <footer>
-
-        <span>‹‹</span>
-
-        <strong>
-            D.I.S.C.O: ALWAYS WITH YOU
-        </strong>
-
-        <span>››</span>
-
-    </footer>
-
-
-    <!-- LOAD BUTTONS AND SCRIPT -->
-    <script>
-
-        fetch("mic-button.html")
-            .then(response => response.text())
-            .then(html => {
-
-                document.getElementById(
-                    "button-area"
-                ).innerHTML = html;
-
-                const script =
-                    document.createElement("script");
-
-                script.src = "script.js";
-
-                document.body.appendChild(script);
-
-            })
-            .catch(error => {
-
-                console.error(
-                    "Button loading error:",
-                    error
-                );
-
-            });
-
-    </script>
-
-</body>
-
-</html>
+                <button id="clear-btn">
