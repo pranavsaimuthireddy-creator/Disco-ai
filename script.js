@@ -1,34 +1,14 @@
 // ==========================================
-// D.I.S.C.O AI - MAIN SCRIPT
+// D.I.S.C.O AI - COMPLETE SCRIPT
 // ==========================================
 
-// ---------- API KEY ----------
 
-let API_KEY = localStorage.getItem("disco_key");
-
-if (!API_KEY) {
-    API_KEY = prompt("Enter your Gemini API Key:");
-
-    if (API_KEY) {
-        API_KEY = API_KEY.trim();
-        localStorage.setItem("disco_key", API_KEY);
-    }
-}
-
-
-// ---------- MODELS ----------
-
-const MODELS = [
-    "gemini-3.6-flash",
-    "gemini-flash-latest"
-];
-
-
-// ---------- ELEMENTS ----------
+// ==========================================
+// ELEMENTS
+// ==========================================
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
-
 const send = document.getElementById("send");
 
 const mic =
@@ -38,11 +18,41 @@ const mic =
 const clearBtn =
     document.getElementById("clear-btn");
 
-const camBtn =
-    document.getElementById("cam-btn");
-
 const imgInput =
     document.getElementById("img-input");
+
+
+// ==========================================
+// API KEY
+// ==========================================
+
+let API_KEY =
+    localStorage.getItem("disco_api_key");
+
+if (!API_KEY) {
+
+    API_KEY = prompt(
+        "Enter your Gemini API Key:"
+    );
+
+    if (API_KEY && API_KEY.trim()) {
+
+        API_KEY = API_KEY.trim();
+
+        localStorage.setItem(
+            "disco_api_key",
+            API_KEY
+        );
+    }
+}
+
+
+// ==========================================
+// GEMINI MODEL
+// ==========================================
+
+const MODEL =
+    "gemini-3.6-flash";
 
 
 // ==========================================
@@ -50,7 +60,9 @@ const imgInput =
 // ==========================================
 
 let MEMORY = JSON.parse(
-    localStorage.getItem("disco_memory") || "[]"
+    localStorage.getItem(
+        "disco_memory"
+    ) || "[]"
 );
 
 
@@ -64,102 +76,44 @@ function saveMemory() {
 }
 
 
-// ==========================================
-// GEMINI BRAIN
-// ==========================================
+function remember(text) {
 
-async function callGemini(question) {
-
-    const contents = MEMORY
-        .slice(-12)
-        .map(m => ({
-            role: m.role,
-            parts: [
-                {
-                    text: m.text
-                }
-            ]
-        }));
-
-
-    contents.push({
-        role: "user",
-        parts: [
-            {
-                text: question
-            }
-        ]
+    MEMORY.push({
+        type: "memory",
+        text: text
     });
 
+    saveMemory();
 
-    let lastError = null;
-
-
-    for (const model of MODELS) {
-
-        try {
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        contents: contents
-                    })
-                }
-            );
+}
 
 
-            const data = await response.json();
+function getMemory() {
 
+    const memories =
+        MEMORY.filter(
+            item =>
+                item.type === "memory"
+        );
 
-            if (data.error) {
+    if (memories.length === 0) {
 
-                lastError =
-                    new Error(data.error.message);
-
-                continue;
-            }
-
-
-            const reply =
-                data.candidates?.[0]
-                    ?.content?.parts?.[0]?.text;
-
-
-            if (!reply) {
-
-                throw new Error(
-                    "No reply received."
-                );
-
-            }
-
-
-            return reply;
-
-
-        } catch (error) {
-
-            lastError = error;
-
-        }
+        return "No saved memories yet.";
 
     }
 
-
-    throw lastError ||
-        new Error("Gemini request failed.");
+    return memories
+        .slice(-20)
+        .map(
+            item =>
+                "- " + item.text
+        )
+        .join("\n");
 }
 
 
 // ==========================================
-// ASK D.I.S.C.O
+// ASK GEMINI
 // ==========================================
 
 async function askGemini(question) {
@@ -181,17 +135,95 @@ async function askGemini(question) {
 
     try {
 
+        const memoryText =
+            getMemory();
+
+
+        const prompt = `
+You are D.I.S.C.O, a helpful personal AI assistant.
+
+Call the user Boss.
+
+Answer clearly and simply.
+
+IMPORTANT:
+Use the user's saved memories when answering questions.
+
+SAVED USER MEMORIES:
+${memoryText}
+
+CURRENT USER MESSAGE:
+${question}
+`;
+
+
+        const response =
+            await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text:
+                                            prompt
+                                    }
+                                ]
+                            }
+                        ]
+
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error?.message ||
+                "Gemini API error"
+            );
+
+        }
+
+
         const reply =
-            await callGemini(question);
+            data.candidates?.[0]
+                ?.content?.parts?.[0]
+                ?.text;
+
+
+        if (!reply) {
+
+            throw new Error(
+                "No reply received."
+            );
+
+        }
 
 
         MEMORY.push({
+            type: "chat",
             role: "user",
             text: question
         });
 
 
         MEMORY.push({
+            type: "chat",
             role: "model",
             text: reply
         });
@@ -218,7 +250,7 @@ async function askGemini(question) {
 
 
 // ==========================================
-// SEND
+// SEND BUTTON
 // ==========================================
 
 if (send) {
@@ -241,6 +273,48 @@ if (send) {
         input.value = "";
 
 
+        const lower =
+            text.toLowerCase();
+
+
+        // Explicit memory commands
+
+        if (
+            lower.startsWith(
+                "remember that "
+            ) ||
+
+            lower.startsWith(
+                "remember "
+            ) ||
+
+            lower.includes(
+                "my favourite "
+            ) ||
+
+            lower.includes(
+                "my favorite "
+            )
+        ) {
+
+            remember(text);
+
+
+            add(
+                "D.I.S.C.O: Got it, Boss. I'll remember that.",
+                "ai"
+            );
+
+
+            speak(
+                "Got it, Boss. I'll remember that."
+            );
+
+
+            return;
+        }
+
+
         askGemini(text);
 
     };
@@ -252,18 +326,24 @@ if (send) {
 // ENTER KEY
 // ==========================================
 
-input.addEventListener(
-    "keydown",
-    event => {
+if (input) {
 
-        if (event.key === "Enter") {
+    input.addEventListener(
+        "keydown",
+        event => {
 
-            send.click();
+            if (
+                event.key === "Enter"
+            ) {
+
+                send.click();
+
+            }
 
         }
+    );
 
-    }
-);
+}
 
 
 // ==========================================
@@ -275,17 +355,25 @@ const SpeechRecognition =
     window.webkitSpeechRecognition;
 
 
-if (SpeechRecognition && mic) {
+if (
+    SpeechRecognition &&
+    mic
+) {
 
     const recognition =
         new SpeechRecognition();
 
 
-    recognition.lang = "en-IN";
+    recognition.lang =
+        "en-IN";
 
-    recognition.continuous = false;
 
-    recognition.interimResults = false;
+    recognition.continuous =
+        false;
+
+
+    recognition.interimResults =
+        false;
 
 
     mic.onclick = () => {
@@ -298,219 +386,43 @@ if (SpeechRecognition && mic) {
     };
 
 
-    recognition.onresult = event => {
+    recognition.onresult =
+        event => {
 
-        const text =
-            event.results[0][0]
-                .transcript;
-
-
-        input.value = text;
-
-        mic.innerText =
-            "🎙️";
+            const text =
+                event.results[0][0]
+                    .transcript;
 
 
-        send.click();
-
-    };
-
-
-    recognition.onerror = () => {
-
-        mic.innerText =
-            "🎙️";
-
-    };
+            input.value =
+                text;
 
 
-    recognition.onend = () => {
-
-        mic.innerText =
-            "🎙️";
-
-    };
-
-}
+            mic.innerText =
+                "🎙️";
 
 
-// ==========================================
-// IMAGE / CAMERA
-// ==========================================
-
-if (camBtn && imgInput) {
-
-    camBtn.onclick = () => {
-
-        imgInput.click();
-
-    };
-
-
-    imgInput.onchange = () => {
-
-        const file =
-            imgInput.files[0];
-
-
-        if (!file) return;
-
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload = () => {
-
-            const base64 =
-                reader.result.split(",")[1];
-
-
-            const question =
-                input.value.trim() ||
-                "What do you see in this image?";
-
-
-            add(
-                "YOU: [IMAGE] " + question,
-                "user"
-            );
-
-
-            askVision(
-                base64,
-                file.type,
-                question
-            );
+            send.click();
 
         };
 
 
-        reader.readAsDataURL(file);
+    recognition.onerror =
+        () => {
 
-    };
+            mic.innerText =
+                "🎙️";
 
-}
-
-
-// ==========================================
-// VISION
-// ==========================================
-
-async function askVision(
-    base64,
-    mime,
-    question
-) {
-
-    add(
-        "D.I.S.C.O: Analyzing image...",
-        "ai"
-    );
+        };
 
 
-    try {
+    recognition.onend =
+        () => {
 
-        const response =
-            await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${MODELS[0]}:generateContent?key=${API_KEY}`,
-                {
-                    method: "POST",
+            mic.innerText =
+                "🎙️";
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        contents: [
-                            {
-                                role: "user",
-
-                                parts: [
-
-                                    {
-                                        text:
-                                            "You are D.I.S.C.O. " +
-                                            "Describe the image clearly and simply.\n\n" +
-                                            question
-                                    },
-
-                                    {
-                                        inline_data: {
-                                            mime_type: mime,
-                                            data: base64
-                                        }
-                                    }
-
-                                ]
-
-                            }
-                        ]
-
-                    })
-
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (data.error) {
-
-            throw new Error(
-                data.error.message
-            );
-
-        }
-
-
-        const reply =
-            data.candidates?.[0]
-                ?.content?.parts?.[0]?.text;
-
-
-        if (!reply) {
-
-            throw new Error(
-                "No vision reply received."
-            );
-
-        }
-
-
-        MEMORY.push({
-            role: "user",
-            text: question
-        });
-
-
-        MEMORY.push({
-            role: "model",
-            text: reply
-        });
-
-
-        saveMemory();
-
-
-        chat.lastChild.innerText =
-            "D.I.S.C.O: " + reply;
-
-
-        speak(reply);
-
-
-    } catch (error) {
-
-        chat.lastChild.innerText =
-            "D.I.S.C.O: ERROR - " +
-            error.message;
-
-    }
+        };
 
 }
 
@@ -529,8 +441,40 @@ if (clearBtn) {
 
         chat.innerHTML = "";
 
+
         add(
-            "D.I.S.C.O: Memory cleared.",
+            "D.I.S.C.O: Memory cleared, Boss.",
+            "ai"
+        );
+
+    };
+
+}
+
+
+// ==========================================
+// IMAGE INPUT
+// ==========================================
+
+if (imgInput) {
+
+    imgInput.onchange = () => {
+
+        const file =
+            imgInput.files[0];
+
+
+        if (!file) return;
+
+
+        add(
+            "YOU: [Image selected]",
+            "user"
+        );
+
+
+        add(
+            "D.I.S.C.O: Image selected.",
             "ai"
         );
 
@@ -548,7 +492,9 @@ function speak(text) {
     if (
         !("speechSynthesis" in window)
     ) {
+
         return;
+
     }
 
 
@@ -556,17 +502,26 @@ function speak(text) {
 
 
     const voice =
-        new SpeechSynthesisUtterance(text);
+        new SpeechSynthesisUtterance(
+            text
+        );
 
 
-    voice.lang = "en-IN";
-
-    voice.rate = 1;
-
-    voice.pitch = 0.85;
+    voice.lang =
+        "en-IN";
 
 
-    speechSynthesis.speak(voice);
+    voice.rate =
+        1;
+
+
+    voice.pitch =
+        0.85;
+
+
+    speechSynthesis.speak(
+        voice
+    );
 
 }
 
@@ -575,10 +530,15 @@ function speak(text) {
 // ADD MESSAGE
 // ==========================================
 
-function add(text, who) {
+function add(
+    text,
+    who
+) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     div.className =
@@ -589,10 +549,12 @@ function add(text, who) {
         text;
 
 
-    chat.appendChild(div);
+    chat.appendChild(
+        div
+    );
 
 
     chat.scrollTop =
         chat.scrollHeight;
 
-                                }
+}
