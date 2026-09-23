@@ -37,33 +37,22 @@ const imgInput =
 // ==========================================
 
 let API_KEY =
-    localStorage.getItem(
-        "disco_api_key"
-    );
+    localStorage.getItem("disco_api_key");
 
 
 function askForAPIKey() {
 
     const key =
-        prompt(
-            "Enter your Gemini API Key:"
-        );
+        prompt("Enter your Gemini API Key:");
 
+    if (key && key.trim()) {
 
-    if (
-        key &&
-        key.trim()
-    ) {
-
-        API_KEY =
-            key.trim();
-
+        API_KEY = key.trim();
 
         localStorage.setItem(
             "disco_api_key",
             API_KEY
         );
-
 
         add(
             "D.I.S.C.O: API key saved, Boss.",
@@ -83,7 +72,7 @@ if (!API_KEY) {
 
 
 // ==========================================
-// CHANGE KEY
+// CHANGE API KEY
 // ==========================================
 
 if (changeKey) {
@@ -134,15 +123,11 @@ function getMemory() {
                 item.type === "memory"
         );
 
-
-    if (
-        memories.length === 0
-    ) {
+    if (memories.length === 0) {
 
         return "No saved memories.";
 
     }
-
 
     return memories
         .slice(-30)
@@ -180,10 +165,11 @@ function processMemory(text) {
     ) {
 
         return false;
+
     }
 
 
-    // "Remember that..."
+    // Remember that...
 
     if (
         lower.startsWith(
@@ -194,7 +180,6 @@ function processMemory(text) {
         const fact =
             text.substring(14).trim();
 
-
         if (fact) {
 
             MEMORY.push({
@@ -208,7 +193,6 @@ function processMemory(text) {
 
             });
 
-
             saveMemory();
 
             return true;
@@ -216,7 +200,7 @@ function processMemory(text) {
     }
 
 
-    // "Remember..."
+    // Remember...
 
     if (
         lower.startsWith(
@@ -227,7 +211,6 @@ function processMemory(text) {
         const fact =
             text.substring(9).trim();
 
-
         if (fact) {
 
             MEMORY.push({
@@ -241,7 +224,6 @@ function processMemory(text) {
 
             });
 
-
             saveMemory();
 
             return true;
@@ -249,7 +231,7 @@ function processMemory(text) {
     }
 
 
-    // "My favourite X is Y"
+    // My favourite X is Y
 
     const favourite =
         text.match(
@@ -261,7 +243,6 @@ function processMemory(text) {
 
         const item =
             favourite[2].trim();
-
 
         const value =
             favourite[3].trim();
@@ -291,7 +272,7 @@ function processMemory(text) {
 
 
 // ==========================================
-// SEND MESSAGE
+// SEND BUTTON
 // ==========================================
 
 if (send) {
@@ -306,6 +287,10 @@ if (send) {
     );
 }
 
+
+// ==========================================
+// SEND MESSAGE
+// ==========================================
 
 function sendMessage() {
 
@@ -350,12 +335,11 @@ function sendMessage() {
 
         speak(reply);
 
-
         return;
     }
 
 
-    // Normal AI question
+    // Ask Gemini
 
     askGemini(text);
 }
@@ -385,7 +369,7 @@ if (input) {
 
 
 // ==========================================
-// GEMINI
+// GEMINI AI
 // ==========================================
 
 async function askGemini(question) {
@@ -442,7 +426,7 @@ something to remember.
         const response =
             await fetch(
 
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`,
 
                 {
 
@@ -455,7 +439,6 @@ something to remember.
                             "application/json"
 
                     },
-
 
                     body:
                         JSON.stringify({
@@ -498,13 +481,13 @@ something to remember.
                 "Gemini API error"
 
             );
+
         }
 
 
         const reply =
             data.candidates?.[0]
-                ?.content
-                ?.parts?.[0]
+                ?.content?.parts?.[0]
                 ?.text;
 
 
@@ -513,6 +496,7 @@ something to remember.
             throw new Error(
                 "No reply received."
             );
+
         }
 
 
@@ -571,7 +555,7 @@ if (
             recognition.start();
 
             mic.innerText =
-                "🔴";
+                "😮";
 
         }
     );
@@ -643,6 +627,7 @@ if (clearBtn) {
 
         }
     );
+
 }
 
 
@@ -650,7 +635,10 @@ if (clearBtn) {
 // IMAGE BUTTON
 // ==========================================
 
-if (imgBtn && imgInput) {
+if (
+    imgBtn &&
+    imgInput
+) {
 
     imgBtn.addEventListener(
         "click",
@@ -689,6 +677,7 @@ if (imgBtn && imgInput) {
 
         }
     );
+
 }
 
 
@@ -730,6 +719,7 @@ function speak(text) {
     speechSynthesis.speak(
         voice
     );
+
 }
 
 
@@ -763,4 +753,5 @@ function add(
 
     chat.scrollTop =
         chat.scrollHeight;
-}
+
+        }
