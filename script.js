@@ -2,7 +2,6 @@
 // D.I.S.C.O AI - COMPLETE SCRIPT
 // ==========================================
 
-
 // ==========================================
 // ELEMENTS
 // ==========================================
@@ -21,6 +20,9 @@ const clearBtn =
 const imgInput =
     document.getElementById("img-input");
 
+const changeKeyBtn =
+    document.getElementById("change-key");
+
 
 // ==========================================
 // API KEY
@@ -29,21 +31,63 @@ const imgInput =
 let API_KEY =
     localStorage.getItem("disco_api_key");
 
-if (!API_KEY) {
 
-    API_KEY = prompt(
-        "Enter your Gemini API Key:"
+function getAPIKey() {
+
+    if (!API_KEY) {
+
+        API_KEY = prompt(
+            "Enter your Gemini API Key:"
+        );
+
+        if (API_KEY && API_KEY.trim()) {
+
+            API_KEY = API_KEY.trim();
+
+            localStorage.setItem(
+                "disco_api_key",
+                API_KEY
+            );
+
+        } else {
+
+            API_KEY = "";
+
+        }
+    }
+
+    return API_KEY;
+}
+
+
+// ==========================================
+// CHANGE API KEY
+// ==========================================
+
+function changeAPIKey() {
+
+    localStorage.removeItem(
+        "disco_api_key"
     );
 
-    if (API_KEY && API_KEY.trim()) {
+    API_KEY = "";
 
-        API_KEY = API_KEY.trim();
+    getAPIKey();
+}
 
-        localStorage.setItem(
-            "disco_api_key",
-            API_KEY
-        );
-    }
+
+// ==========================================
+// KEY BUTTON
+// ==========================================
+
+if (changeKeyBtn) {
+
+    changeKeyBtn.onclick = () => {
+
+        changeAPIKey();
+
+    };
+
 }
 
 
@@ -124,7 +168,8 @@ async function askGemini(question) {
     );
 
 
-    if (!API_KEY) {
+    // Get API key
+    if (!getAPIKey()) {
 
         chat.lastChild.innerText =
             "D.I.S.C.O: API key is missing.";
@@ -215,6 +260,7 @@ ${question}
         }
 
 
+        // Save chat
         MEMORY.push({
             type: "chat",
             role: "user",
@@ -277,8 +323,7 @@ if (send) {
             text.toLowerCase();
 
 
-        // Explicit memory commands
-
+        // MEMORY COMMANDS
         if (
             lower.startsWith(
                 "remember that "
