@@ -1,12 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>D.I.S.C.O AI</title>
 
@@ -24,12 +21,9 @@
 
     <!-- AI CORE -->
     <div class="core">
-
         <div class="ring r1"></div>
         <div class="ring r2"></div>
-
         <div class="center"></div>
-
     </div>
 
     <p class="core-text">
@@ -85,19 +79,38 @@
             autocomplete="off"
         >
 
-        <button id="mic" type="button">
-            🎙️
-        </button>
-
-        <button id="send" type="button">
-            SEND
-        </button>
+        <div id="button-area"></div>
 
     </div>
 
 
-    <!-- JAVASCRIPT -->
-    <script src="script.js"></script>
+    <!-- LOAD MIC BUTTON FILE -->
+    <script>
+
+        fetch("mic-button.html")
+            .then(response => response.text())
+            .then(html => {
+
+                document.getElementById("button-area").innerHTML = html;
+
+                const script =
+                    document.createElement("script");
+
+                script.src = "script.js";
+
+                document.body.appendChild(script);
+
+            })
+            .catch(error => {
+
+                console.error(
+                    "Could not load mic-button.html:",
+                    error
+                );
+
+            });
+
+    </script>
 
 </body>
 
