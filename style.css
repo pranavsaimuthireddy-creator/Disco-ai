@@ -7,68 +7,66 @@
 
 body {
     min-height: 100vh;
+    padding: 14px;
     color: #eaffff;
     background:
-        radial-gradient(circle at 50% 15%, rgba(0,255,255,.18), transparent 25%),
-        radial-gradient(circle at 10% 80%, rgba(80,0,255,.16), transparent 30%),
-        radial-gradient(circle at 90% 70%, rgba(0,255,180,.10), transparent 30%),
-        #010308;
+        radial-gradient(circle at 50% 20%, rgba(0,255,255,.18), transparent 30%),
+        radial-gradient(circle at 10% 80%, rgba(0,80,255,.15), transparent 35%),
+        #01040a;
     overflow-x: hidden;
-    padding: 18px;
 }
 
-/* futuristic grid */
+/* FUTURISTIC GRID */
 body::before {
     content: "";
     position: fixed;
     inset: 0;
     background-image:
-        linear-gradient(rgba(0,255,255,.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,255,.035) 1px, transparent 1px);
-    background-size: 35px 35px;
+        linear-gradient(rgba(0,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,255,.045) 1px, transparent 1px);
+    background-size: 32px 32px;
     pointer-events: none;
+    z-index: -1;
 }
 
 /* HEADER */
-
 header {
     text-align: center;
-    padding: 15px;
+    padding: 15px 5px 5px;
 }
 
 header h1 {
-    font-size: 42px;
-    letter-spacing: 10px;
+    font-size: 40px;
+    letter-spacing: 9px;
     color: #00ffff;
     text-shadow:
         0 0 8px #00ffff,
-        0 0 25px #00ffff,
-        0 0 50px #008cff;
+        0 0 20px #00ffff,
+        0 0 45px #008cff;
 }
 
 header p {
     margin-top: 8px;
     font-size: 10px;
     letter-spacing: 5px;
-    color: #70ffff;
+    color: #7fffff;
 }
 
-/* AI CORE */
-
+/* CORE */
 .core {
     position: relative;
-    width: 190px;
-    height: 190px;
-    margin: 25px auto 5px;
+    width: 240px;
+    height: 240px;
+    margin: 25px auto 8px;
 }
 
 .ring {
     position: absolute;
     border-radius: 50%;
-    border: 2px solid #00ffff;
+    border: 3px solid #00ffff;
     box-shadow:
         0 0 15px #00ffff,
-        inset 0 0 15px rgba(0,255,255,.4);
+        inset 0 0 20px rgba(0,255,255,.35);
 }
 
 .r1 {
@@ -79,35 +77,45 @@ header p {
 }
 
 .r2 {
-    inset: 20px;
+    inset: 25px;
     border-left-color: transparent;
     border-right-color: transparent;
-    animation: rotateReverse 3s linear infinite;
+    animation: reverseRotate 3s linear infinite;
 }
 
 .center {
     position: absolute;
-    width: 55px;
-    height: 55px;
+    width: 70px;
+    height: 70px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background: #00ffff;
     box-shadow:
-        0 0 15px #00ffff,
-        0 0 40px #00ffff,
-        0 0 80px #008cff;
-    animation: pulse 1.5s infinite;
+        0 0 20px #00ffff,
+        0 0 50px #00ffff,
+        0 0 90px #008cff;
+    animation: pulse 1.8s infinite;
 }
 
+.core-text {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #39ff88;
+    letter-spacing: 5px;
+    font-size: 11px;
+    text-shadow: 0 0 12px #39ff88;
+}
+
+/* ANIMATION */
 @keyframes rotate {
     to {
         transform: rotate(360deg);
     }
 }
 
-@keyframes rotateReverse {
+@keyframes reverseRotate {
     to {
         transform: rotate(-360deg);
     }
@@ -115,151 +123,176 @@ header p {
 
 @keyframes pulse {
     50% {
-        transform: translate(-50%, -50%) scale(.65);
-        opacity: .6;
+        transform: translate(-50%, -50%) scale(.72);
+        opacity: .7;
     }
 }
 
-.core-text {
-    text-align: center;
-    color: #39ff88;
-    font-size: 11px;
-    letter-spacing: 4px;
-    text-shadow: 0 0 12px #39ff88;
-    margin-bottom: 25px;
-}
-
-/* GLASS PANELS */
-
+/* PANELS */
 .status,
 .chat {
-    max-width: 700px;
+    max-width: 850px;
     margin: 18px auto;
     padding: 18px;
-    border: 1px solid rgba(0,255,255,.35);
-    background: rgba(0,15,25,.65);
-    backdrop-filter: blur(12px);
+
+    border: 1px solid rgba(0,255,255,.4);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0,30,45,.85),
+            rgba(0,5,15,.9)
+        );
+
     box-shadow:
         0 0 25px rgba(0,255,255,.08),
-        inset 0 0 25px rgba(0,255,255,.03);
+        inset 0 0 30px rgba(0,255,255,.03);
+
+    backdrop-filter: blur(12px);
 }
 
-/* PANEL TITLE */
-
+/* STATUS */
 .status h2 {
     color: #00ffff;
-    font-size: 15px;
+    font-size: 16px;
     letter-spacing: 3px;
     margin-bottom: 15px;
 }
-
-/* STATUS ROWS */
 
 .row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 13px;
+
+    padding: 15px;
     margin: 8px 0;
-    border: 1px solid rgba(0,255,255,.15);
+
+    border: 1px solid rgba(0,255,255,.18);
+
     background: rgba(0,255,255,.025);
+
+    transition: .3s;
+}
+
+.row:hover {
+    border-color: #00ffff;
+    box-shadow: 0 0 18px rgba(0,255,255,.2);
 }
 
 .on {
     color: #39ff88;
-    text-shadow: 0 0 8px #39ff88;
+    text-shadow: 0 0 10px #39ff88;
     font-size: 11px;
 }
 
 .off {
     color: #ff3155;
-    text-shadow: 0 0 8px #ff3155;
+    text-shadow: 0 0 10px #ff3155;
     font-size: 11px;
 }
 
 /* CHAT */
-
 .chat {
-    min-height: 130px;
-    max-height: 260px;
+    min-height: 150px;
+    max-height: 300px;
     overflow-y: auto;
 }
 
 .msg {
-    padding: 10px 12px;
-    margin: 8px 0;
-    border-left: 2px solid #00ffff;
-    background: rgba(0,255,255,.06);
+    padding: 13px 15px;
+    margin: 9px 0;
+
+    border-left: 3px solid #00ffff;
+
+    background: rgba(0,255,255,.055);
+
     line-height: 1.5;
     font-size: 13px;
+
+    box-shadow: inset 0 0 15px rgba(0,255,255,.02);
 }
 
 .msg.user {
     border-left-color: white;
-    background: rgba(255,255,255,.05);
+    background: rgba(255,255,255,.045);
 }
 
 /* INPUT */
-
 .input-area {
-    max-width: 700px;
+    max-width: 850px;
     margin: 15px auto;
+
     display: flex;
-    gap: 8px;
+    gap: 6px;
 }
 
 input {
     flex: 1;
     min-width: 0;
-    padding: 14px;
+
+    padding: 15px;
+
     color: white;
-    background: rgba(0,10,15,.9);
+
+    background: rgba(0,5,12,.95);
+
     border: 1px solid #00ffff;
+
     outline: none;
-    box-shadow: 0 0 12px rgba(0,255,255,.12);
+
+    box-shadow:
+        0 0 12px rgba(0,255,255,.12),
+        inset 0 0 12px rgba(0,255,255,.03);
 }
 
 input:focus {
     box-shadow:
-        0 0 15px rgba(0,255,255,.4),
-        inset 0 0 10px rgba(0,255,255,.05);
+        0 0 20px rgba(0,255,255,.35),
+        inset 0 0 15px rgba(0,255,255,.05);
 }
 
 input::placeholder {
-    color: rgba(180,255,255,.45);
+    color: #668087;
 }
 
 /* BUTTONS */
-
 button {
     border: 1px solid #00ffff;
+
     background: #00ffff;
+
     color: #001014;
-    padding: 12px 17px;
+
+    padding: 12px 15px;
+
     font-weight: bold;
+
     cursor: pointer;
+
     box-shadow:
-        0 0 10px rgba(0,255,255,.5),
+        0 0 12px rgba(0,255,255,.5),
         0 0 25px rgba(0,255,255,.15);
+
+    transition: .2s;
 }
 
 button:hover {
     background: white;
+
     box-shadow:
-        0 0 15px white,
-        0 0 30px #00ffff;
+        0 0 18px white,
+        0 0 35px #00ffff;
 }
 
 button:active {
-    transform: scale(.94);
+    transform: scale(.92);
 }
 
 /* MOBILE */
-
-@media (max-width: 500px) {
+@media (max-width: 600px) {
 
     body {
-        padding: 12px;
+        padding: 10px;
     }
 
     header h1 {
@@ -268,8 +301,17 @@ button:active {
     }
 
     .core {
-        width: 160px;
-        height: 160px;
+        width: 190px;
+        height: 190px;
+    }
+
+    .center {
+        width: 55px;
+        height: 55px;
+    }
+
+    .r2 {
+        inset: 20px;
     }
 
     .status,
@@ -278,10 +320,11 @@ button:active {
     }
 
     .input-area {
-        gap: 5px;
+        gap: 4px;
     }
 
     button {
-        padding: 12px;
+        padding: 11px 9px;
+        font-size: 11px;
     }
 }
