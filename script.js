@@ -1,14 +1,18 @@
 // ==========================================
-// D.I.S.C.O AI - COMPLETE SCRIPT
+// D.I.S.C.O AI
 // ==========================================
 
-// ==========================================
+
 // ELEMENTS
-// ==========================================
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("msg");
-const send = document.getElementById("send");
+const chat =
+    document.getElementById("chat");
+
+const input =
+    document.getElementById("msg");
+
+const send =
+    document.getElementById("send");
 
 const mic =
     document.getElementById("mic-btn") ||
@@ -17,11 +21,11 @@ const mic =
 const clearBtn =
     document.getElementById("clear-btn");
 
+const changeKey =
+    document.getElementById("change-key");
+
 const imgInput =
     document.getElementById("img-input");
-
-const changeKeyBtn =
-    document.getElementById("change-key");
 
 
 // ==========================================
@@ -29,62 +33,66 @@ const changeKeyBtn =
 // ==========================================
 
 let API_KEY =
-    localStorage.getItem("disco_api_key");
-
-
-function getAPIKey() {
-
-    if (!API_KEY) {
-
-        API_KEY = prompt(
-            "Enter your Gemini API Key:"
-        );
-
-        if (API_KEY && API_KEY.trim()) {
-
-            API_KEY = API_KEY.trim();
-
-            localStorage.setItem(
-                "disco_api_key",
-                API_KEY
-            );
-
-        } else {
-
-            API_KEY = "";
-
-        }
-    }
-
-    return API_KEY;
-}
-
-
-// ==========================================
-// CHANGE API KEY
-// ==========================================
-
-function changeAPIKey() {
-
-    localStorage.removeItem(
+    localStorage.getItem(
         "disco_api_key"
     );
 
-    API_KEY = "";
 
-    getAPIKey();
+function askForAPIKey() {
+
+    const newKey =
+        prompt(
+            "Enter your Gemini API Key:"
+        );
+
+    if (
+        newKey &&
+        newKey.trim()
+    ) {
+
+        API_KEY =
+            newKey.trim();
+
+        localStorage.setItem(
+            "disco_api_key",
+            API_KEY
+        );
+
+        add(
+            "D.I.S.C.O: API key saved, Boss.",
+            "ai"
+        );
+
+    }
+
 }
 
 
-// ==========================================
-// KEY BUTTON
-// ==========================================
+// Ask when no key exists
 
-if (changeKeyBtn) {
+if (!API_KEY) {
 
-    changeKeyBtn.onclick = () => {
+    setTimeout(
+        askForAPIKey,
+        500
+    );
 
-        changeAPIKey();
+}
+
+
+// Change key button
+
+if (changeKey) {
+
+    changeKey.onclick = () => {
+
+        localStorage.removeItem(
+            "disco_api_key"
+        );
+
+        API_KEY = "";
+
+        askForAPIKey();
 
     };
 
@@ -92,7 +100,7 @@ if (changeKeyBtn) {
 
 
 // ==========================================
-// GEMINI MODEL
+// MODEL
 // ==========================================
 
 const MODEL =
@@ -110,6 +118,15 @@ let MEMORY = JSON.parse(
 );
 
 
+// MEMORY IS ALWAYS ACTIVE
+
+const MEMORY_ENABLED = true;
+
+
+// ==========================================
+// SAVE MEMORY
+// ==========================================
+
 function saveMemory() {
 
     localStorage.setItem(
@@ -120,17 +137,31 @@ function saveMemory() {
 }
 
 
+// ==========================================
+// SAVE A MEMORY
+// ==========================================
+
 function remember(text) {
 
     MEMORY.push({
+
         type: "memory",
-        text: text
+
+        text: text,
+
+        date:
+            new Date().toISOString()
+
     });
 
     saveMemory();
 
 }
 
+
+// ==========================================
+// GET MEMORIES
+// ==========================================
 
 function getMemory() {
 
@@ -140,7 +171,9 @@ function getMemory() {
                 item.type === "memory"
         );
 
-    if (memories.length === 0) {
+    if (
+        memories.length === 0
+    ) {
 
         return "No saved memories yet.";
 
@@ -153,6 +186,7 @@ function getMemory() {
                 "- " + item.text
         )
         .join("\n");
+
 }
 
 
@@ -168,13 +202,13 @@ async function askGemini(question) {
     );
 
 
-    // Get API key
-    if (!getAPIKey()) {
+    if (!API_KEY) {
 
         chat.lastChild.innerText =
-            "D.I.S.C.O: API key is missing.";
+            "D.I.S.C.O: API key is missing. Tap 🔑 KEY.";
 
         return;
+
     }
 
 
@@ -191,8 +225,7 @@ Call the user Boss.
 
 Answer clearly and simply.
 
-IMPORTANT:
-Use the user's saved memories when answering questions.
+Use the saved memories when they are relevant.
 
 SAVED USER MEMORIES:
 ${memoryText}
@@ -204,8 +237,11 @@ ${question}
 
         const response =
             await fetch(
+
                 `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+
                 {
+
                     method: "POST",
 
                     headers: {
@@ -216,18 +252,26 @@ ${question}
                     body: JSON.stringify({
 
                         contents: [
+
                             {
+
                                 parts: [
+
                                     {
                                         text:
                                             prompt
                                     }
+
                                 ]
+
                             }
+
                         ]
 
                     })
+
                 }
+
             );
 
 
@@ -238,8 +282,10 @@ ${question}
         if (!response.ok) {
 
             throw new Error(
+
                 data.error?.message ||
                 "Gemini API error"
+
             );
 
         }
@@ -260,18 +306,27 @@ ${question}
         }
 
 
-        // Save chat
+        // Save conversation
+
         MEMORY.push({
+
             type: "chat",
+
             role: "user",
+
             text: question
+
         });
 
 
         MEMORY.push({
+
             type: "chat",
+
             role: "model",
+
             text: reply
+
         });
 
 
@@ -292,11 +347,12 @@ ${question}
             error.message;
 
     }
+
 }
 
 
 // ==========================================
-// SEND BUTTON
+// SEND
 // ==========================================
 
 if (send) {
@@ -324,7 +380,9 @@ if (send) {
 
 
         // MEMORY COMMANDS
+
         if (
+
             lower.startsWith(
                 "remember that "
             ) ||
@@ -340,6 +398,7 @@ if (send) {
             lower.includes(
                 "my favorite "
             )
+
         ) {
 
             remember(text);
@@ -357,6 +416,7 @@ if (send) {
 
 
             return;
+
         }
 
 
@@ -435,7 +495,8 @@ if (
         event => {
 
             const text =
-                event.results[0][0]
+                event
+                    .results[0][0]
                     .transcript;
 
 
@@ -486,7 +547,6 @@ if (clearBtn) {
 
         chat.innerHTML = "";
 
-
         add(
             "D.I.S.C.O: Memory cleared, Boss.",
             "ai"
@@ -498,7 +558,7 @@ if (clearBtn) {
 
 
 // ==========================================
-// IMAGE INPUT
+// IMAGE
 // ==========================================
 
 if (imgInput) {
@@ -519,7 +579,7 @@ if (imgInput) {
 
 
         add(
-            "D.I.S.C.O: Image selected.",
+            "D.I.S.C.O: Image selected, Boss.",
             "ai"
         );
 
@@ -529,7 +589,7 @@ if (imgInput) {
 
 
 // ==========================================
-// AI VOICE
+// VOICE
 // ==========================================
 
 function speak(text) {
