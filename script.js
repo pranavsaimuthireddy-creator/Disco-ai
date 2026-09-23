@@ -5,27 +5,17 @@
 
 // ELEMENTS
 
-const chat =
-    document.getElementById("chat");
-
-const input =
-    document.getElementById("msg");
-
-const send =
-    document.getElementById("send");
+const chat = document.getElementById("chat");
+const input = document.getElementById("msg");
+const send = document.getElementById("send");
 
 const mic =
     document.getElementById("mic-btn") ||
     document.getElementById("mic");
 
-const clearBtn =
-    document.getElementById("clear-btn");
-
-const changeKey =
-    document.getElementById("change-key");
-
-const imgInput =
-    document.getElementById("img-input");
+const clearBtn = document.getElementById("clear-btn");
+const changeKey = document.getElementById("change-key");
+const imgInput = document.getElementById("img-input");
 
 
 // ==========================================
@@ -33,25 +23,18 @@ const imgInput =
 // ==========================================
 
 let API_KEY =
-    localStorage.getItem(
-        "disco_api_key"
-    );
+    localStorage.getItem("disco_api_key");
 
 
 function askForAPIKey() {
 
-    const newKey =
-        prompt(
-            "Enter your Gemini API Key:"
-        );
+    const newKey = prompt(
+        "Enter your Gemini API Key:"
+    );
 
-    if (
-        newKey &&
-        newKey.trim()
-    ) {
+    if (newKey && newKey.trim()) {
 
-        API_KEY =
-            newKey.trim();
+        API_KEY = newKey.trim();
 
         localStorage.setItem(
             "disco_api_key",
@@ -62,13 +45,11 @@ function askForAPIKey() {
             "D.I.S.C.O: API key saved, Boss.",
             "ai"
         );
-
     }
-
 }
 
 
-// Ask when no key exists
+// Ask for key if missing
 
 if (!API_KEY) {
 
@@ -76,11 +57,10 @@ if (!API_KEY) {
         askForAPIKey,
         500
     );
-
 }
 
 
-// Change key button
+// Change API key
 
 if (changeKey) {
 
@@ -93,14 +73,12 @@ if (changeKey) {
         API_KEY = "";
 
         askForAPIKey();
-
     };
-
 }
 
 
 // ==========================================
-// MODEL
+// GEMINI MODEL
 // ==========================================
 
 const MODEL =
@@ -117,9 +95,6 @@ let MEMORY = JSON.parse(
     ) || "[]"
 );
 
-
-// MEMORY IS ALWAYS ACTIVE
-
 const MEMORY_ENABLED = true;
 
 
@@ -133,12 +108,11 @@ function saveMemory() {
         "disco_memory",
         JSON.stringify(MEMORY)
     );
-
 }
 
 
 // ==========================================
-// SAVE A MEMORY
+// REMEMBER SOMETHING
 // ==========================================
 
 function remember(text) {
@@ -155,12 +129,11 @@ function remember(text) {
     });
 
     saveMemory();
-
 }
 
 
 // ==========================================
-// GET MEMORIES
+// GET MEMORY
 // ==========================================
 
 function getMemory() {
@@ -171,9 +144,7 @@ function getMemory() {
                 item.type === "memory"
         );
 
-    if (
-        memories.length === 0
-    ) {
+    if (memories.length === 0) {
 
         return "No saved memories yet.";
 
@@ -186,7 +157,67 @@ function getMemory() {
                 "- " + item.text
         )
         .join("\n");
+}
 
+
+// ==========================================
+// CHECK IF USER WANTS TO SAVE MEMORY
+// ==========================================
+
+function isMemoryCommand(text) {
+
+    const lower =
+        text.toLowerCase().trim();
+
+
+    // These are actual memory commands
+
+    if (
+        lower.startsWith(
+            "remember that "
+        )
+    ) {
+        return true;
+    }
+
+
+    if (
+        lower.startsWith(
+            "remember "
+        )
+    ) {
+        return true;
+    }
+
+
+    // Examples:
+    // "My favourite colour is blue"
+    // "My favorite bike is Pulsar"
+
+    if (
+        /^my\s+(favourite|favorite)\s+.+\s+is\s+.+/i
+            .test(text)
+    ) {
+        return true;
+    }
+
+
+    // IMPORTANT:
+    // Questions are NOT memory commands
+
+    if (
+        lower.endsWith("?") ||
+        lower.startsWith("what ") ||
+        lower.startsWith("what's ") ||
+        lower.startsWith("whats ") ||
+        lower.startsWith("which ") ||
+        lower.startsWith("do you know ")
+    ) {
+        return false;
+    }
+
+
+    return false;
 }
 
 
@@ -208,7 +239,6 @@ async function askGemini(question) {
             "D.I.S.C.O: API key is missing. Tap 🔑 KEY.";
 
         return;
-
     }
 
 
@@ -225,7 +255,7 @@ Call the user Boss.
 
 Answer clearly and simply.
 
-Use the saved memories when they are relevant.
+Use saved memories when they are relevant.
 
 SAVED USER MEMORIES:
 ${memoryText}
@@ -271,7 +301,6 @@ ${question}
                     })
 
                 }
-
             );
 
 
@@ -282,12 +311,9 @@ ${question}
         if (!response.ok) {
 
             throw new Error(
-
                 data.error?.message ||
                 "Gemini API error"
-
             );
-
         }
 
 
@@ -302,7 +328,6 @@ ${question}
             throw new Error(
                 "No reply received."
             );
-
         }
 
 
@@ -315,7 +340,6 @@ ${question}
             role: "user",
 
             text: question
-
         });
 
 
@@ -326,7 +350,6 @@ ${question}
             role: "model",
 
             text: reply
-
         });
 
 
@@ -345,14 +368,12 @@ ${question}
         chat.lastChild.innerText =
             "D.I.S.C.O: ERROR - " +
             error.message;
-
     }
-
 }
 
 
 // ==========================================
-// SEND
+// SEND MESSAGE
 // ==========================================
 
 if (send) {
@@ -375,55 +396,41 @@ if (send) {
         input.value = "";
 
 
-        const lower =
-            text.toLowerCase();
-
-
-        // MEMORY COMMANDS
+        // ==================================
+        // MEMORY COMMAND
+        // ==================================
 
         if (
-
-            lower.startsWith(
-                "remember that "
-            ) ||
-
-            lower.startsWith(
-                "remember "
-            ) ||
-
-            lower.includes(
-                "my favourite "
-            ) ||
-
-            lower.includes(
-                "my favorite "
-            )
-
+            isMemoryCommand(text)
         ) {
 
             remember(text);
 
 
+            const reply =
+                "Got it, Boss. I'll remember that.";
+
+
             add(
-                "D.I.S.C.O: Got it, Boss. I'll remember that.",
+                "D.I.S.C.O: " + reply,
                 "ai"
             );
 
 
-            speak(
-                "Got it, Boss. I'll remember that."
-            );
+            speak(reply);
 
 
             return;
-
         }
 
+
+        // ==================================
+        // NORMAL QUESTION
+        // ==================================
 
         askGemini(text);
 
     };
-
 }
 
 
@@ -447,7 +454,6 @@ if (input) {
 
         }
     );
-
 }
 
 
@@ -487,7 +493,6 @@ if (
 
         mic.innerText =
             "🔴";
-
     };
 
 
@@ -509,7 +514,6 @@ if (
 
 
             send.click();
-
         };
 
 
@@ -518,7 +522,6 @@ if (
 
             mic.innerText =
                 "🎙️";
-
         };
 
 
@@ -527,9 +530,7 @@ if (
 
             mic.innerText =
                 "🎙️";
-
         };
-
 }
 
 
@@ -551,9 +552,7 @@ if (clearBtn) {
             "D.I.S.C.O: Memory cleared, Boss.",
             "ai"
         );
-
     };
-
 }
 
 
@@ -582,9 +581,7 @@ if (imgInput) {
             "D.I.S.C.O: Image selected, Boss.",
             "ai"
         );
-
     };
-
 }
 
 
@@ -597,9 +594,7 @@ function speak(text) {
     if (
         !("speechSynthesis" in window)
     ) {
-
         return;
-
     }
 
 
@@ -627,7 +622,6 @@ function speak(text) {
     speechSynthesis.speak(
         voice
     );
-
 }
 
 
@@ -661,5 +655,4 @@ function add(
 
     chat.scrollTop =
         chat.scrollHeight;
-
 }
