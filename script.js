@@ -1,9 +1,17 @@
+// ==========================================
+// D.I.S.C.O AI - MAIN SCRIPT
+// ==========================================
+
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
 const send = document.getElementById("send");
 const mic = document.getElementById("mic");
 
-// Ask for API key every time the website opens
+
+// ==========================================
+// API KEY
+// ==========================================
+
 let API_KEY = prompt(
     "D.I.S.C.O requires your Gemini API Key:"
 );
@@ -16,21 +24,27 @@ if (API_KEY) {
     );
 }
 
-// Gemini model
+
+// ==========================================
+// GEMINI MODEL
+// ==========================================
+
 const MODEL = "gemini-3.6-flash";
 
 
-// ===============================
-// GEMINI AI
-// ===============================
+// ==========================================
+// ASK GEMINI
+// ==========================================
 
 async function askGemini(question) {
 
     add("D.I.S.C.O: Thinking...", "ai");
 
     if (!API_KEY) {
+
         chat.lastChild.innerText =
             "D.I.S.C.O: Please enter your Gemini API key.";
+
         return;
     }
 
@@ -65,7 +79,9 @@ async function askGemini(question) {
             }
         );
 
+
         const data = await response.json();
+
 
         if (!response.ok) {
 
@@ -76,8 +92,10 @@ async function askGemini(question) {
 
         }
 
+
         const reply =
             data.candidates?.[0]?.content?.parts?.[0]?.text;
+
 
         if (!reply) {
 
@@ -87,10 +105,13 @@ async function askGemini(question) {
 
         }
 
+
         chat.lastChild.innerText =
             "D.I.S.C.O: " + reply;
 
+
         speak(reply);
+
 
     } catch (error) {
 
@@ -102,9 +123,9 @@ async function askGemini(question) {
 }
 
 
-// ===============================
+// ==========================================
 // SEND BUTTON
-// ===============================
+// ==========================================
 
 send.onclick = () => {
 
@@ -112,45 +133,53 @@ send.onclick = () => {
 
     if (!text) return;
 
+
     add(
         "YOU: " + text,
         "user"
     );
 
+
     input.value = "";
 
+
     askGemini(text);
+
 };
 
 
-// ===============================
+// ==========================================
 // ENTER KEY
-// ===============================
+// ==========================================
 
 input.addEventListener(
     "keydown",
     (event) => {
 
         if (event.key === "Enter") {
+
             send.click();
+
         }
 
     }
 );
 
 
-// ===============================
+// ==========================================
 // VOICE INPUT
-// ===============================
+// ==========================================
 
 const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
+
 if (SpeechRecognition) {
 
     const recognition =
         new SpeechRecognition();
+
 
     recognition.lang = "en-IN";
 
@@ -173,9 +202,12 @@ if (SpeechRecognition) {
         const text =
             event.results[0][0].transcript;
 
+
         input.value = text;
 
+
         mic.innerText = "🎙️";
+
 
         send.click();
 
@@ -208,9 +240,9 @@ if (SpeechRecognition) {
 }
 
 
-// ===============================
+// ==========================================
 // AI VOICE REPLY
-// ===============================
+// ==========================================
 
 function speak(text) {
 
@@ -218,10 +250,13 @@ function speak(text) {
         return;
     }
 
+
     speechSynthesis.cancel();
+
 
     const voice =
         new SpeechSynthesisUtterance(text);
+
 
     voice.lang = "en-IN";
 
@@ -229,26 +264,31 @@ function speak(text) {
 
     voice.pitch = 0.85;
 
+
     speechSynthesis.speak(voice);
 
 }
 
 
-// ===============================
+// ==========================================
 // ADD MESSAGE
-// ===============================
+// ==========================================
 
 function add(text, who) {
 
     const div =
         document.createElement("div");
 
+
     div.className =
         "msg " + who;
 
+
     div.innerText = text;
 
+
     chat.appendChild(div);
+
 
     chat.scrollTop =
         chat.scrollHeight;
