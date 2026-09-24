@@ -3,7 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>D.I.S.C.O AI</title>
 
@@ -12,213 +14,153 @@
 
 <body>
 
-    <div class="scanlines"></div>
+<div class="scanlines"></div>
 
-    <!-- HEADER -->
-    <header>
+<header>
 
-        <div class="top-bar">
+    <div class="top-bar">
+        <span>☰</span>
+        <span class="system-online">● SYSTEM ONLINE</span>
+        <span>◉</span>
+    </div>
 
-            <span class="menu-icon">☰</span>
+    <h1>D.I.S.C.O</h1>
+    <p>MOBILE AI SYSTEM</p>
 
-            <span class="system-online">
-                ● SYSTEM ONLINE
-            </span>
+</header>
 
-            <span class="bot-icon">◉</span>
 
+<section class="core-section">
+
+    <div class="core">
+
+        <div class="core-ring ring-outer"></div>
+        <div class="core-ring ring-middle"></div>
+        <div class="core-ring ring-inner"></div>
+
+        <div class="core-lines"></div>
+
+        <div class="core-centre">
+            <strong>D.I.S.C.O</strong>
+            <span>CORE ACTIVE</span>
+            <i></i>
         </div>
 
-        <h1>D.I.S.C.O</h1>
+    </div>
 
-        <p>MOBILE AI SYSTEM</p>
-
-    </header>
+</section>
 
 
-    <!-- CORE -->
-    <section class="core-section">
+<section class="panel">
 
-        <div class="core">
+    <div class="panel-title">
+        ⚡ SYSTEM STATUS
+    </div>
 
-            <div class="core-ring ring-outer"></div>
-            <div class="core-ring ring-middle"></div>
-            <div class="core-ring ring-inner"></div>
+    <div class="status-grid">
 
-            <div class="core-lines"></div>
-
-            <div class="core-centre">
-
-                <strong>D.I.S.C.O</strong>
-
-                <span>CORE ACTIVE</span>
-
-                <i></i>
-
-            </div>
-
+        <div class="status-card">
+            <div class="status-icon">▣</div>
+            <h3>AI CORE</h3>
+            <span>● ONLINE</span>
         </div>
 
-    </section>
-
-
-    <!-- SYSTEM STATUS -->
-    <section class="panel status-panel">
-
-        <div class="panel-title">
-            ⚡ SYSTEM STATUS
+        <div class="status-card">
+            <div class="status-icon">⌁</div>
+            <h3>NETWORK</h3>
+            <span>● ONLINE</span>
         </div>
 
-        <div class="status-grid">
+        <div class="status-card">
+            <div class="status-icon">♬</div>
+            <h3>VOICE</h3>
+            <span>● READY</span>
+        </div>
 
-            <div class="status-card">
+        <div class="status-card">
+            <div class="status-icon">🧠</div>
+            <h3>MEMORY</h3>
+            <span>● ONLINE</span>
+        </div>
 
-                <div class="status-icon">▣</div>
+    </div>
 
-                <h3>AI CORE</h3>
-
-                <span class="status-online">
-                    ● ONLINE
-                </span>
-
-            </div>
-
-
-            <div class="status-card">
-
-                <div class="status-icon">⌁</div>
-
-                <h3>NETWORK</h3>
-
-                <span class="status-online">
-                    ● ONLINE
-                </span>
-
-            </div>
+</section>
 
 
-            <div class="status-card">
+<section class="chat-panel">
 
-                <div class="status-icon">♬</div>
+    <div class="chat-terminal">
 
-                <h3>VOICE</h3>
+        <div class="terminal-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
 
-                <span class="status-online">
-                    ● READY
-                </span>
+        <div id="chat" class="chat">
 
-            </div>
-
-
-            <div class="status-card">
-
-                <div class="status-icon">🧠</div>
-
-                <h3>MEMORY</h3>
-
-                <span class="status-online">
-                    ● ONLINE
-                </span>
-
+            <div class="msg ai">
+                D.I.S.C.O: Systems online.<br>
+                How may I assist you, Boss?
             </div>
 
         </div>
 
-    </section>
+    </div>
+
+</section>
 
 
-    <!-- CHAT -->
-    <section class="chat-panel">
+<section class="input-section">
 
-        <div class="chat-terminal">
+    <div class="input-area">
 
-            <div class="terminal-dots">
+        <input
+            id="msg"
+            type="text"
+            placeholder="Ask D.I.S.C.O..."
+            autocomplete="off"
+        >
 
-                <span></span>
-                <span></span>
-                <span></span>
+        <div id="button-area">
 
-            </div>
+            <button id="send">SEND</button>
 
-            <div class="chat" id="chat">
+            <button id="mic">🎙️</button>
 
-                <div class="msg ai">
-                    D.I.S.C.O: Systems online.
-                    How may I assist you, Boss?
-                </div>
+            <button id="clear-btn">🗑️</button>
 
-            </div>
+            <button id="change-key">🔑 KEY</button>
 
-        </div>
-
-    </section>
-
-
-    <!-- INPUT -->
-    <section class="input-section">
-
-        <div class="input-area">
+            <button id="img-btn">🖼️</button>
 
             <input
-                id="msg"
-                type="text"
-                placeholder="Ask D.I.S.C.O..."
-                autocomplete="off"
+                type="file"
+                id="img-input"
+                accept="image/*"
+                style="display:none"
             >
-
-            <div id="button-area">
-
-                <button id="send">
-                    SEND
-                </button>
-
-                <button id="mic">
-                    🎙️
-                </button>
-
-                <button id="clear-btn">
-                    🗑️
-                </button>
-
-                <button id="change-key">
-                    🔑 KEY
-                </button>
-
-                <button id="img-btn">
-                    🖼️
-                </button>
-
-                <input
-                    type="file"
-                    id="img-input"
-                    accept="image/*"
-                    style="display:none"
-                >
-
-            </div>
 
         </div>
 
-    </section>
+    </div>
+
+</section>
 
 
-    <!-- FOOTER -->
-    <footer>
+<footer>
 
-        <span>‹‹</span>
+    <span>‹‹</span>
 
-        <strong>
-            D.I.S.C.O: ALWAYS WITH YOU
-        </strong>
+    <strong>D.I.S.C.O: ALWAYS WITH YOU</strong>
 
-        <span>››</span>
+    <span>››</span>
 
-    </footer>
+</footer>
 
 
-    <!-- JAVASCRIPT -->
-    <script src="script.js"></script>
+<script src="script.js?v=20260923"></script>
 
 </body>
-
 </html>
