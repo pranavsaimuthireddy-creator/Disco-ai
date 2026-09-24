@@ -1,62 +1,50 @@
 "use strict";
 
 /* =====================================================
-   D.I.S.C.O
-   COMPLETE WORKING SCRIPT
+   D.I.S.C.O — STABLE SCRIPT
+   15 TOOLS + MEMORY + GEMINI + VOICE + LOCATION
    ===================================================== */
 
 const MODEL = "gemini-3.6-flash";
 
-const API_KEY_STORAGE = "disco_api_key";
-const MEMORY_STORAGE = "disco_memory";
-
-
-/* =====================================================
-   ELEMENTS
-   ===================================================== */
+const KEY_NAME = "disco_api_key";
+const MEMORY_NAME = "disco_memory";
 
 const msg = document.getElementById("msg");
 const send = document.getElementById("send");
 const mic = document.getElementById("mic");
 const clearBtn = document.getElementById("clear-btn");
-const changeKey = document.getElementById("change-key");
-const imgBtn = document.getElementById("img-btn");
-const imgInput = document.getElementById("img-input");
+const keyBtn = document.getElementById("change-key");
+const imageBtn = document.getElementById("img-btn");
+const imageInput = document.getElementById("img-input");
 const chat = document.getElementById("chat");
+
+let memory = [];
+let timer = null;
 
 
 /* =====================================================
    MEMORY
    ===================================================== */
 
-let memory = [];
-
 try {
-    memory = JSON.parse(
-        localStorage.getItem(MEMORY_STORAGE) || "[]"
-    );
+    memory = JSON.parse(localStorage.getItem(MEMORY_NAME) || "[]");
 
     if (!Array.isArray(memory)) {
         memory = [];
     }
-} catch (error) {
+} catch (e) {
     memory = [];
 }
 
-
 function saveMemory() {
-    localStorage.setItem(
-        MEMORY_STORAGE,
-        JSON.stringify(memory)
-    );
+    localStorage.setItem(MEMORY_NAME, JSON.stringify(memory));
 }
 
-
 function remember(text) {
-
     memory.push({
         text: text,
-        time: new Date().toISOString()
+        time: Date.now()
     });
 
     saveMemory();
@@ -67,70 +55,58 @@ function remember(text) {
    CHAT
    ===================================================== */
 
-function addUserMessage(text) {
-
+function addUser(text) {
     if (!chat) return;
 
     const div = document.createElement("div");
-
     div.className = "msg user";
-
     div.textContent = text;
 
     chat.appendChild(div);
-
     chat.scrollTop = chat.scrollHeight;
 }
 
-
-function addAIMessage(text) {
-
+function addAI(text) {
     if (!chat) return;
 
     const div = document.createElement("div");
-
     div.className = "msg ai";
-
     div.textContent = "D.I.S.C.O: " + text;
 
     chat.appendChild(div);
-
     chat.scrollTop = chat.scrollHeight;
 }
 
 
 /* =====================================================
-   SPEECH
+   VOICE OUTPUT
    ===================================================== */
 
 function speak(text) {
-
-    if (!window.speechSynthesis) {
-        return;
-    }
+    if (!window.speechSynthesis) return;
 
     window.speechSynthesis.cancel();
 
-    const speech =
-        new SpeechSynthesisUtterance(
-            String(text)
-        );
+    const speech = new SpeechSynthesisUtterance(
+        String(text)
+    );
 
     speech.lang = "en-IN";
     speech.rate = 0.95;
     speech.pitch = 0.9;
     speech.volume = 1;
 
-    const voices =
-        window.speechSynthesis.getVoices();
+    const voices = window.speechSynthesis.getVoices();
 
-    const voice =
-        voices.find(function (v) {
-            return v.lang === "en-IN";
-        }) ||
-        voices.find(function (v) {
+    let voice = voices.find(function(v) {
+        return v.lang === "en-IN";
+    });
+
+    if (!voice) {
+        voice = voices.find(function(v) {
             return v.lang.startsWith("en");
         });
+    }
 
     if (voice) {
         speech.voice = voice;
@@ -141,64 +117,23 @@ function speak(text) {
 
 
 /* =====================================================
-   API KEY
-   ===================================================== */
-
-function getKey() {
-
-    return localStorage.getItem(
-        API_KEY_STORAGE
-    );
-}
-
-
-function changeAPIKey() {
-
-    const key = prompt(
-        "Enter your Gemini API key:"
-    );
-
-    if (!key || !key.trim()) {
-        return;
-    }
-
-    localStorage.setItem(
-        API_KEY_STORAGE,
-        key.trim()
-    );
-
-    addAIMessage(
-        "API key saved successfully, Boss."
-    );
-
-    speak(
-        "API key saved successfully, Boss."
-    );
-}
-
-
-/* =====================================================
    MEMORY LEARNING
    ===================================================== */
 
-function learn(text) {
-
+function learnMemory(text) {
     const lower = text.toLowerCase();
 
     if (
-        lower.startsWith("remember that") ||
+        lower.startsWith("remember that ") ||
         lower.startsWith("remember ")
     ) {
-
-        let saved = text
+        let value = text
             .replace(/^remember that\s*/i, "")
             .replace(/^remember\s*/i, "")
             .trim();
 
-        if (saved) {
-
-            remember(saved);
-
+        if (value) {
+            remember(value);
             return "I will remember that, Boss.";
         }
     }
@@ -208,13 +143,11 @@ function learn(text) {
 
 
 /* =====================================================
-   MEMORY ANSWER
+   MEMORY QUESTIONS
    ===================================================== */
 
 function memoryAnswer(text) {
-
     const lower = text.toLowerCase();
-
 
     /* NAME */
 
@@ -223,35 +156,23 @@ function memoryAnswer(text) {
         lower.includes("what's my name") ||
         lower.includes("whats my name")
     ) {
-
-        for (
-            let i = memory.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const match =
-                memory[i].text.match(
-                    /my\s+name\s+is\s+(.+)/i
-                );
+        for (let i = memory.length - 1; i >= 0; i--) {
+            const match = memory[i].text.match(
+                /my\s+name\s+is\s+(.+)/i
+            );
 
             if (match) {
-
-                return (
-                    "Your name is " +
+                return "Your name is " +
                     match[1].trim() +
-                    ", Boss."
-                );
+                    ", Boss.";
             }
         }
 
-        return (
-            "I don't have your name in my memory yet, Boss."
-        );
+        return "I don't know your name yet, Boss.";
     }
 
 
-    /* COLOUR */
+    /* FAVOURITE COLOUR */
 
     if (
         lower.includes("favourite colour") ||
@@ -259,99 +180,63 @@ function memoryAnswer(text) {
         lower.includes("favourite color") ||
         lower.includes("favorite color")
     ) {
-
-        for (
-            let i = memory.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const match =
-                memory[i].text.match(
-                    /my\s+(?:favourite|favorite)\s+colou?r\s+is\s+(.+)/i
-                );
+        for (let i = memory.length - 1; i >= 0; i--) {
+            const match = memory[i].text.match(
+                /my\s+(?:favourite|favorite)\s+colou?r\s+is\s+(.+)/i
+            );
 
             if (match) {
-
-                return (
-                    "Your favourite colour is " +
+                return "Your favourite colour is " +
                     match[1].trim() +
-                    ", Boss."
-                );
+                    ", Boss.";
             }
         }
 
-        return (
-            "I don't have your favourite colour in my memory yet, Boss."
-        );
+        return "I don't know your favourite colour yet, Boss.";
     }
 
 
-    /* BIKE */
+    /* FAVOURITE BIKE */
 
     if (
         lower.includes("favourite bike") ||
         lower.includes("favorite bike")
     ) {
-
-        for (
-            let i = memory.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const match =
-                memory[i].text.match(
-                    /my\s+(?:favourite|favorite)\s+bike\s+is\s+(.+)/i
-                );
+        for (let i = memory.length - 1; i >= 0; i--) {
+            const match = memory[i].text.match(
+                /my\s+(?:favourite|favorite)\s+bike\s+is\s+(.+)/i
+            );
 
             if (match) {
-
-                return (
-                    "Your favourite bike is " +
+                return "Your favourite bike is " +
                     match[1].trim() +
-                    ", Boss."
-                );
+                    ", Boss.";
             }
         }
 
-        return (
-            "I don't have your favourite bike in my memory yet, Boss."
-        );
+        return "I don't know your favourite bike yet, Boss.";
     }
 
 
-    /* FOOD */
+    /* FAVOURITE FOOD */
 
     if (
         lower.includes("favourite food") ||
         lower.includes("favorite food")
     ) {
-
-        for (
-            let i = memory.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const match =
-                memory[i].text.match(
-                    /my\s+(?:favourite|favorite)\s+food\s+is\s+(.+)/i
-                );
+        for (let i = memory.length - 1; i >= 0; i--) {
+            const match = memory[i].text.match(
+                /my\s+(?:favourite|favorite)\s+food\s+is\s+(.+)/i
+            );
 
             if (match) {
-
-                return (
-                    "Your favourite food is " +
+                return "Your favourite food is " +
                     match[1].trim() +
-                    ", Boss."
-                );
+                    ", Boss.";
             }
         }
 
-        return (
-            "I don't have your favourite food in my memory yet, Boss."
-        );
+        return "I don't know your favourite food yet, Boss.";
     }
 
 
@@ -361,25 +246,15 @@ function memoryAnswer(text) {
         lower.includes("what do you remember") ||
         lower.includes("show my memory")
     ) {
-
         if (memory.length === 0) {
             return "My memory is empty, Boss.";
         }
 
-        return (
-            "Here is what I remember, Boss:\n" +
-            memory
-                .map(function (item, index) {
-                    return (
-                        (index + 1) +
-                        ". " +
-                        item.text
-                    );
-                })
-                .join("\n")
-        );
+        return "I remember:\n" +
+            memory.map(function(item, index) {
+                return (index + 1) + ". " + item.text;
+            }).join("\n");
     }
-
 
     return null;
 }
@@ -390,22 +265,17 @@ function memoryAnswer(text) {
    ===================================================== */
 
 function toolTime(text) {
-
-    const lower = text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        lower.includes("what time") ||
-        lower === "time" ||
-        lower.includes("current time")
+        t === "time" ||
+        t.includes("what time") ||
+        t.includes("current time") ||
+        t.includes("tell me the time")
     ) {
-
-        return (
-            "The current time is " +
-            new Date().toLocaleTimeString(
-                "en-IN"
-            ) +
-            ", Boss."
-        );
+        return "The current time is " +
+            new Date().toLocaleTimeString("en-IN") +
+            ", Boss.";
     }
 
     return null;
@@ -417,29 +287,23 @@ function toolTime(text) {
    ===================================================== */
 
 function toolDate(text) {
-
-    const lower = text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        lower.includes("today's date") ||
-        lower.includes("todays date") ||
-        lower === "date" ||
-        lower.includes("what date")
+        t === "date" ||
+        t.includes("today's date") ||
+        t.includes("todays date") ||
+        t.includes("what is the date") ||
+        t.includes("what day is today")
     ) {
-
-        return (
-            "Today is " +
-            new Date().toLocaleDateString(
-                "en-IN",
-                {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric"
-                }
-            ) +
-            ", Boss."
-        );
+        return "Today is " +
+            new Date().toLocaleDateString("en-IN", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            }) +
+            ", Boss.";
     }
 
     return null;
@@ -447,319 +311,299 @@ function toolDate(text) {
 
 
 /* =====================================================
-   TOOL 3 — WEATHER
+   TOOL 3 — LOCATION
    ===================================================== */
 
-async function toolWeather(text) {
+async function toolLocation(text) {
+    const t = text.toLowerCase();
 
-    const lower = text.toLowerCase();
-
-    if (!lower.includes("weather")) {
+    if (
+        !t.includes("where am i") &&
+        !t.includes("my location") &&
+        !t.includes("current location") &&
+        !t.includes("my current location")
+    ) {
         return null;
     }
 
+    if (!navigator.geolocation) {
+        return "Location is not supported by this browser, Boss.";
+    }
+
     try {
-
-        const match =
-            text.match(
-                /weather\s+(?:in|at|for)\s+(.+)/i
+        const position = await new Promise(function(resolve, reject) {
+            navigator.geolocation.getCurrentPosition(
+                resolve,
+                reject,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 60000
+                }
             );
+        });
 
-        let latitude;
-        let longitude;
-        let placeName = "your location";
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
 
+        const url =
+            "https://geocoding-api.open-meteo.com/v1/reverse" +
+            "?latitude=" + lat +
+            "&longitude=" + lon +
+            "&language=en" +
+            "&format=json";
 
-        /* CITY WEATHER */
+        const response = await fetch(url);
+        const data = await response.json();
 
-        if (match) {
+        if (data && data.address) {
+            const a = data.address;
 
-            const city =
-                match[1]
-                    .replace(/[?.!]+$/, "")
-                    .trim();
+            const place =
+                a.city ||
+                a.town ||
+                a.village ||
+                a.municipality ||
+                a.county ||
+                "your current area";
 
-            const geoURL =
-                "https://geocoding-api.open-meteo.com/v1/search" +
-                "?name=" +
-                encodeURIComponent(city) +
-                "&count=1&language=en&format=json";
+            const state = a.state || "";
+            const country = a.country || "";
 
-            const geoResponse =
-                await fetch(geoURL);
-
-            const geo =
-                await geoResponse.json();
-
-            if (
-                !geo.results ||
-                geo.results.length === 0
-            ) {
-
-                return (
-                    "I could not find that city, Boss."
-                );
-            }
-
-            latitude =
-                geo.results[0].latitude;
-
-            longitude =
-                geo.results[0].longitude;
-
-            placeName =
-                geo.results[0].name;
+            return "You are currently around " +
+                place +
+                (state ? ", " + state : "") +
+                (country ? ", " + country : "") +
+                ", Boss.";
         }
 
-
-        /* CURRENT LOCATION */
-
-        else {
-
-            if (!navigator.geolocation) {
-
-                return (
-                    "Location is not supported by this browser, Boss."
-                );
-            }
-
-            const position =
-                await new Promise(
-                    function (resolve, reject) {
-
-                        navigator.geolocation
-                            .getCurrentPosition(
-                                resolve,
-                                reject,
-                                {
-                                    timeout: 10000
-                                }
-                            );
-                    }
-                );
-
-            latitude =
-                position.coords.latitude;
-
-            longitude =
-                position.coords.longitude;
-        }
-
-
-        const weatherURL =
-            "https://api.open-meteo.com/v1/forecast" +
-            "?latitude=" +
-            latitude +
-            "&longitude=" +
-            longitude +
-            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code" +
-            "&timezone=auto";
-
-
-        const response =
-            await fetch(weatherURL);
-
-        const data =
-            await response.json();
-
-        const current =
-            data.current;
-
-        if (!current) {
-
-            return (
-                "Weather information is unavailable, Boss."
-            );
-        }
-
-        return (
-            "Weather in " +
-            placeName +
-            ": " +
-            current.temperature_2m +
-            "°C. Feels like " +
-            current.apparent_temperature +
-            "°C. Humidity is " +
-            current.relative_humidity_2m +
-            "% and wind speed is " +
-            current.wind_speed_10m +
-            " km/h, Boss."
-        );
+        return "I found your location, but I could not identify the city name, Boss.";
 
     } catch (error) {
-
-        return (
-            "I could not get the weather. Please allow location access, Boss."
-        );
+        return "I could not access your location. Please allow location permission for this website, Boss.";
     }
 }
 
 
 /* =====================================================
-   TOOL 4 — TIMER
+   TOOL 4 — WEATHER
    ===================================================== */
 
-let activeTimer = null;
+async function toolWeather(text) {
+    const t = text.toLowerCase();
 
-function toolTimer(text) {
-
-    const match =
-        text.match(
-            /(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)/i
-        );
-
-    if (
-        !match ||
-        !text.toLowerCase().includes("timer")
-    ) {
+    if (!t.includes("weather")) {
         return null;
     }
 
-    const amount =
-        Number(match[1]);
+    try {
+        let lat;
+        let lon;
+        let place = "your location";
 
-    const unit =
-        match[2].toLowerCase();
+        const cityMatch = text.match(
+            /weather\s+(?:in|at|for)\s+(.+)/i
+        );
+
+        /* WEATHER FOR A CITY */
+
+        if (cityMatch) {
+            const city = cityMatch[1]
+                .replace(/[?.!]+$/, "")
+                .trim();
+
+            const geoURL =
+                "https://geocoding-api.open-meteo.com/v1/search" +
+                "?name=" + encodeURIComponent(city) +
+                "&count=1" +
+                "&language=en" +
+                "&format=json";
+
+            const geoResponse = await fetch(geoURL);
+            const geoData = await geoResponse.json();
+
+            if (
+                !geoData.results ||
+                geoData.results.length === 0
+            ) {
+                return "I could not find that city, Boss.";
+            }
+
+            lat = geoData.results[0].latitude;
+            lon = geoData.results[0].longitude;
+            place = geoData.results[0].name;
+
+        } else {
+
+            /* WEATHER USING DEVICE LOCATION */
+
+            if (!navigator.geolocation) {
+                return "Location is not supported by this browser, Boss.";
+            }
+
+            const position = await new Promise(function(resolve, reject) {
+                navigator.geolocation.getCurrentPosition(
+                    resolve,
+                    reject,
+                    {
+                        enableHighAccuracy: false,
+                        timeout: 15000,
+                        maximumAge: 60000
+                    }
+                );
+            });
+
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+        }
+
+        const weatherURL =
+            "https://api.open-meteo.com/v1/forecast" +
+            "?latitude=" + lat +
+            "&longitude=" + lon +
+            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code" +
+            "&timezone=auto";
+
+        const weatherResponse = await fetch(weatherURL);
+        const weather = await weatherResponse.json();
+
+        if (!weather.current) {
+            return "Weather information is unavailable right now, Boss.";
+        }
+
+        const c = weather.current;
+
+        return "Current weather in " +
+            place +
+            " is " +
+            c.temperature_2m +
+            "°C. It feels like " +
+            c.apparent_temperature +
+            "°C, humidity is " +
+            c.relative_humidity_2m +
+            "%, and wind speed is " +
+            c.wind_speed_10m +
+            " km/h, Boss.";
+
+    } catch (error) {
+        return "I could not get the weather. Please allow location permission or specify a city, Boss.";
+    }
+}
+
+
+/* =====================================================
+   TOOL 5 — TIMER
+   ===================================================== */
+
+function toolTimer(text) {
+    const t = text.toLowerCase();
+
+    if (!t.includes("timer")) {
+        return null;
+    }
+
+    const match = t.match(
+        /(\d+(?:\.\d+)?)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)/
+    );
+
+    if (!match) {
+        return "Tell me the timer duration, Boss. For example: set a timer for 5 minutes.";
+    }
+
+    const amount = Number(match[1]);
+    const unit = match[2];
 
     let milliseconds;
-
 
     if (
         unit.startsWith("second") ||
         unit.startsWith("sec")
     ) {
-
-        milliseconds =
-            amount * 1000;
-
+        milliseconds = amount * 1000;
     } else if (
         unit.startsWith("hour") ||
         unit.startsWith("hr")
     ) {
-
-        milliseconds =
-            amount * 60 * 60 * 1000;
-
+        milliseconds = amount * 60 * 60 * 1000;
     } else {
-
-        milliseconds =
-            amount * 60 * 1000;
+        milliseconds = amount * 60 * 1000;
     }
 
-
-    if (activeTimer) {
-        clearTimeout(activeTimer);
+    if (timer) {
+        clearTimeout(timer);
     }
 
+    timer = setTimeout(function() {
+        const message =
+            "Boss, your timer is finished.";
 
-    activeTimer =
-        setTimeout(function () {
+        addAI(message);
+        speak(message);
 
-            const message =
-                "Boss, your " +
-                amount +
-                " " +
-                unit +
-                " timer is finished.";
+        timer = null;
+    }, milliseconds);
 
-            addAIMessage(message);
-
-            speak(message);
-
-            activeTimer = null;
-
-        }, milliseconds);
-
-
-    return (
-        "Timer set for " +
+    return "Timer set for " +
         amount +
         " " +
         unit +
-        ", Boss."
-    );
+        ", Boss.";
 }
 
 
 /* =====================================================
-   TOOL 5 — TRANSLATE
+   TOOL 6 — TRANSLATE
    ===================================================== */
 
 async function toolTranslate(text) {
-
-    if (
-        !text
-            .toLowerCase()
-            .startsWith("translate")
-    ) {
+    if (!text.toLowerCase().startsWith("translate")) {
         return null;
     }
 
-    const query =
-        text
-            .replace(/^translate\s*/i, "")
-            .trim();
+    const query = text
+        .replace(/^translate\s*/i, "")
+        .trim();
 
     if (!query) {
-
-        return (
-            "Tell me what you want me to translate, Boss."
-        );
+        return "Tell me what you want me to translate, Boss.";
     }
 
     try {
-
         const url =
             "https://api.mymemory.translated.net/get" +
-            "?q=" +
-            encodeURIComponent(query) +
+            "?q=" + encodeURIComponent(query) +
             "&langpair=en|te";
 
-        const response =
-            await fetch(url);
+        const response = await fetch(url);
+        const data = await response.json();
 
-        const data =
-            await response.json();
-
-        return (
-            "In Telugu: " +
-            data.responseData.translatedText
-        );
+        return "In Telugu: " +
+            data.responseData.translatedText;
 
     } catch (error) {
-
-        return (
-            "Translation service is unavailable, Boss."
-        );
+        return "Translation service is unavailable, Boss.";
     }
 }
 
 
 /* =====================================================
-   TOOL 6 — YOUTUBE SEARCH
+   TOOL 7 — YOUTUBE SEARCH
    ===================================================== */
 
 function toolYouTube(text) {
-
-    const lower =
-        text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        lower.startsWith("play ") ||
-        lower.startsWith("youtube search ")
+        t.startsWith("play ") ||
+        t.startsWith("youtube search ")
     ) {
-
-        let query =
-            text
-                .replace(/^play\s+/i, "")
-                .replace(/^youtube\s+search\s+/i, "")
-                .trim();
+        let query = text
+            .replace(/^play\s+/i, "")
+            .replace(/^youtube\s+search\s+/i, "")
+            .trim();
 
         if (!query) {
-
-            return (
-                "Tell me what you want to search on YouTube, Boss."
-            );
+            return "Tell me what to search on YouTube, Boss.";
         }
 
         window.open(
@@ -768,11 +612,9 @@ function toolYouTube(text) {
             "_blank"
         );
 
-        return (
-            "Searching YouTube for " +
+        return "Searching YouTube for " +
             query +
-            ", Boss."
-        );
+            ", Boss.";
     }
 
     return null;
@@ -780,26 +622,22 @@ function toolYouTube(text) {
 
 
 /* =====================================================
-   TOOL 7 — GOOGLE SEARCH
+   TOOL 8 — GOOGLE SEARCH
    ===================================================== */
 
 function toolGoogle(text) {
-
-    const lower =
-        text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        lower.startsWith("google ") ||
-        lower.startsWith("search google ") ||
-        lower.startsWith("search for ")
+        t.startsWith("google ") ||
+        t.startsWith("search google ") ||
+        t.startsWith("search for ")
     ) {
-
-        const query =
-            text
-                .replace(/^google\s+/i, "")
-                .replace(/^search\s+google\s+/i, "")
-                .replace(/^search\s+for\s+/i, "")
-                .trim();
+        const query = text
+            .replace(/^google\s+/i, "")
+            .replace(/^search\s+google\s+/i, "")
+            .replace(/^search\s+for\s+/i, "")
+            .trim();
 
         if (!query) {
             return "Tell me what to search for, Boss.";
@@ -811,11 +649,9 @@ function toolGoogle(text) {
             "_blank"
         );
 
-        return (
-            "Searching Google for " +
+        return "Searching Google for " +
             query +
-            ", Boss."
-        );
+            ", Boss.";
     }
 
     return null;
@@ -823,96 +659,68 @@ function toolGoogle(text) {
 
 
 /* =====================================================
-   TOOL 8 — CALCULATOR
+   TOOL 9 — CALCULATOR
    ===================================================== */
 
 function toolCalculator(text) {
-
-    const lower =
-        text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        !lower.startsWith("calculate ") &&
-        !lower.startsWith("calc ")
+        !t.startsWith("calculate ") &&
+        !t.startsWith("calc ")
     ) {
         return null;
     }
 
-    let expression =
-        text
-            .replace(/^calculate\s+/i, "")
-            .replace(/^calc\s+/i, "")
-            .trim();
+    let expression = text
+        .replace(/^calculate\s+/i, "")
+        .replace(/^calc\s+/i, "")
+        .trim();
 
-    expression =
-        expression.replace(/×/g, "*");
+    expression = expression
+        .replace(/×/g, "*")
+        .replace(/÷/g, "/");
 
-    expression =
-        expression.replace(/÷/g, "/");
-
-    if (
-        !/^[0-9+\-*/().%\s]+$/.test(
-            expression
-        )
-    ) {
-
-        return (
-            "I can calculate basic mathematical expressions only, Boss."
-        );
+    if (!/^[0-9+\-*/().%\s]+$/.test(expression)) {
+        return "I can only calculate basic mathematical expressions, Boss.";
     }
 
     try {
+        const result = Function(
+            '"use strict"; return (' +
+            expression +
+            ")"
+        )();
 
-        const answer =
-            Function(
-                '"use strict"; return (' +
-                expression +
-                ")"
-            )();
-
-        return (
-            "The answer is " +
-            answer +
-            ", Boss."
-        );
+        return "The answer is " +
+            result +
+            ", Boss.";
 
     } catch (error) {
-
-        return (
-            "I could not calculate that, Boss."
-        );
+        return "I could not calculate that, Boss.";
     }
 }
 
 
 /* =====================================================
-   TOOL 9 — CANCEL TIMER
+   TOOL 10 — CANCEL TIMER
    ===================================================== */
 
 function toolCancelTimer(text) {
-
-    const lower =
-        text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        lower.includes("cancel timer") ||
-        lower.includes("stop timer")
+        t.includes("cancel timer") ||
+        t.includes("stop timer")
     ) {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
 
-        if (activeTimer) {
-
-            clearTimeout(activeTimer);
-
-            activeTimer = null;
-
-            return (
-                "Timer cancelled, Boss."
-            );
+            return "Timer cancelled, Boss.";
         }
 
-        return (
-            "There is no active timer, Boss."
-        );
+        return "There is no active timer, Boss.";
     }
 
     return null;
@@ -920,17 +728,13 @@ function toolCancelTimer(text) {
 
 
 /* =====================================================
-   TOOL 10 — OPEN YOUTUBE
+   TOOL 11 — OPEN YOUTUBE
    ===================================================== */
 
 function toolOpenYouTube(text) {
-
     if (
-        text
-            .toLowerCase()
-            .trim() === "open youtube"
+        text.toLowerCase().trim() === "open youtube"
     ) {
-
         window.open(
             "https://www.youtube.com/",
             "_blank"
@@ -944,17 +748,13 @@ function toolOpenYouTube(text) {
 
 
 /* =====================================================
-   TOOL 11 — OPEN GOOGLE
+   TOOL 12 — OPEN GOOGLE
    ===================================================== */
 
 function toolOpenGoogle(text) {
-
     if (
-        text
-            .toLowerCase()
-            .trim() === "open google"
+        text.toLowerCase().trim() === "open google"
     ) {
-
         window.open(
             "https://www.google.com/",
             "_blank"
@@ -968,17 +768,13 @@ function toolOpenGoogle(text) {
 
 
 /* =====================================================
-   TOOL 12 — OPEN GITHUB
+   TOOL 13 — OPEN GITHUB
    ===================================================== */
 
 function toolGitHub(text) {
-
     if (
-        text
-            .toLowerCase()
-            .trim() === "open github"
+        text.toLowerCase().trim() === "open github"
     ) {
-
         window.open(
             "https://github.com/",
             "_blank"
@@ -992,38 +788,26 @@ function toolGitHub(text) {
 
 
 /* =====================================================
-   TOOL 13 — BATTERY
+   TOOL 14 — BATTERY
    ===================================================== */
 
 async function toolBattery(text) {
-
-    if (
-        !text
-            .toLowerCase()
-            .includes("battery")
-    ) {
+    if (!text.toLowerCase().includes("battery")) {
         return null;
     }
 
     if (!navigator.getBattery) {
-
-        return (
-            "Battery information is not supported by this browser, Boss."
-        );
+        return "Battery information is not supported by this browser, Boss.";
     }
 
     try {
-
         const battery =
             await navigator.getBattery();
 
         const level =
-            Math.round(
-                battery.level * 100
-            );
+            Math.round(battery.level * 100);
 
-        return (
-            "Battery level is " +
+        return "Battery is at " +
             level +
             "%. " +
             (
@@ -1031,58 +815,35 @@ async function toolBattery(text) {
                     ? "The device is charging."
                     : "The device is not charging."
             ) +
-            " Boss."
-        );
+            " Boss.";
 
     } catch (error) {
-
-        return (
-            "I could not read the battery status, Boss."
-        );
+        return "I could not read the battery status, Boss.";
     }
 }
 
 
 /* =====================================================
-   TOOL 14 — DEVICE INFORMATION
+   TOOL 15 — NETWORK / DEVICE
    ===================================================== */
 
 function toolDevice(text) {
-
-    const lower =
-        text.toLowerCase();
+    const t = text.toLowerCase();
 
     if (
-        lower.includes("device information") ||
-        lower.includes("device info")
+        t.includes("device info") ||
+        t.includes("device information")
     ) {
-
-        return (
-            "Your browser reports this device as: " +
+        return "You are using: " +
             navigator.userAgent +
-            ", Boss."
-        );
+            ", Boss.";
     }
 
-    return null;
-}
-
-
-/* =====================================================
-   TOOL 15 — NETWORK
-   ===================================================== */
-
-function toolNetwork(text) {
-
-    const lower =
-        text.toLowerCase();
-
     if (
-        lower.includes("internet status") ||
-        lower.includes("network status") ||
-        lower.includes("am i online")
+        t.includes("internet status") ||
+        t.includes("network status") ||
+        t.includes("am i online")
     ) {
-
         return navigator.onLine
             ? "You are currently online, Boss."
             : "You are currently offline, Boss.";
@@ -1093,73 +854,56 @@ function toolNetwork(text) {
 
 
 /* =====================================================
-   RUN ALL TOOLS
+   RUN TOOLS
    ===================================================== */
 
 async function runTools(text) {
-
     let result;
-
 
     result = toolTime(text);
     if (result) return result;
 
-
     result = toolDate(text);
     if (result) return result;
 
+    result = await toolLocation(text);
+    if (result) return result;
 
     result = await toolWeather(text);
     if (result) return result;
 
-
     result = toolTimer(text);
     if (result) return result;
-
 
     result = await toolTranslate(text);
     if (result) return result;
 
-
     result = toolYouTube(text);
     if (result) return result;
-
 
     result = toolGoogle(text);
     if (result) return result;
 
-
     result = toolCalculator(text);
     if (result) return result;
-
 
     result = toolCancelTimer(text);
     if (result) return result;
 
-
     result = toolOpenYouTube(text);
     if (result) return result;
-
 
     result = toolOpenGoogle(text);
     if (result) return result;
 
-
     result = toolGitHub(text);
     if (result) return result;
-
 
     result = await toolBattery(text);
     if (result) return result;
 
-
     result = toolDevice(text);
     if (result) return result;
-
-
-    result = toolNetwork(text);
-    if (result) return result;
-
 
     return null;
 }
@@ -1170,264 +914,168 @@ async function runTools(text) {
    ===================================================== */
 
 async function askGemini(question) {
+    let key = localStorage.getItem(KEY_NAME);
 
-    let apiKey =
-        localStorage.getItem(
-            API_KEY_STORAGE
-        );
+    if (!key) {
+        key = prompt("Enter your Gemini API key:");
 
-
-    if (!apiKey) {
-
-        apiKey =
-            prompt(
-                "Enter your Gemini API key:"
-            );
-
-        if (!apiKey) {
-
-            return (
-                "Gemini API key was not entered, Boss."
-            );
+        if (!key) {
+            return "Gemini API key was not entered, Boss.";
         }
 
-        apiKey =
-            apiKey.trim();
-
-        localStorage.setItem(
-            API_KEY_STORAGE,
-            apiKey
-        );
+        localStorage.setItem(KEY_NAME, key.trim());
     }
 
-
-    const storedMemory =
-        memory.length
-            ? memory
-                .map(function (item) {
-                    return item.text;
-                })
-                .join("\n")
-            : "No memory stored.";
-
+    const memoryText = memory.length
+        ? memory.map(function(item) {
+            return item.text;
+        }).join("\n")
+        : "No stored memory.";
 
     const promptText =
-        "You are D.I.S.C.O, a helpful personal AI assistant. " +
+        "You are D.I.S.C.O, a helpful AI assistant. " +
         "Call the user Boss. Use simple Indian English. " +
-        "Answer the actual question clearly. " +
-        "Do not give the same answer to every question.\n\n" +
-        "USER MEMORY:\n" +
-        storedMemory +
-        "\n\nUSER QUESTION:\n" +
+        "Answer the actual question clearly.\n\n" +
+        "MEMORY:\n" +
+        memoryText +
+        "\n\nQUESTION:\n" +
         question;
 
-
     try {
+        const response = await fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/" +
+            MODEL +
+            ":generateContent",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": key
+                },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: promptText
+                                }
+                            ]
+                        }
+                    ]
+                })
+            }
+        );
 
-        const response =
-            await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/" +
-                MODEL +
-                ":generateContent",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "x-goog-api-key":
-                            apiKey
-                    },
-
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    {
-                                        text:
-                                            promptText
-                                    }
-                                ]
-                            }
-                        ]
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
+        const data = await response.json();
 
         if (!response.ok) {
-
             if (
                 response.status === 401 ||
                 response.status === 403
             ) {
-
-                return (
-                    "The Gemini API key was rejected, Boss. Press KEY to change it."
-                );
+                return "The Gemini API key was rejected, Boss. Press KEY to change it.";
             }
 
-
-            if (
-                response.status === 429
-            ) {
-
-                return (
-                    "Gemini request limit reached. Please wait and try again, Boss."
-                );
+            if (response.status === 429) {
+                return "Gemini request limit reached. Please try again later, Boss.";
             }
 
-
-            return (
-                "Gemini error: " +
+            return "Gemini error: " +
                 (
                     data.error &&
                     data.error.message
                         ? data.error.message
                         : "Unknown error"
-                )
-            );
+                );
         }
-
 
         if (
             data.candidates &&
             data.candidates[0] &&
-            data.candidates[0].content &&
-            data.candidates[0].content.parts
+            data.candidates[0].content
         ) {
-
             return data.candidates[0]
                 .content
                 .parts
-                .map(function (part) {
+                .map(function(part) {
                     return part.text || "";
                 })
                 .join("")
                 .trim();
         }
 
-
-        return (
-            "Gemini returned an empty answer, Boss."
-        );
+        return "Gemini returned no answer, Boss.";
 
     } catch (error) {
-
-        return (
-            "Network error. Please check your internet connection, Boss."
-        );
+        return "Network error while contacting Gemini, Boss.";
     }
 }
 
 
 /* =====================================================
-   MAIN SEND FUNCTION
+   MAIN SEND
    ===================================================== */
 
 async function sendMessage() {
+    if (!msg) return;
 
-    if (!msg) {
-        return;
-    }
+    const text = msg.value.trim();
 
-    const text =
-        msg.value.trim();
+    if (!text) return;
 
-
-    if (!text) {
-        return;
-    }
-
-
-    addUserMessage(text);
+    addUser(text);
 
     msg.value = "";
 
+    /* MEMORY */
 
-    /* MEMORY LEARNING */
-
-    const learned =
-        learn(text);
+    const learned = learnMemory(text);
 
     if (learned) {
-
-        addAIMessage(learned);
+        addAI(learned);
         speak(learned);
-
         return;
     }
 
+    const remembered = memoryAnswer(text);
 
-    /* MEMORY ANSWER */
-
-    const memoryReply =
-        memoryAnswer(text);
-
-    if (memoryReply) {
-
-        addAIMessage(memoryReply);
-        speak(memoryReply);
-
+    if (remembered) {
+        addAI(remembered);
+        speak(remembered);
         return;
     }
-
 
     /* TOOLS */
 
-    const toolReply =
-        await runTools(text);
+    const toolResult = await runTools(text);
 
-    if (toolReply) {
-
-        addAIMessage(toolReply);
-        speak(toolReply);
-
+    if (toolResult) {
+        addAI(toolResult);
+        speak(toolResult);
         return;
     }
 
-
     /* GEMINI */
 
-    addAIMessage(
-        "Processing..."
-    );
+    addAI("Processing...");
 
+    const answer = await askGemini(text);
 
-    const answer =
-        await askGemini(text);
+    const aiMessages =
+        chat.querySelectorAll(".msg.ai");
 
-
-    const messages =
-        chat.querySelectorAll(
-            ".msg.ai"
-        );
-
-
-    if (messages.length > 0) {
-
+    if (aiMessages.length > 0) {
         const last =
-            messages[
-                messages.length - 1
-            ];
+            aiMessages[aiMessages.length - 1];
 
         if (
-            last.textContent.includes(
-                "Processing..."
-            )
+            last.textContent.includes("Processing...")
         ) {
             last.remove();
         }
     }
 
-
-    addAIMessage(answer);
-
+    addAI(answer);
     speak(answer);
 }
 
@@ -1437,15 +1085,9 @@ async function sendMessage() {
    ===================================================== */
 
 if (send) {
-
-    send.addEventListener(
-        "click",
-        function () {
-
-            sendMessage();
-
-        }
-    );
+    send.onclick = function() {
+        sendMessage();
+    };
 }
 
 
@@ -1454,21 +1096,12 @@ if (send) {
    ===================================================== */
 
 if (msg) {
-
-    msg.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                event.preventDefault();
-
-                sendMessage();
-            }
+    msg.onkeydown = function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessage();
         }
-    );
+    };
 }
 
 
@@ -1477,29 +1110,20 @@ if (msg) {
    ===================================================== */
 
 if (clearBtn) {
+    clearBtn.onclick = function() {
+        memory = [];
+        localStorage.removeItem(MEMORY_NAME);
 
-    clearBtn.addEventListener(
-        "click",
-        function () {
-
-            memory = [];
-
-            localStorage.removeItem(
-                MEMORY_STORAGE
-            );
-
-            if (chat) {
-                chat.innerHTML = "";
-            }
-
-            const message =
-                "Memory cleared. Fresh system ready, Boss.";
-
-            addAIMessage(message);
-
-            speak(message);
+        if (chat) {
+            chat.innerHTML = "";
         }
-    );
+
+        const message =
+            "Memory cleared. I am ready, Boss.";
+
+        addAI(message);
+        speak(message);
+    };
 }
 
 
@@ -1507,16 +1131,25 @@ if (clearBtn) {
    KEY BUTTON
    ===================================================== */
 
-if (changeKey) {
+if (keyBtn) {
+    keyBtn.onclick = function() {
+        const key = prompt(
+            "Enter your new Gemini API key:"
+        );
 
-    changeKey.addEventListener(
-        "click",
-        function () {
+        if (key && key.trim()) {
+            localStorage.setItem(
+                KEY_NAME,
+                key.trim()
+            );
 
-            changeAPIKey();
+            const message =
+                "Gemini API key updated, Boss.";
 
+            addAI(message);
+            speak(message);
         }
-    );
+    };
 }
 
 
@@ -1526,100 +1159,66 @@ if (changeKey) {
 
 let recognition = null;
 
-
 const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
-
 if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
 
-    recognition =
-        new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
-    recognition.lang =
-        "en-IN";
+    recognition.onstart = function() {
+        if (mic) {
+            mic.textContent = "🔴";
+        }
+    };
 
-    recognition.continuous =
-        false;
+    recognition.onresult = function(event) {
+        const spoken =
+            event.results[0][0].transcript;
 
-    recognition.interimResults =
-        false;
+        if (msg) {
+            msg.value = spoken;
+        }
 
+        sendMessage();
+    };
 
-    recognition.onstart =
-        function () {
+    recognition.onerror = function() {
+        if (mic) {
+            mic.textContent = "🎙️";
+        }
 
-            if (mic) {
-                mic.textContent = "👂";
-            }
-        };
+        addAI(
+            "I could not hear you clearly, Boss."
+        );
+    };
 
-
-    recognition.onresult =
-        function (event) {
-
-            const transcript =
-                event.results[0][0]
-                    .transcript;
-
-            if (msg) {
-                msg.value =
-                    transcript;
-            }
-
-            sendMessage();
-        };
-
-
-    recognition.onerror =
-        function () {
-
-            if (mic) {
-                mic.textContent = "🎙️";
-            }
-
-            addAIMessage(
-                "I could not hear you clearly, Boss."
-            );
-        };
-
-
-    recognition.onend =
-        function () {
-
-            if (mic) {
-                mic.textContent = "🎙️";
-            }
-        };
+    recognition.onend = function() {
+        if (mic) {
+            mic.textContent = "🎙️";
+        }
+    };
 }
 
-
 if (mic) {
-
-    mic.addEventListener(
-        "click",
-        function () {
-
-            if (!recognition) {
-
-                addAIMessage(
-                    "Voice recognition is not supported by this browser, Boss."
-                );
-
-                return;
-            }
-
-            try {
-
-                recognition.start();
-
-            } catch (error) {
-
-                /* Prevent repeated microphone errors */
-            }
+    mic.onclick = function() {
+        if (!recognition) {
+            addAI(
+                "Voice recognition is not supported by this browser, Boss."
+            );
+            return;
         }
-    );
+
+        try {
+            recognition.start();
+        } catch (e) {
+            /* Prevent repeated start error */
+        }
+    };
 }
 
 
@@ -1627,85 +1226,31 @@ if (mic) {
    IMAGE BUTTON
    ===================================================== */
 
-if (imgBtn && imgInput) {
+if (imageBtn && imageInput) {
+    imageBtn.onclick = function() {
+        imageInput.click();
+    };
 
-    imgBtn.addEventListener(
-        "click",
-        function () {
+    imageInput.onchange = function() {
+        const file = imageInput.files[0];
 
-            imgInput.click();
+        if (!file) return;
 
-        }
-    );
+        addUser("🖼️ " + file.name);
 
+        addAI(
+            "Image selected, Boss. You can connect your Gemini vision request here."
+        );
 
-    imgInput.addEventListener(
-        "change",
-        function () {
-
-            const file =
-                imgInput.files[0];
-
-            if (!file) {
-                return;
-            }
-
-            addUserMessage(
-                "🖼️ " + file.name
-            );
-
-            addAIMessage(
-                "Image selected, Boss. Image analysis can be connected to your Gemini vision model."
-            );
-
-            speak(
-                "Image selected, Boss."
-            );
-
-            imgInput.value = "";
-        }
-    );
+        imageInput.value = "";
+    };
 }
 
 
 /* =====================================================
-   ONLINE / OFFLINE
+   STARTUP
    ===================================================== */
 
-window.addEventListener(
-    "online",
-    function () {
-
-        addAIMessage(
-            "Network connection restored, Boss."
-        );
-    }
-);
-
-
-window.addEventListener(
-    "offline",
-    function () {
-
-        addAIMessage(
-            "Network connection lost, Boss."
-        );
-    }
-);
-
-
-/* =====================================================
-   START
-   ===================================================== */
-
-console.log(
-    "D.I.S.C.O loaded successfully."
-);
-
-console.log(
-    "15 tools loaded."
-);
-
-console.log(
-    "SEND button ready."
-);
+console.log("D.I.S.C.O loaded successfully.");
+console.log("SEND button ready.");
+console.log("15 tools ready.");
