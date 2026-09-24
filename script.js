@@ -1,9 +1,12 @@
-// ==========================================
-// D.I.S.C.O AI
-// WORKING VERSION + MEMORY
-// ==========================================
+const API_MODEL = "gemini-3.6-flash";
+const API_URL =
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
+    API_MODEL +
+    ":generateContent";
 
-// ELEMENTS
+const KEY_NAME = "disco_api_key";
+const MEMORY_NAME = "disco_memory";
+
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
 const send = document.getElementById("send");
@@ -13,123 +16,154 @@ const changeKey = document.getElementById("change-key");
 const imgBtn = document.getElementById("img-btn");
 const imgInput = document.getElementById("img-input");
 
-// ==========================================
-// API KEY
-// ==========================================
 
-let API_KEY = localStorage.getItem("disco_api_key");
+/* =========================
+   API KEY
+========================= */
 
-function askForAPIKey() {
-    const key = prompt("Enter your Gemini API Key:");
+function getApiKey() {
+    return localStorage.getItem(KEY_NAME);
+}
 
-    if (key && key.trim()) {
-        API_KEY = key.trim();
+function askForApiKey() {
 
-        localStorage.setItem(
-            "disco_api_key",
-            API_KEY
-        );
+    let key = prompt(
+        "D.I.S.C.O needs your Gemini API key.\n\n" +
+        "Enter your key here.\n\n" +
+        "Do not share your key with anyone."
+    );
 
-        add(
-            "D.I.S.C.O: API key saved, Boss.",
-            "ai"
-        );
+    if (!key) {
+        return null;
+    }
+
+    key = key.trim();
+
+    if (!key) {
+        return null;
+    }
+
+    localStorage.setItem(KEY_NAME, key);
+
+    return key;
+}
+
+
+/* =========================
+   MEMORY
+========================= */
+
+function getMemory() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(MEMORY_NAME);
+
+        if (!saved) {
+            return {};
+        }
+
+        return JSON.parse(saved);
+
+    } catch (error) {
+
+        console.log("Memory error:", error);
+
+        return {};
     }
 }
 
-if (!API_KEY) {
-    setTimeout(askForAPIKey, 500);
-}
 
-// ==========================================
-// MEMORY
-// ==========================================
+function saveMemory(memory) {
 
-let MEMORY = JSON.parse(
-    localStorage.getItem("disco_memory") || "[]"
-);
-
-function saveMemory() {
     localStorage.setItem(
-        "disco_memory",
-        JSON.stringify(MEMORY)
+        MEMORY_NAME,
+        JSON.stringify(memory)
     );
 }
 
-function addMemory(text) {
-    MEMORY.push(text);
-    saveMemory();
+
+function clearMemory() {
+
+    localStorage.removeItem(MEMORY_NAME);
+
+    addMessage(
+        "ai",
+        "D.I.S.C.O: Memory cleared, Boss."
+    );
 }
 
-function getMemory() {
-    if (MEMORY.length === 0) {
-        return "No memories saved.";
-    }
 
-    return MEMORY.join("\n");
-}
+function extractMemory(text) {
 
-// ==========================================
-// ADD MESSAGE
-// ==========================================
+    const memory = getMemory();
 
-function add(text, type) {
-    const message = document.createElement("div");
+    let changed = false;
 
-    message.className = "msg " + type;
+    /*
+       NAME
+    */
 
-    message.textContent = text;
+    let nameMatch = text.match(
+        /(?:my name is|i am|i'm)\s+([a-zA-Z][a-zA-Z ]{1,30})/i
+    );
 
-    chat.appendChild(message);
+    if (nameMatch) {
 
-    chat.scrollTop = chat.scrollHeight;
-}
+        let name = nameMatch[1]
+            .trim()
+            .replace(/[.!?,]+$/, "");
 
-// ==========================================
-// MEMORY COMMAND
-// ==========================================
+        if (name) {
 
-function processMemory(text) {
-
-    const lower = text.toLowerCase();
-
-    if (
-        lower.startsWith("remember ") ||
-        lower.startsWith("remember that ")
-    ) {
-
-        const memory = text
-            .replace(/^remember that /i, "")
-            .replace(/^remember /i, "")
-            .trim();
-
-        if (memory) {
-
-            addMemory(memory);
-
-            add(
-                "D.I.S.C.O: I'll remember that, Boss.",
-                "ai"
-            );
-
-            speak(
-                "I'll remember that, Boss."
-            );
-
-            return true;
+            memory.name = name;
+            changed = true;
         }
     }
 
-    if (
-        lower.includes("what do you remember") ||
-        lower.includes("show my memory") ||
-        lower === "memory"
-    ) {
 
-        add(
-            "D.I.S.C.O MEMORY:\n" + getMemory(),
-            "ai"
-        );
+    /*
+       FAVOURITE COLOUR
+    */
+
+    let colourMatch = text.match(
+        /(?:my favourite colour is|my favorite color is)\s+([a-zA-Z]+)/i
+    );
+
+    if (colourMatch) {
+
+        memory.favouriteColour =
+            colourMatch[1].trim();
+
+        changed = true;
+    }
+
+
+    /*
+       FAVOURITE COLOR
+    */
+
+    let favouriteMatch = text.match(
+        /(?:my favourite color is|my favorite colour is)\s+([a-zA-Z]+)/i
+    );
+
+    if (favouriteMatch) {
+
+        memory.favouriteColour =
+            favouriteMatch[1].trim();
+
+        changed = true;
+    }
+
+
+    /*
+       SAVE
+    */
+
+    if (changed) {
+
+        saveMemory(memory);
 
         return true;
     }
@@ -137,102 +171,221 @@ function processMemory(text) {
     return false;
 }
 
-// ==========================================
-// SEND MESSAGE
-// ==========================================
 
-async function sendMessage() {
+/* =========================
+   MEMORY QUESTIONS
+========================= */
 
-    const text = input.value.trim();
+function answerFromMemory(text) {
 
-    if (!text) {
-        return;
-    }
+    const memory = getMemory();
 
-    add(text, "user");
+    const lower = text.toLowerCase();
 
-    input.value = "";
 
-    if (processMemory(text)) {
-        return;
-    }
+    /*
+       NAME
+    */
 
-    if (!API_KEY) {
+    if (
+        lower.includes("what is my name") ||
+        lower.includes("what's my name") ||
+        lower.includes("do you know my name")
+    ) {
 
-        add(
-            "D.I.S.C.O: API key required, Boss.",
-            "ai"
-        );
+        if (memory.name) {
 
-        askForAPIKey();
+            return (
+                "Your name is " +
+                memory.name +
+                ", Boss."
+            );
+        }
 
-        return;
-    }
-
-    const thinking =
-        document.createElement("div");
-
-    thinking.className = "msg ai";
-
-    thinking.textContent =
-        "D.I.S.C.O: Processing...";
-
-    chat.appendChild(thinking);
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-    try {
-
-        const reply =
-            await askGemini(text);
-
-        thinking.remove();
-
-        add(
-            reply,
-            "ai"
-        );
-
-        speak(reply);
-
-    } catch (error) {
-
-        thinking.remove();
-
-        console.error(error);
-
-        add(
-            "D.I.S.C.O: Error connecting to Gemini, Boss.",
-            "ai"
+        return (
+            "I don't know your name yet, Boss."
         );
     }
+
+
+    /*
+       FAVOURITE COLOUR
+    */
+
+    if (
+        lower.includes("what is my favourite colour") ||
+        lower.includes("what is my favorite color") ||
+        lower.includes("what's my favourite colour") ||
+        lower.includes("what's my favorite color")
+    ) {
+
+        if (memory.favouriteColour) {
+
+            return (
+                "Your favourite colour is " +
+                memory.favouriteColour +
+                ", Boss."
+            );
+        }
+
+        return (
+            "I don't know your favourite colour yet, Boss."
+        );
+    }
+
+
+    /*
+       SHOW MEMORY
+    */
+
+    if (
+        lower.includes("what do you remember about me") ||
+        lower.includes("show my memory") ||
+        lower.includes("what do you remember")
+    ) {
+
+        const keys = Object.keys(memory);
+
+        if (keys.length === 0) {
+
+            return (
+                "My memory is currently empty, Boss."
+            );
+        }
+
+        let result =
+            "Here is what I remember, Boss:\n\n";
+
+        if (memory.name) {
+            result +=
+                "Name: " +
+                memory.name +
+                "\n";
+        }
+
+        if (memory.favouriteColour) {
+            result +=
+                "Favourite colour: " +
+                memory.favouriteColour +
+                "\n";
+        }
+
+        return result;
+    }
+
+
+    return null;
 }
 
-// ==========================================
-// GEMINI
-// ==========================================
 
-async function askGemini(text) {
+/* =========================
+   CHAT DISPLAY
+========================= */
 
-    const url =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key="
-        + API_KEY;
+function addMessage(type, text) {
 
-    const prompt =
-        "You are D.I.S.C.O, a helpful AI assistant. " +
-        "Call the user Boss. " +
-        "Answer clearly and naturally. " +
-        "Use the following saved memories when relevant.\n\n" +
+    const message =
+        document.createElement("div");
 
-        "SAVED MEMORY:\n" +
-        getMemory() +
-        "\n\nUSER:\n" +
-        text;
+    message.className =
+        "msg " + type;
+
+    message.textContent = text;
+
+    chat.appendChild(message);
+
+    const terminal =
+        document.querySelector(".chat-terminal");
+
+    terminal.scrollTop =
+        terminal.scrollHeight;
+}
+
+
+/* =========================
+   GEMINI
+========================= */
+
+async function askGemini(userText, imageData = null) {
+
+    let apiKey = getApiKey();
+
+    if (!apiKey) {
+
+        apiKey = askForApiKey();
+
+        if (!apiKey) {
+
+            throw new Error(
+                "No API key entered."
+            );
+        }
+    }
+
+
+    const memory = getMemory();
+
+
+    const memoryText =
+        Object.keys(memory).length > 0
+            ? JSON.stringify(memory)
+            : "No saved memory.";
+
+
+    const systemInstruction = `
+You are D.I.S.C.O, a helpful personal AI assistant.
+
+Always call the user "Boss".
+
+Answer clearly and simply.
+
+You have a small local memory supplied by the website.
+
+Saved memory:
+${memoryText}
+
+Use the saved memory when answering questions about the user.
+
+If the user tells you something to remember, acknowledge it naturally.
+
+Do not invent memories that are not supplied.
+
+Do not claim to remember something that is not in the saved memory.
+`;
+
+
+    const parts = [];
+
+
+    parts.push({
+        text:
+            systemInstruction +
+            "\n\nUser message:\n" +
+            userText
+    });
+
+
+    if (imageData) {
+
+        parts.push({
+            inline_data: {
+                mime_type: imageData.mimeType,
+                data: imageData.base64
+            }
+        });
+
+        parts.push({
+            text:
+                "\nAnalyse the uploaded image and answer the user's request."
+        });
+    }
+
 
     const response =
         await fetch(
-            url,
+            API_URL +
+            "?key=" +
+            encodeURIComponent(apiKey),
             {
                 method: "POST",
 
@@ -244,242 +397,380 @@ async function askGemini(text) {
                 body: JSON.stringify({
 
                     contents: [
-
                         {
-                            parts: [
-
-                                {
-                                    text: prompt
-                                }
-
-                            ]
+                            role: "user",
+                            parts: parts
                         }
-
                     ]
+
                 })
             }
         );
 
-    if (!response.ok) {
-
-        const error =
-            await response.text();
-
-        console.error(error);
-
-        throw new Error(
-            "Gemini API Error"
-        );
-    }
 
     const data =
         await response.json();
 
-    const reply =
-        data?.candidates?.[0]
-        ?.content?.parts?.[0]?.text;
 
-    if (!reply) {
+    if (!response.ok) {
+
+        console.log(
+            "Gemini error:",
+            data
+        );
+
+        let errorMessage =
+            data?.error?.message ||
+            "Gemini request failed.";
+
+        throw new Error(errorMessage);
+    }
+
+
+    const answer =
+        data?.candidates?.[0]?.content?.parts
+            ?.map(part => part.text || "")
+            .join("")
+            .trim();
+
+
+    if (!answer) {
 
         throw new Error(
-            "No Gemini response"
+            "Gemini returned an empty response."
         );
     }
 
-    return reply;
+
+    return answer;
 }
 
-// ==========================================
-// SEND BUTTON
-// ==========================================
 
-if (send) {
+/* =========================
+   SEND
+========================= */
 
-    send.addEventListener(
-        "click",
-        sendMessage
+async function sendMessage() {
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+
+    addMessage(
+        "user",
+        text
     );
-}
 
-// ==========================================
-// ENTER KEY
-// ==========================================
+    input.value = "";
 
-if (input) {
+    /*
+       SAVE MEMORY
+    */
 
-    input.addEventListener(
-        "keydown",
-        function(event) {
+    const remembered =
+        extractMemory(text);
 
-            if (event.key === "Enter") {
 
-                event.preventDefault();
+    /*
+       DIRECT MEMORY ANSWER
+    */
 
-                sendMessage();
-            }
-        }
-    );
-}
+    const memoryAnswer =
+        answerFromMemory(text);
 
-// ==========================================
-// CHANGE KEY
-// ==========================================
 
-if (changeKey) {
+    if (memoryAnswer) {
 
-    changeKey.addEventListener(
-        "click",
-        function() {
+        addMessage(
+            "ai",
+            "D.I.S.C.O: " +
+            memoryAnswer
+        );
 
-            const key =
-                prompt(
-                    "Enter your new Gemini API Key:"
-                );
+        speak(
+            memoryAnswer
+        );
 
-            if (key && key.trim()) {
+        return;
+    }
 
-                API_KEY =
-                    key.trim();
 
-                localStorage.setItem(
-                    "disco_api_key",
-                    API_KEY
-                );
+    /*
+       REMEMBER CONFIRMATION
+    */
 
-                add(
-                    "D.I.S.C.O: API key changed, Boss.",
-                    "ai"
-                );
-            }
-        }
-    );
-}
+    if (remembered) {
 
-// ==========================================
-// CLEAR MEMORY
-// ==========================================
+        const memory =
+            getMemory();
 
-if (clearBtn) {
+        let savedItems = [];
 
-    clearBtn.addEventListener(
-        "click",
-        function() {
-
-            MEMORY = [];
-
-            saveMemory();
-
-            add(
-                "D.I.S.C.O: Memory cleared, Boss.",
-                "ai"
-            );
-
-            speak(
-                "Memory cleared, Boss."
+        if (memory.name) {
+            savedItems.push(
+                "name = " +
+                memory.name
             );
         }
-    );
+
+        if (memory.favouriteColour) {
+            savedItems.push(
+                "favourite colour = " +
+                memory.favouriteColour
+            );
+        }
+
+        const confirmation =
+            "I'll remember that, Boss.\n" +
+            savedItems.join("\n");
+
+        addMessage(
+            "ai",
+            "D.I.S.C.O: " +
+            confirmation
+        );
+
+        speak(
+            confirmation
+        );
+
+        return;
+    }
+
+
+    /*
+       THINKING
+    */
+
+    const thinking =
+        document.createElement("div");
+
+    thinking.className =
+        "msg ai";
+
+    thinking.id =
+        "thinking";
+
+    thinking.textContent =
+        "D.I.S.C.O: Processing...";
+
+    chat.appendChild(thinking);
+
+
+    try {
+
+        const answer =
+            await askGemini(text);
+
+        thinking.remove();
+
+        addMessage(
+            "ai",
+            "D.I.S.C.O: " +
+            answer
+        );
+
+        speak(answer);
+
+    } catch (error) {
+
+        thinking.remove();
+
+        addMessage(
+            "ai",
+            "D.I.S.C.O: " +
+            error.message
+        );
+
+        console.log(error);
+    }
 }
 
-// ==========================================
-// MICROPHONE
-// ==========================================
+
+/* =========================
+   ENTER KEY
+========================= */
+
+input.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+
+            event.preventDefault();
+
+            sendMessage();
+        }
+
+    }
+);
+
+
+/* =========================
+   SEND BUTTON
+========================= */
+
+send.addEventListener(
+    "click",
+    sendMessage
+);
+
+
+/* =========================
+   CLEAR MEMORY
+========================= */
+
+clearBtn.addEventListener(
+    "click",
+    function() {
+
+        const answer =
+            confirm(
+                "Clear D.I.S.C.O memory?"
+            );
+
+        if (answer) {
+
+            clearMemory();
+        }
+    }
+);
+
+
+/* =========================
+   CHANGE KEY
+========================= */
+
+changeKey.addEventListener(
+    "click",
+    function() {
+
+        const answer =
+            confirm(
+                "Change your Gemini API key?"
+            );
+
+        if (!answer) {
+            return;
+        }
+
+        localStorage.removeItem(
+            KEY_NAME
+        );
+
+        const newKey =
+            askForApiKey();
+
+        if (newKey) {
+
+            addMessage(
+                "ai",
+                "D.I.S.C.O: API key changed, Boss."
+            );
+        }
+    }
+);
+
+
+/* =========================
+   VOICE INPUT
+========================= */
+
+let recognition = null;
 
 const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
+
 if (SpeechRecognition) {
 
-    const recognition =
+    recognition =
         new SpeechRecognition();
 
-    recognition.lang = "en-IN";
+    recognition.lang =
+        "en-IN";
 
-    recognition.continuous = false;
+    recognition.continuous =
+        false;
 
-    recognition.interimResults = false;
+    recognition.interimResults =
+        false;
 
-    recognition.onstart = function() {
 
-        if (mic) {
-            mic.textContent = "🔴";
-        }
-    };
+    recognition.onstart =
+        function() {
 
-    recognition.onend = function() {
+            mic.textContent =
+                "🔴";
+        };
 
-        if (mic) {
-            mic.textContent = "🎙️";
-        }
-    };
+
+    recognition.onend =
+        function() {
+
+            mic.textContent =
+                "🎙️";
+        };
+
+
+    recognition.onerror =
+        function() {
+
+            mic.textContent =
+                "🎙️";
+        };
+
 
     recognition.onresult =
         function(event) {
 
-            input.value =
+            const spoken =
                 event.results[0][0].transcript;
+
+            input.value =
+                spoken;
 
             sendMessage();
         };
 
-    if (mic) {
 
-        mic.addEventListener(
-            "click",
-            function() {
-
-                try {
-                    recognition.start();
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        );
-    }
-}
-
-// ==========================================
-// IMAGE BUTTON
-// ==========================================
-
-if (imgBtn && imgInput) {
-
-    imgBtn.addEventListener(
+    mic.addEventListener(
         "click",
         function() {
 
-            imgInput.click();
+            try {
+
+                recognition.start();
+
+            } catch (error) {
+
+                console.log(error);
+            }
         }
     );
 
-    imgInput.addEventListener(
-        "change",
+} else {
+
+    mic.addEventListener(
+        "click",
         function() {
 
-            const file =
-                imgInput.files[0];
-
-            if (!file) {
-                return;
-            }
-
-            add(
-                "Image selected: " + file.name,
-                "user"
-            );
-
-            add(
-                "D.I.S.C.O: Image received, Boss.",
-                "ai"
+            alert(
+                "Voice input is not supported by this browser."
             );
         }
     );
 }
 
-// ==========================================
-// VOICE OUTPUT
-// ==========================================
+
+/* =========================
+   VOICE OUTPUT
+========================= */
 
 function speak(text) {
 
@@ -491,26 +782,157 @@ function speak(text) {
 
     speechSynthesis.cancel();
 
-    const speech =
+    const cleanText =
+        text
+            .replace(
+                /[*_#`]/g,
+                ""
+            )
+            .trim();
+
+    const utterance =
         new SpeechSynthesisUtterance(
-            text
+            cleanText
         );
 
-    speech.lang = "en-IN";
+    utterance.lang =
+        "en-GB";
 
-    speech.rate = 0.9;
+    utterance.rate =
+        0.95;
 
-    speech.pitch = 1;
+    utterance.pitch =
+        1;
 
     speechSynthesis.speak(
-        speech
+        utterance
     );
 }
 
-// ==========================================
-// START
-// ==========================================
+
+/* =========================
+   IMAGE / VISION
+========================= */
+
+imgBtn.addEventListener(
+    "click",
+    function() {
+
+        imgInput.click();
+    }
+);
+
+
+imgInput.addEventListener(
+    "change",
+    async function() {
+
+        const file =
+            imgInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+
+        if (!file.type.startsWith("image/")) {
+
+            alert(
+                "Please select an image."
+            );
+
+            return;
+        }
+
+
+        addMessage(
+            "user",
+            "🖼️ Image uploaded"
+        );
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            async function(event) {
+
+                const result =
+                    event.target.result;
+
+                const base64 =
+                    result.split(",")[1];
+
+
+                const thinking =
+                    document.createElement("div");
+
+                thinking.className =
+                    "msg ai";
+
+                thinking.textContent =
+                    "D.I.S.C.O: Analysing image...";
+
+                chat.appendChild(
+                    thinking
+                );
+
+
+                try {
+
+                    const answer =
+                        await askGemini(
+                            "Analyse this image and describe what you see.",
+                            {
+                                mimeType:
+                                    file.type,
+                                base64:
+                                    base64
+                            }
+                        );
+
+                    thinking.remove();
+
+                    addMessage(
+                        "ai",
+                        "D.I.S.C.O: " +
+                        answer
+                    );
+
+                    speak(answer);
+
+                } catch (error) {
+
+                    thinking.remove();
+
+                    addMessage(
+                        "ai",
+                        "D.I.S.C.O: " +
+                        error.message
+                    );
+
+                    console.log(error);
+                }
+            };
+
+
+        reader.readAsDataURL(file);
+
+        imgInput.value = "";
+    }
+);
+
+
+/* =========================
+   STARTUP
+========================= */
 
 console.log(
-    "D.I.S.C.O: SYSTEM ONLINE"
+    "D.I.S.C.O JavaScript loaded successfully."
+);
+
+console.log(
+    "Memory:",
+    getMemory()
 );
