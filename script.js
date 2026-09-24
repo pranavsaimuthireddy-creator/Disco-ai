@@ -1,9 +1,10 @@
 /* =========================================
    D.I.S.C.O AI
-   GEMINI + GENERAL MEMORY + VOICE + RETRY
+   GEMINI 3.5 FLASH-LITE
+   GENERAL MEMORY + VOICE + RETRY
 ========================================= */
 
-const MODEL = "gemini-3.8-flash";
+const MODEL = "gemini-3.5-flash-lite";
 const KEY_STORAGE = "disco_api_key";
 const MEMORY_STORAGE = "disco_memory";
 
@@ -17,6 +18,7 @@ const imgBtn = document.getElementById("img-btn");
 const imgInput = document.getElementById("img-input");
 
 let apiKey = localStorage.getItem(KEY_STORAGE) || "";
+
 
 /* =========================================
    LOAD MEMORY
@@ -39,27 +41,21 @@ try {
 
 
 /* =========================================
-   CHAT DISPLAY
+   CHAT
 ========================================= */
 
 function addUser(text) {
-
     const div = document.createElement("div");
-
     div.className = "msg user";
-
     div.textContent = text;
 
     chat.appendChild(div);
-
     chat.scrollTop = chat.scrollHeight;
 }
 
 
 function addAI(text) {
-
     const div = document.createElement("div");
-
     div.className = "msg ai";
 
     div.innerHTML =
@@ -67,27 +63,22 @@ function addAI(text) {
         escapeHTML(text).replace(/\n/g, "<br>");
 
     chat.appendChild(div);
-
     chat.scrollTop = chat.scrollHeight;
 }
 
 
 function escapeHTML(text) {
-
     const div = document.createElement("div");
-
     div.textContent = text;
-
     return div.innerHTML;
 }
 
 
 /* =========================================
-   SAVE MEMORY
+   MEMORY
 ========================================= */
 
 function saveMemory() {
-
     localStorage.setItem(
         MEMORY_STORAGE,
         JSON.stringify(memory)
@@ -95,13 +86,9 @@ function saveMemory() {
 }
 
 
-/* =========================================
-   ADD GENERAL MEMORY
-========================================= */
-
 function addMemory(text) {
 
-    const cleanText = text
+    let cleanText = text
         .replace(/^remember\s+(that\s+)?/i, "")
         .trim();
 
@@ -109,31 +96,25 @@ function addMemory(text) {
         return false;
     }
 
+    cleanText = cleanText.replace(/[.!?]+$/, "");
 
-    /* Avoid exact duplicate memories */
+    const exists = memory.some(
+        item =>
+            item.toLowerCase() ===
+            cleanText.toLowerCase()
+    );
 
-    const alreadyExists =
-        memory.some(
-            item =>
-                item.toLowerCase() ===
-                cleanText.toLowerCase()
-        );
-
-
-    if (!alreadyExists) {
-
+    if (!exists) {
         memory.push(cleanText);
-
         saveMemory();
     }
-
 
     return true;
 }
 
 
 /* =========================================
-   FIND MEMORY QUESTION
+   LOCAL MEMORY QUESTIONS
 ========================================= */
 
 function answerFromMemory(question) {
@@ -145,35 +126,28 @@ function answerFromMemory(question) {
     }
 
 
-    /*
-       NAME
-    */
+    /* NAME */
 
     if (
         q.includes("what is my name") ||
-        q.includes("what's my name")
+        q.includes("what's my name") ||
+        q.includes("do you know my name")
     ) {
 
-        const nameMemory =
-            memory.find(
-                item =>
-                    /my\s+name\s+is/i.test(item)
+        const item = memory.find(
+            x => /my\s+name\s+is/i.test(x)
+        );
+
+        if (item) {
+
+            const match = item.match(
+                /my\s+name\s+is\s+(.+)/i
             );
 
-
-        if (nameMemory) {
-
-            const match =
-                nameMemory.match(
-                    /my\s+name\s+is\s+(.+)/i
-                );
-
-
             if (match) {
-
                 return (
                     "Your name is " +
-                    match[1].replace(/[.!?]+$/, "") +
+                    match[1] +
                     ", Boss."
                 );
             }
@@ -181,35 +155,28 @@ function answerFromMemory(question) {
     }
 
 
-    /*
-       FAVOURITE BIKE
-    */
+    /* FAVOURITE BIKE */
 
     if (
         q.includes("favourite bike") ||
         q.includes("favorite bike")
     ) {
 
-        const bikeMemory =
-            memory.find(
-                item =>
-                    /favou?rite\s+bike\s+is/i.test(item)
+        const item = memory.find(
+            x =>
+                /favou?rite\s+bike\s+is/i.test(x)
+        );
+
+        if (item) {
+
+            const match = item.match(
+                /favou?rite\s+bike\s+is\s+(.+)/i
             );
 
-
-        if (bikeMemory) {
-
-            const match =
-                bikeMemory.match(
-                    /favou?rite\s+bike\s+is\s+(.+)/i
-                );
-
-
             if (match) {
-
                 return (
                     "Your favourite bike is " +
-                    match[1].replace(/[.!?]+$/, "") +
+                    match[1] +
                     ", Boss."
                 );
             }
@@ -217,9 +184,7 @@ function answerFromMemory(question) {
     }
 
 
-    /*
-       FAVOURITE COLOUR
-    */
+    /* FAVOURITE COLOUR */
 
     if (
         q.includes("favourite colour") ||
@@ -228,26 +193,21 @@ function answerFromMemory(question) {
         q.includes("favorite colour")
     ) {
 
-        const colourMemory =
-            memory.find(
-                item =>
-                    /favou?rite\s+colou?r\s+is/i.test(item)
+        const item = memory.find(
+            x =>
+                /favou?rite\s+colou?r\s+is/i.test(x)
+        );
+
+        if (item) {
+
+            const match = item.match(
+                /favou?rite\s+colou?r\s+is\s+(.+)/i
             );
 
-
-        if (colourMemory) {
-
-            const match =
-                colourMemory.match(
-                    /favou?rite\s+colou?r\s+is\s+(.+)/i
-                );
-
-
             if (match) {
-
                 return (
                     "Your favourite colour is " +
-                    match[1].replace(/[.!?]+$/, "") +
+                    match[1] +
                     ", Boss."
                 );
             }
@@ -255,37 +215,7 @@ function answerFromMemory(question) {
     }
 
 
-    /*
-       AC
-    */
-
-    if (
-        q.includes("what ac do i have") ||
-        q.includes("which ac do i have") ||
-        q.includes("my ac")
-    ) {
-
-        const acMemory =
-            memory.find(
-                item =>
-                    /\b(i\s+have|i\s+own)\b.*\bac\b/i.test(item)
-            );
-
-
-        if (acMemory) {
-
-            return (
-                "You told me that " +
-                acMemory.replace(/[.!?]+$/, "") +
-                ", Boss."
-            );
-        }
-    }
-
-
-    /*
-       FOOD
-    */
+    /* FOOD */
 
     if (
         q.includes("what food do i like") ||
@@ -293,18 +223,40 @@ function answerFromMemory(question) {
         q.includes("what food i like")
     ) {
 
-        const foodMemory =
-            memory.find(
-                item =>
-                    /i\s+like\s+to\s+eat/i.test(item)
-            );
+        const item = memory.find(
+            x =>
+                /i\s+like\s+to\s+eat/i.test(x)
+        );
 
-
-        if (foodMemory) {
+        if (item) {
 
             return (
                 "You told me that " +
-                foodMemory.replace(/[.!?]+$/, "") +
+                item +
+                ", Boss."
+            );
+        }
+    }
+
+
+    /* AC */
+
+    if (
+        q.includes("what ac do i have") ||
+        q.includes("which ac do i have") ||
+        q.includes("my ac")
+    ) {
+
+        const item = memory.find(
+            x =>
+                /\b(i\s+have|i\s+own)\b.*\bac\b/i.test(x)
+        );
+
+        if (item) {
+
+            return (
+                "You told me that " +
+                item +
                 ", Boss."
             );
         }
@@ -316,7 +268,7 @@ function answerFromMemory(question) {
 
 
 /* =========================================
-   GET API KEY
+   API KEY
 ========================================= */
 
 function getApiKey() {
@@ -325,10 +277,9 @@ function getApiKey() {
         return true;
     }
 
-
-    const key =
-        prompt("Enter your Gemini API key:");
-
+    const key = prompt(
+        "Enter your Gemini API key:"
+    );
 
     if (!key || !key.trim()) {
 
@@ -339,47 +290,41 @@ function getApiKey() {
         return false;
     }
 
-
     apiKey = key.trim();
-
 
     localStorage.setItem(
         KEY_STORAGE,
         apiKey
     );
 
-
     addAI(
         "Gemini connection key saved, Boss."
     );
-
 
     return true;
 }
 
 
 /* =========================================
-   CREATE GEMINI PROMPT
+   GEMINI PROMPT
 ========================================= */
 
 function createPrompt(question) {
 
-    let savedMemory = "No saved memories yet.";
-
+    let savedMemory =
+        "No saved memories yet.";
 
     if (memory.length > 0) {
 
-        savedMemory =
-            memory
-                .map(
-                    (item, index) =>
-                        (index + 1) +
-                        ". " +
-                        item
-                )
-                .join("\n");
+        savedMemory = memory
+            .map(
+                (item, index) =>
+                    (index + 1) +
+                    ". " +
+                    item
+            )
+            .join("\n");
     }
-
 
     return `
 You are D.I.S.C.O, a personal AI assistant.
@@ -394,19 +339,19 @@ Be friendly, respectful and helpful.
 
 Give direct answers.
 
-You have a persistent personal memory.
+The user has a persistent personal memory.
 
-These are facts the user has explicitly asked D.I.S.C.O to remember:
+These are facts the user explicitly asked D.I.S.C.O to remember:
 
 ${savedMemory}
 
-Use these memories when they are relevant.
+Use these memories whenever relevant.
 
-Do not invent memories.
+Never invent memories.
 
-Do not say you remember something unless it is present in the saved memory.
+Never claim to remember something that is not in the saved memory.
 
-If the user asks about something contained in the saved memory, use that information.
+If the user asks about something in the memory, use the saved information.
 
 User's message:
 ${question}
@@ -415,53 +360,45 @@ ${question}
 
 
 /* =========================================
-   GEMINI REQUEST
+   SEND TO GEMINI
 ========================================= */
 
 async function sendToGemini(question) {
 
-    const response =
-        await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/" +
-            MODEL +
-            ":generateContent",
-            {
-                method: "POST",
+    const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+        MODEL +
+        ":generateContent",
+        {
+            method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": apiKey
-                },
+            headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey
+            },
 
-                body: JSON.stringify({
-
-                    contents: [
-                        {
-                            parts: [
-                                {
-                                    text:
-                                        createPrompt(question)
-                                }
-                            ]
-                        }
-                    ]
-
-                })
-            }
-        );
-
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text:
+                                    createPrompt(question)
+                            }
+                        ]
+                    }
+                ]
+            })
+        }
+    );
 
     let data = {};
 
     try {
-
         data = await response.json();
-
     } catch (error) {
-
         data = {};
     }
-
 
     return {
         response: response,
@@ -471,7 +408,7 @@ async function sendToGemini(question) {
 
 
 /* =========================================
-   GEMINI + AUTO RETRY
+   GEMINI WITH RETRY
 ========================================= */
 
 async function askGemini(question) {
@@ -480,13 +417,10 @@ async function askGemini(question) {
         return;
     }
 
-
     addAI("Thinking, Boss...");
-
 
     const thinkingMessage =
         chat.lastElementChild;
-
 
     const retryDelays = [
         1500,
@@ -494,11 +428,9 @@ async function askGemini(question) {
         6000
     ];
 
-
     try {
 
         let result = null;
-
 
         for (
             let attempt = 0;
@@ -511,24 +443,19 @@ async function askGemini(question) {
                 result =
                     await sendToGemini(question);
 
-
                 const status =
                     result.response.status;
-
 
                 const temporaryError =
                     status === 429 ||
                     status === 503;
 
-
                 if (
                     result.response.ok ||
                     !temporaryError
                 ) {
-
                     break;
                 }
-
 
                 if (thinkingMessage) {
 
@@ -547,7 +474,6 @@ async function askGemini(question) {
                     }
                 }
 
-
                 if (
                     attempt <
                     retryDelays.length
@@ -562,7 +488,6 @@ async function askGemini(question) {
                     );
                 }
 
-
             } catch (error) {
 
                 if (
@@ -576,7 +501,6 @@ async function askGemini(question) {
                             "<b>D.I.S.C.O:</b> Connection problem. Retrying...";
                     }
 
-
                     await new Promise(
                         resolve =>
                             setTimeout(
@@ -584,7 +508,6 @@ async function askGemini(question) {
                                 retryDelays[attempt]
                             )
                     );
-
 
                 } else {
 
@@ -600,7 +523,6 @@ async function askGemini(question) {
                 thinkingMessage.remove();
             }
 
-
             addAI(
                 "Gemini could not be reached, Boss."
             );
@@ -609,20 +531,18 @@ async function askGemini(question) {
         }
 
 
-        const data =
-            result.data;
-
-
         if (thinkingMessage) {
             thinkingMessage.remove();
         }
+
+
+        const data = result.data;
 
 
         if (!result.response.ok) {
 
             let errorMessage =
                 "Gemini could not answer.";
-
 
             if (
                 data &&
@@ -633,7 +553,6 @@ async function askGemini(question) {
                 errorMessage =
                     data.error.message;
             }
-
 
             addAI(
                 "Gemini error: " +
@@ -687,12 +606,10 @@ async function askGemini(question) {
             thinkingMessage.remove();
         }
 
-
         console.error(
             "Gemini error:",
             error
         );
-
 
         addAI(
             "Connection error, Boss: " +
@@ -711,25 +628,19 @@ async function sendMessage() {
     const text =
         msg.value.trim();
 
-
     if (!text) {
         return;
     }
 
-
     msg.value = "";
 
-
     addUser(text);
-
 
     const lower =
         text.toLowerCase();
 
 
-    /*
-       GENERAL REMEMBER COMMAND
-    */
+    /* SAVE MEMORY */
 
     if (
         lower.startsWith("remember ") ||
@@ -750,13 +661,10 @@ async function sendMessage() {
     }
 
 
-    /*
-       CHECK LOCAL MEMORY
-    */
+    /* LOCAL MEMORY ANSWER */
 
     const memoryAnswer =
         answerFromMemory(text);
-
 
     if (memoryAnswer) {
 
@@ -768,9 +676,7 @@ async function sendMessage() {
     }
 
 
-    /*
-       SEND TO GEMINI
-    */
+    /* GEMINI */
 
     await askGemini(text);
 }
@@ -790,7 +696,7 @@ if (send) {
 
 
 /* =========================================
-   ENTER KEY
+   ENTER
 ========================================= */
 
 if (msg) {
@@ -822,11 +728,9 @@ if (clearBtn) {
 
             memory = [];
 
-
             localStorage.removeItem(
                 MEMORY_STORAGE
             );
-
 
             const reply =
                 "All saved memories have been cleared, Boss.";
@@ -854,21 +758,17 @@ if (changeKey) {
                     "Enter your new Gemini API key:"
                 );
 
-
             if (!key || !key.trim()) {
                 return;
             }
 
-
             apiKey =
                 key.trim();
-
 
             localStorage.setItem(
                 KEY_STORAGE,
                 apiKey
             );
-
 
             const reply =
                 "API key changed successfully, Boss.";
@@ -882,7 +782,7 @@ if (changeKey) {
 
 
 /* =========================================
-   TEXT TO SPEECH
+   VOICE OUTPUT
 ========================================= */
 
 function speak(text) {
@@ -893,31 +793,24 @@ function speak(text) {
         return;
     }
 
-
     speechSynthesis.cancel();
-
 
     const utterance =
         new SpeechSynthesisUtterance(
             text
         );
 
-
     utterance.lang =
         "en-IN";
-
 
     utterance.rate =
         0.92;
 
-
     utterance.pitch =
         0.85;
 
-
     const voices =
         speechSynthesis.getVoices();
-
 
     const indianVoice =
         voices.find(
@@ -928,13 +821,10 @@ function speak(text) {
                     .startsWith("en-in")
         );
 
-
     if (indianVoice) {
-
         utterance.voice =
             indianVoice;
     }
-
 
     speechSynthesis.speak(
         utterance
@@ -975,14 +865,11 @@ if (
     const recognition =
         new SpeechRecognition();
 
-
     recognition.lang =
         "en-IN";
 
-
     recognition.continuous =
         false;
-
 
     recognition.interimResults =
         false;
@@ -1014,10 +901,8 @@ if (
                 event.results[0][0]
                     .transcript;
 
-
             msg.value =
                 transcript;
-
 
             sendMessage();
         };
@@ -1037,12 +922,10 @@ if (
             mic.textContent =
                 "🎙️";
 
-
             console.log(
                 "Speech error:",
                 event.error
             );
-
 
             addAI(
                 "I could not hear that clearly, Boss."
@@ -1092,7 +975,6 @@ if (
 
                 const file =
                     imgInput.files[0];
-
 
                 addAI(
                     "Image selected: " +
