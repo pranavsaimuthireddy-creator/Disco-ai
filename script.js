@@ -1,6 +1,6 @@
 // ==========================================
 // D.I.S.C.O AI
-// FULL SCRIPT
+// MEMORY + GEMINI + VOICE + VISION
 // ==========================================
 
 
@@ -54,8 +54,9 @@ if (!API_KEY) {
 // ==========================================
 
 let MEMORY = JSON.parse(
-    localStorage.getItem("disco_memory") || "[]"
+    localStorage.getItem("disco_memory") || "{}"
 );
+
 
 function saveMemory() {
 
@@ -66,48 +67,110 @@ function saveMemory() {
 }
 
 
-function addMemory(text) {
+// ==========================================
+// UNDERSTAND MEMORY
+// ==========================================
 
-    MEMORY.push(text);
+function rememberInformation(text) {
 
-    saveMemory();
-}
+    let changed = false;
 
+    // NAME
+    const nameMatch =
+        text.match(
+            /(?:my name is|name is)\s+([A-Za-z ]+)/i
+        );
 
-function getMemory() {
+    if (nameMatch) {
 
-    if (MEMORY.length === 0) {
+        let name =
+            nameMatch[1]
+                .replace(
+                    /\s+(and|in|is|my|favourite|favorite).*$/i,
+                    ""
+                )
+                .trim();
 
-        return "No memories saved.";
+        if (name) {
+
+            MEMORY.name = name;
+
+            changed = true;
+        }
     }
 
-    return MEMORY.join("\n");
+
+    // FAVOURITE COLOUR
+    const colourMatch =
+        text.match(
+            /(?:my )?(?:favourite|favorite) colou?r is\s+([A-Za-z]+)/i
+        );
+
+    if (colourMatch) {
+
+        MEMORY.favouriteColour =
+            colourMatch[1].trim();
+
+        changed = true;
+    }
+
+
+    // LIKES
+    const likesMatch =
+        text.match(
+            /(?:i like|i love)\s+(.+)/i
+        );
+
+    if (likesMatch) {
+
+        let thing =
+            likesMatch[1]
+                .replace(
+                    /\s+(and|also).*$/i,
+                    ""
+                )
+                .trim();
+
+        if (thing) {
+
+            if (!MEMORY.likes) {
+                MEMORY.likes = [];
+            }
+
+            MEMORY.likes.push(thing);
+
+            changed = true;
+        }
+    }
+
+
+    // GENERAL MEMORY
+    if (
+        !nameMatch &&
+        !colourMatch &&
+        !likesMatch
+    ) {
+
+        if (!MEMORY.notes) {
+            MEMORY.notes = [];
+        }
+
+        MEMORY.notes.push(text);
+
+        changed = true;
+    }
+
+
+    if (changed) {
+        saveMemory();
+    }
+
+    return changed;
 }
 
 
 // ==========================================
-// ADD MESSAGE
-// ==========================================
-
-function addMessage(text, type) {
-
-    const message =
-        document.createElement("div");
-
-    message.className =
-        "msg " + type;
-
-    message.textContent = text;
-
-    chat.appendChild(message);
-
-    chat.scrollTop =
-        chat.scrollHeight;
-}
-
-
-// ==========================================
-// MEMORY PROCESSING
+// MEMORY COMMAND
 // ==========================================
 
 function processMemory(text) {
@@ -122,25 +185,42 @@ function processMemory(text) {
         lower.startsWith("remember that ")
     ) {
 
-        let memory =
+        const memoryText =
             text
-                .replace(/^remember that /i, "")
-                .replace(/^remember /i, "")
+                .replace(/^remember that\s+/i, "")
+                .replace(/^remember\s+/i, "")
                 .trim();
 
 
-        if (memory) {
+        if (memoryText) {
 
-            addMemory(memory);
+            rememberInformation(memoryText);
+
+
+            let reply =
+                "Got it, Boss. I'll remember that.";
+
+            if (MEMORY.name) {
+
+                reply +=
+                    " Your name is " +
+                    MEMORY.name + ".";
+            }
+
+            if (MEMORY.favouriteColour) {
+
+                reply +=
+                    " Your favourite colour is " +
+                    MEMORY.favouriteColour + ".";
+            }
+
 
             addMessage(
-                "D.I.S.C.O: I'll remember that, Boss.",
+                reply,
                 "ai"
             );
 
-            speak(
-                "I'll remember that, Boss."
-            );
+            speak(reply);
 
             return true;
         }
@@ -149,15 +229,40 @@ function processMemory(text) {
 
     // SHOW MEMORY
     if (
-        lower.includes("what do you remember") ||
+        lower === "memory" ||
         lower.includes("show my memory") ||
-        lower === "memory"
+        lower.includes("what do you remember")
     ) {
 
+        let memoryText =
+            formatMemory();
+
         addMessage(
-            "D.I.S.C.O MEMORY:\n" +
-            getMemory(),
+            memoryText,
             "ai"
+        );
+
+        return true;
+    }
+
+
+    // FORGET EVERYTHING
+    if (
+        lower === "forget everything" ||
+        lower === "clear memory"
+    ) {
+
+        MEMORY = {};
+
+        saveMemory();
+
+        addMessage(
+            "D.I.S.C.O: All memory cleared, Boss.",
+            "ai"
+        );
+
+        speak(
+            "All memory cleared, Boss."
         );
 
         return true;
@@ -169,175 +274,93 @@ function processMemory(text) {
 
 
 // ==========================================
-// SEND MESSAGE
+// FORMAT MEMORY
 // ==========================================
 
-async function sendMessage() {
+function formatMemory() {
 
-    const text =
-        input.value.trim();
+    let result =
+        "D.I.S.C.O MEMORY:\n";
 
 
-    if (!text) {
+    if (MEMORY.name) {
 
-        return;
+        result +=
+            "Name: " +
+            MEMORY.name +
+            "\n";
     }
 
 
-    addMessage(
-        text,
-        "user"
-    );
+    if (MEMORY.favouriteColour) {
 
-
-    input.value = "";
-
-
-    // MEMORY COMMAND
-    if (processMemory(text)) {
-
-        return;
+        result +=
+            "Favourite colour: " +
+            MEMORY.favouriteColour +
+            "\n";
     }
 
 
-    // API CHECK
-    if (!API_KEY) {
+    if (
+        MEMORY.likes &&
+        MEMORY.likes.length > 0
+    ) {
 
-        addMessage(
-            "D.I.S.C.O: API key required, Boss.",
-            "ai"
-        );
-
-        askForAPIKey();
-
-        return;
+        result +=
+            "Likes: " +
+            MEMORY.likes.join(", ") +
+            "\n";
     }
 
 
-    // PROCESSING MESSAGE
-    const thinking =
-        document.createElement("div");
+    if (
+        MEMORY.notes &&
+        MEMORY.notes.length > 0
+    ) {
 
-    thinking.className =
-        "msg ai";
+        result +=
+            "Other memories:\n";
 
-    thinking.textContent =
-        "D.I.S.C.O: Processing...";
+        MEMORY.notes.forEach(
+            function(note) {
 
-    chat.appendChild(thinking);
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-
-    try {
-
-        const reply =
-            await askGemini(text);
-
-
-        thinking.remove();
-
-
-        addMessage(
-            reply,
-            "ai"
-        );
-
-
-        speak(reply);
-
-
-    } catch (error) {
-
-        thinking.remove();
-
-        console.error(error);
-
-        addMessage(
-            "D.I.S.C.O: Gemini connection error, Boss.",
-            "ai"
+                result +=
+                    "- " +
+                    note +
+                    "\n";
+            }
         );
     }
+
+
+    if (
+        !MEMORY.name &&
+        !MEMORY.favouriteColour &&
+        (!MEMORY.likes ||
+            MEMORY.likes.length === 0) &&
+        (!MEMORY.notes ||
+            MEMORY.notes.length === 0)
+    ) {
+
+        result +=
+            "No memories saved.";
+    }
+
+
+    return result;
 }
 
 
 // ==========================================
-// GEMINI
+// ANSWER PERSONAL QUESTIONS FROM MEMORY
 // ==========================================
 
-async function askGemini(text) {
+function answerFromMemory(text) {
 
-    const url =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key="
-        + API_KEY;
-
-
-    const memoryText =
-        getMemory();
+    const lower =
+        text.toLowerCase();
 
 
-    const prompt =
-        "You are D.I.S.C.O, a helpful AI assistant. " +
-        "Call the user Boss. " +
-        "Answer clearly and simply. " +
-        "Give different answers depending on the user's question.\n\n" +
-
-        "USER MEMORY:\n" +
-        memoryText +
-        "\n\nUSER MESSAGE:\n" +
-        text;
-
-
-    const response =
-        await fetch(
-            url,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    contents: [
-
-                        {
-                            parts: [
-
-                                {
-                                    text: prompt
-                                }
-
-                            ]
-                        }
-
-                    ]
-                })
-            }
-        );
-
-
-    if (!response.ok) {
-
-        const error =
-            await response.text();
-
-        console.error(error);
-
-        throw new Error(
-            "Gemini API Error"
-        );
-    }
-
-
-    const data =
-        await response.json();
-
-
-    const reply =
-        data
-        ?.candidates
-        ?.[
+    // NAME
+    if (
+        lower.includes("
