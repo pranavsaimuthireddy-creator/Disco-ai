@@ -21,14 +21,11 @@ const imgInput = document.getElementById("img-input");
 // API KEY
 // ==========================================
 
-let API_KEY =
-    localStorage.getItem("disco_api_key");
-
+let API_KEY = localStorage.getItem("disco_api_key");
 
 function askForAPIKey() {
 
-    const key =
-        prompt("Enter your Gemini API Key:");
+    const key = prompt("Enter your Gemini API Key:");
 
     if (key && key.trim()) {
 
@@ -46,7 +43,6 @@ function askForAPIKey() {
     }
 }
 
-
 if (!API_KEY) {
 
     setTimeout(
@@ -57,7 +53,7 @@ if (!API_KEY) {
 
 
 // ==========================================
-// CHANGE API KEY
+// CHANGE KEY
 // ==========================================
 
 if (changeKey) {
@@ -73,7 +69,6 @@ if (changeKey) {
             API_KEY = "";
 
             askForAPIKey();
-
         }
     );
 }
@@ -83,16 +78,33 @@ if (changeKey) {
 // MEMORY
 // ==========================================
 
-let MEMORY =
-    JSON.parse(
-        localStorage.getItem(
-            "disco_memory"
-        ) || "[]"
+let MEMORY = [];
+
+try {
+
+    const savedMemory =
+        localStorage.getItem("disco_memory");
+
+    MEMORY =
+        savedMemory
+            ? JSON.parse(savedMemory)
+            : [];
+
+    if (!Array.isArray(MEMORY)) {
+        MEMORY = [];
+    }
+
+} catch (error) {
+
+    MEMORY = [];
+
+    localStorage.removeItem(
+        "disco_memory"
     );
+}
 
 
-// Stores the user's previous message
-let LAST_USER_MESSAGE = "";
+let LAST_PERSONAL_STATEMENT = "";
 
 
 // ==========================================
@@ -117,16 +129,14 @@ function getMemory() {
     const memories =
         MEMORY.filter(
             item =>
+                item &&
                 item.type === "memory"
         );
-
 
     if (memories.length === 0) {
 
         return "No saved memories.";
-
     }
-
 
     return memories
         .slice(-30)
@@ -143,6 +153,10 @@ function getMemory() {
 // ==========================================
 
 function addMemory(text) {
+
+    if (!text) {
+        return;
+    }
 
     MEMORY.push({
 
@@ -170,45 +184,24 @@ function processMemory(text) {
 
 
     // --------------------------------------
-    // QUESTIONS ARE NOT MEMORY COMMANDS
-    // --------------------------------------
-
-    if (
-        lower.endsWith("?") ||
-        lower.startsWith("what ") ||
-        lower.startsWith("what's ") ||
-        lower.startsWith("whats ") ||
-        lower.startsWith("which ") ||
-        lower.startsWith("who ") ||
-        lower.startsWith("where ") ||
-        lower.startsWith("when ") ||
-        lower.startsWith("why ") ||
-        lower.startsWith("how ")
-    ) {
-
-        return false;
-
-    }
-
-
-    // --------------------------------------
-    // "REMEMBER IT"
+    // REMEMBER IT
     // --------------------------------------
 
     if (
         lower === "remember it" ||
+        lower === "remember this" ||
         lower === "remember that" ||
-        lower === "remember this"
+        lower === "save it" ||
+        lower === "save this"
     ) {
 
-        if (LAST_USER_MESSAGE) {
+        if (LAST_PERSONAL_STATEMENT) {
 
             addMemory(
-                LAST_USER_MESSAGE
+                LAST_PERSONAL_STATEMENT
             );
 
             return true;
-
         }
 
         return false;
@@ -216,7 +209,7 @@ function processMemory(text) {
 
 
     // --------------------------------------
-    // "REMEMBER THAT ..."
+    // REMEMBER THAT...
     // --------------------------------------
 
     if (
@@ -226,9 +219,7 @@ function processMemory(text) {
     ) {
 
         const fact =
-            text
-                .substring(14)
-                .trim();
+            text.substring(14).trim();
 
         if (fact) {
 
@@ -240,7 +231,7 @@ function processMemory(text) {
 
 
     // --------------------------------------
-    // "REMEMBER ..."
+    // REMEMBER...
     // --------------------------------------
 
     if (
@@ -250,11 +241,14 @@ function processMemory(text) {
     ) {
 
         const fact =
-            text
-                .substring(9)
-                .trim();
+            text.substring(9).trim();
 
-        if (fact) {
+        if (
+            fact &&
+            fact !== "it" &&
+            fact !== "this" &&
+            fact !== "that"
+        ) {
 
             addMemory(fact);
 
@@ -264,60 +258,13 @@ function processMemory(text) {
 
 
     // --------------------------------------
-    // "MY NAME IS ..."
-    // --------------------------------------
-
-    const nameMatch =
-        text.match(
-            /^my\s+name\s+is\s+(.+)$/i
-        );
-
-
-    if (nameMatch) {
-
-        const name =
-            nameMatch[1].trim();
-
-        addMemory(
-            `User's name is ${name}.`
-        );
-
-        return true;
-    }
-
-
-    // --------------------------------------
-    // "I LIKE ..."
-    // --------------------------------------
-
-    const likeMatch =
-        text.match(
-            /^i\s+like\s+(.+)$/i
-        );
-
-
-    if (likeMatch) {
-
-        const thing =
-            likeMatch[1].trim();
-
-        addMemory(
-            `User likes ${thing}.`
-        );
-
-        return true;
-    }
-
-
-    // --------------------------------------
-    // "MY FAVOURITE X IS Y"
+    // MY FAVOURITE X IS Y
     // --------------------------------------
 
     const favourite =
         text.match(
             /^my\s+(favourite|favorite)\s+(.+?)\s+is\s+(.+)$/i
         );
-
 
     if (favourite) {
 
@@ -327,8 +274,84 @@ function processMemory(text) {
         const value =
             favourite[3].trim();
 
+        const memoryText =
+            `User's favourite ${item} is ${value}.`;
+
+        addMemory(memoryText);
+
+        return true;
+    }
+
+
+    // --------------------------------------
+    // MY NAME IS...
+    // --------------------------------------
+
+    const nameMatch =
+        text.match(
+            /^my\s+name\s+is\s+(.+)$/i
+        );
+
+    if (nameMatch) {
+
+        const name =
+            nameMatch[1].trim();
+
+        LAST_PERSONAL_STATEMENT =
+            `User's name is ${name}.`;
+
         addMemory(
-            `User's favourite ${item} is ${value}.`
+            LAST_PERSONAL_STATEMENT
+        );
+
+        return true;
+    }
+
+
+    // --------------------------------------
+    // I LIKE...
+    // --------------------------------------
+
+    const likeMatch =
+        text.match(
+            /^i\s+like\s+(.+)$/i
+        );
+
+    if (likeMatch) {
+
+        const thing =
+            likeMatch[1].trim();
+
+        LAST_PERSONAL_STATEMENT =
+            `User likes ${thing}.`;
+
+        addMemory(
+            LAST_PERSONAL_STATEMENT
+        );
+
+        return true;
+    }
+
+
+    // --------------------------------------
+    // I LOVE...
+    // --------------------------------------
+
+    const loveMatch =
+        text.match(
+            /^i\s+love\s+(.+)$/i
+        );
+
+    if (loveMatch) {
+
+        const thing =
+            loveMatch[1].trim();
+
+        LAST_PERSONAL_STATEMENT =
+            `User loves ${thing}.`;
+
+        addMemory(
+            LAST_PERSONAL_STATEMENT
         );
 
         return true;
@@ -340,5 +363,501 @@ function processMemory(text) {
 
 
 // ==========================================
+// SEND MESSAGE
+// ==========================================
+
+function sendMessage() {
+
+    if (!input) {
+        return;
+    }
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+
+    add(
+        "YOU: " + text,
+        "user"
+    );
+
+
+    input.value = "";
+
+
+    const lower =
+        text.toLowerCase().trim();
+
+
+    const isQuestion =
+        lower.endsWith("?") ||
+        lower.startsWith("what ") ||
+        lower.startsWith("what's ") ||
+        lower.startsWith("whats ") ||
+        lower.startsWith("which ") ||
+        lower.startsWith("who ") ||
+        lower.startsWith("where ") ||
+        lower.startsWith("when ") ||
+        lower.startsWith("why ") ||
+        lower.startsWith("how ");
+
+
+    // Memory command
+
+    if (
+        !isQuestion &&
+        processMemory(text)
+    ) {
+
+        const reply =
+            "Got it, Boss. I'll remember that.";
+
+        add(
+            "D.I.S.C.O: " + reply,
+            "ai"
+        );
+
+        speak(reply);
+
+        return;
+    }
+
+
+    // Normal AI question
+
+    askGemini(text);
+}
+
+
+// ==========================================
 // SEND BUTTON
-//
+// ==========================================
+
+if (send) {
+
+    send.addEventListener(
+        "click",
+        sendMessage
+    );
+}
+
+
+// ==========================================
+// ENTER KEY
+// ==========================================
+
+if (input) {
+
+    input.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                sendMessage();
+            }
+        }
+    );
+}
+
+
+// ==========================================
+// GEMINI AI
+// ==========================================
+
+async function askGemini(question) {
+
+    add(
+        "D.I.S.C.O: Thinking...",
+        "ai"
+    );
+
+
+    if (!API_KEY) {
+
+        if (chat && chat.lastChild) {
+
+            chat.lastChild.innerText =
+                "D.I.S.C.O: API key missing. Tap 🔑 KEY.";
+        }
+
+        return;
+    }
+
+
+    try {
+
+        const prompt = `
+
+You are D.I.S.C.O, a helpful personal AI assistant.
+
+Call the user Boss.
+
+Answer clearly and simply.
+
+Use saved memories when relevant.
+
+SAVED USER MEMORIES:
+
+${getMemory()}
+
+CURRENT USER MESSAGE:
+
+${question}
+
+IMPORTANT:
+
+If the user asks about something stored in memory,
+use that memory to answer.
+
+Do not say "I'll remember that"
+unless the user is actually giving you
+something to remember.
+
+`;
+
+
+        const response =
+            await fetch(
+
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`,
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            contents: [
+
+                                {
+
+                                    parts: [
+
+                                        {
+                                            text: prompt
+                                        }
+
+                                    ]
+
+                                }
+
+                            ]
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+
+                data.error?.message ||
+                "Gemini API error"
+
+            );
+        }
+
+
+        const reply =
+            data.candidates?.[0]
+                ?.content?.parts?.[0]
+                ?.text;
+
+
+        if (!reply) {
+
+            throw new Error(
+                "No reply received."
+            );
+        }
+
+
+        if (chat && chat.lastChild) {
+
+            chat.lastChild.innerText =
+                "D.I.S.C.O: " + reply;
+        }
+
+
+        speak(reply);
+
+
+    } catch (error) {
+
+        if (chat && chat.lastChild) {
+
+            chat.lastChild.innerText =
+                "D.I.S.C.O: ERROR - " +
+                error.message;
+        }
+    }
+}
+
+
+// ==========================================
+// MICROPHONE
+// ==========================================
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+if (
+    SpeechRecognition &&
+    mic
+) {
+
+    const recognition =
+        new SpeechRecognition();
+
+
+    recognition.lang =
+        "en-IN";
+
+
+    recognition.continuous =
+        false;
+
+
+    recognition.interimResults =
+        false;
+
+
+    mic.addEventListener(
+        "click",
+        function () {
+
+            try {
+
+                recognition.start();
+
+                mic.innerText =
+                    "🔴";
+
+            } catch (error) {
+
+                console.log(
+                    "Microphone error:",
+                    error
+                );
+            }
+        }
+    );
+
+
+    recognition.onresult =
+        function (event) {
+
+            const text =
+                event
+                    .results[0][0]
+                    .transcript;
+
+
+            input.value =
+                text;
+
+
+            mic.innerText =
+                "🎙️";
+
+
+            sendMessage();
+        };
+
+
+    recognition.onerror =
+        function () {
+
+            mic.innerText =
+                "🎙️";
+        };
+
+
+    recognition.onend =
+        function () {
+
+            mic.innerText =
+                "🎙️";
+        };
+
+}
+
+
+// ==========================================
+// CLEAR MEMORY
+// ==========================================
+
+if (clearBtn) {
+
+    clearBtn.addEventListener(
+        "click",
+        function () {
+
+            MEMORY = [];
+
+            LAST_PERSONAL_STATEMENT =
+                "";
+
+            saveMemory();
+
+
+            if (chat) {
+
+                chat.innerHTML = "";
+
+                add(
+                    "D.I.S.C.O: Memory cleared, Boss.",
+                    "ai"
+                );
+            }
+        }
+    );
+}
+
+
+// ==========================================
+// IMAGE BUTTON
+// ==========================================
+
+if (
+    imgBtn &&
+    imgInput
+) {
+
+    imgBtn.addEventListener(
+        "click",
+        function () {
+
+            imgInput.click();
+        }
+    );
+
+
+    imgInput.addEventListener(
+        "change",
+        function () {
+
+            const file =
+                imgInput.files[0];
+
+
+            if (!file) {
+                return;
+            }
+
+
+            add(
+                "YOU: [Image selected]",
+                "user"
+            );
+
+
+            add(
+                "D.I.S.C.O: Image selected, Boss.",
+                "ai"
+            );
+        }
+    );
+}
+
+
+// ==========================================
+// VOICE
+// ==========================================
+
+function speak(text) {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        return;
+    }
+
+
+    speechSynthesis.cancel();
+
+
+    const voice =
+        new SpeechSynthesisUtterance(
+            text
+        );
+
+
+    voice.lang =
+        "en-IN";
+
+
+    voice.rate =
+        1;
+
+
+    voice.pitch =
+        0.85;
+
+
+    speechSynthesis.speak(
+        voice
+    );
+}
+
+
+// ==========================================
+// ADD MESSAGE
+// ==========================================
+
+function add(
+    text,
+    type
+) {
+
+    if (!chat) {
+        return;
+    }
+
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.className =
+        "msg " + type;
+
+
+    div.innerText =
+        text;
+
+
+    chat.appendChild(
+        div
+    );
+
+
+    chat.scrollTop =
+        chat.scrollHeight;
+}
