@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ================================
 
     const chat = document.getElementById("chat");
+    alert("D.I.S.C.O SCRIPT LOADED");
     const input = document.getElementById("msg");
     const send = document.getElementById("send");
     const mic = document.getElementById("mic");
