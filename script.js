@@ -1,23 +1,9 @@
-// =====================================================
-// D.I.S.C.O
-// AI + MEMORY + VOICE
-// =====================================================
-
 const API_KEY_STORAGE = "disco_api_key";
 const MEMORY_STORAGE = "disco_memory";
-
 const MODEL = "gemini-3.8-flash";
 
 let apiKey = localStorage.getItem(API_KEY_STORAGE) || "";
-
-let memory = JSON.parse(
-    localStorage.getItem(MEMORY_STORAGE) || "{}"
-);
-
-
-// =====================================================
-// ELEMENTS
-// =====================================================
+let memory = JSON.parse(localStorage.getItem(MEMORY_STORAGE) || "{}");
 
 const chat = document.getElementById("chat");
 const msg = document.getElementById("msg");
@@ -28,182 +14,39 @@ const changeKey = document.getElementById("change-key");
 const imgBtn = document.getElementById("img-btn");
 const imgInput = document.getElementById("img-input");
 
-
-// =====================================================
-// CHAT DISPLAY
-// =====================================================
-
 function addMessage(text, type) {
-
     const div = document.createElement("div");
-
     div.className = "msg " + type;
-
     div.textContent = text;
-
     chat.appendChild(div);
-
     chat.scrollTop = chat.scrollHeight;
 }
 
-
 function addAI(text) {
-
-    addMessage(
-        "D.I.S.C.O: " + text,
-        "ai"
-    );
-
+    addMessage("D.I.S.C.O: " + text, "ai");
 }
-
-
-// =====================================================
-// VOICE
-// =====================================================
-
-function speak(text) {
-
-    if (!("speechSynthesis" in window)) {
-        return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const speech =
-        new SpeechSynthesisUtterance(text);
-
-    speech.lang = "en-IN";
-
-    speech.rate = 0.92;
-
-    speech.pitch = 0.85;
-
-    const voices =
-        window.speechSynthesis.getVoices();
-
-    const maleVoice =
-        voices.find(function (voice) {
-
-            const name =
-                voice.name.toLowerCase();
-
-            return (
-                voice.lang.toLowerCase().startsWith("en-in") &&
-                (
-                    name.includes("male") ||
-                    name.includes("man") ||
-                    name.includes("ravi")
-                )
-            );
-
-        });
-
-    if (maleVoice) {
-        speech.voice = maleVoice;
-    }
-
-    window.speechSynthesis.speak(speech);
-}
-
-
-// =====================================================
-// API KEY
-// =====================================================
-
-function getAPIKey() {
-
-    if (apiKey) {
-        return true;
-    }
-
-    const key =
-        prompt("Enter your Gemini API key:");
-
-    if (!key || !key.trim()) {
-
-        addAI(
-            "I need a Gemini API key before I can answer, Boss."
-        );
-
-        return false;
-    }
-
-    apiKey = key.trim();
-
-    localStorage.setItem(
-        API_KEY_STORAGE,
-        apiKey
-    );
-
-    return true;
-}
-
-
-// =====================================================
-// MEMORY
-// =====================================================
 
 function saveMemory() {
-
-    localStorage.setItem(
-        MEMORY_STORAGE,
-        JSON.stringify(memory)
-    );
-
+    localStorage.setItem(MEMORY_STORAGE, JSON.stringify(memory));
 }
 
-
 function remember(text) {
-
     let saved = false;
 
-    // NAME
-
-    const nameMatch =
-        text.match(
-            /my\s+name\s+is\s+([a-zA-Z]+)/i
-        );
-
-    if (nameMatch) {
-
-        memory.name =
-            nameMatch[1];
-
+    const name = text.match(/my\s+name\s+is\s+([a-zA-Z]+)/i);
+    if (name) {
+        memory.name = name[1];
         saved = true;
     }
 
+    const colour = text.match(
+        /my\s+favou?rite\s+colou?r\s+is\s+([a-zA-Z]+)/i
+    );
 
-    // FAVOURITE COLOUR
-
-    const colourMatch =
-        text.match(
-            /my\s+favou?rite\s+colou?r\s+is\s+([a-zA-Z]+)/i
-        );
-
-    if (colourMatch) {
-
-        memory.colour =
-            colourMatch[1];
-
+    if (colour) {
+        memory.colour = colour[1];
         saved = true;
     }
-
-
-    // FAVOURITE BIKE
-
-    const bikeMatch =
-        text.match(
-            /my\s+favou?rite\s+bike\s+is\s+(.+?)(?:\s+and\s+my|\s*$)/i
-        );
-
-    if (bikeMatch) {
-
-        memory.bike =
-            bikeMatch[1].trim();
-
-        saved = true;
-    }
-
 
     if (saved) {
         saveMemory();
@@ -212,46 +55,20 @@ function remember(text) {
     return saved;
 }
 
-
-// =====================================================
-// MEMORY QUESTIONS
-// =====================================================
-
 function memoryQuestion(text) {
-
-    const q =
-        text.toLowerCase();
-
+    const q = text.toLowerCase();
     const answers = [];
-
-
-    // NAME
 
     if (
         q.includes("what is my name") ||
-        q.includes("what's my name") ||
-        q.includes("do you know my name")
+        q.includes("what's my name")
     ) {
-
-        if (memory.name) {
-
-            answers.push(
-                "Your name is " +
-                memory.name +
-                ", Boss."
-            );
-
-        } else {
-
-            answers.push(
-                "You have not told me your name yet, Boss."
-            );
-
-        }
+        answers.push(
+            memory.name
+                ? "Your name is " + memory.name + ", Boss."
+                : "You have not told me your name yet, Boss."
+        );
     }
-
-
-    // COLOUR
 
     if (
         q.includes("what is my favourite colour") ||
@@ -261,76 +78,50 @@ function memoryQuestion(text) {
         q.includes("what is my favourite color") ||
         q.includes("what is my favorite colour")
     ) {
-
-        if (memory.colour) {
-
-            answers.push(
-                "Your favourite colour is " +
-                memory.colour +
-                ", Boss."
-            );
-
-        } else {
-
-            answers.push(
-                "You have not told me your favourite colour yet, Boss."
-            );
-
-        }
+        answers.push(
+            memory.colour
+                ? "Your favourite colour is " + memory.colour + ", Boss."
+                : "You have not told me your favourite colour yet, Boss."
+        );
     }
 
-
-    // BIKE
-
-    if (
-        q.includes("what is my favourite bike") ||
-        q.includes("what is my favorite bike") ||
-        q.includes("what's my favourite bike") ||
-        q.includes("what's my favorite bike")
-    ) {
-
-        if (memory.bike) {
-
-            answers.push(
-                "Your favourite bike is " +
-                memory.bike +
-                ", Boss."
-            );
-
-        } else {
-
-            answers.push(
-                "You have not told me your favourite bike yet, Boss."
-            );
-
-        }
-    }
-
-
-    if (answers.length > 0) {
-
-        return answers.join(" ");
-
-    }
-
-    return null;
+    return answers.length ? answers.join(" ") : null;
 }
 
+function speak(text) {
+    if (!("speechSynthesis" in window)) return;
 
-// =====================================================
-// GEMINI
-// =====================================================
+    speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(text);
+
+    speech.lang = "en-IN";
+    speech.rate = 0.92;
+    speech.pitch = 0.85;
+
+    speechSynthesis.speak(speech);
+}
+
+function getAPIKey() {
+    if (apiKey) return true;
+
+    const key = prompt("Enter your Gemini API key:");
+
+    if (!key || !key.trim()) {
+        addAI("A Gemini API key is required, Boss.");
+        return false;
+    }
+
+    apiKey = key.trim();
+
+    localStorage.setItem(API_KEY_STORAGE, apiKey);
+
+    return true;
+}
 
 async function askGemini(question) {
 
-    if (!getAPIKey()) {
-        return;
-    }
-
-
-    const memoryData =
-        JSON.stringify(memory);
-
+    if (!getAPIKey()) return;
 
     const prompt = `
 You are D.I.S.C.O, a personal AI assistant.
@@ -341,94 +132,65 @@ Use simple natural Indian English.
 
 Be friendly and helpful.
 
-Do not invent information about the user.
+Saved user memory:
+${JSON.stringify(memory)}
 
-The user's saved local memory is:
-
-${memoryData}
-
-Use this memory when relevant.
-
-User's question:
-
+User question:
 ${question}
 `;
 
-
     try {
 
-        const response =
-            await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/" +
-                MODEL +
-                ":generateContent",
-                {
-                    method: "POST",
+        const response = await fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/" +
+            MODEL +
+            ":generateContent",
+            {
+                method: "POST",
 
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-goog-api-key": apiKey
-                    },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": apiKey
+                },
 
-                    body: JSON.stringify({
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: prompt
+                                }
+                            ]
+                        }
+                    ]
+                })
+            }
+        );
 
-                        contents: [
-                            {
-                                parts: [
-                                    {
-                                        text: prompt
-                                    }
-                                ]
-                            }
-                        ]
+        const data = await response.json();
 
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
+        console.log("Gemini response:", data);
 
         if (!response.ok) {
 
-            console.error(
-                "Gemini error:",
-                data
-            );
-
+            let reason = "Unknown Gemini error.";
 
             if (
-                response.status === 401 ||
-                response.status === 403
+                data &&
+                data.error &&
+                data.error.message
             ) {
-
-                addAI(
-                    "Your Gemini API key is invalid or does not have access, Boss."
-                );
-
-            } else if (
-                response.status === 429
-            ) {
-
-                addAI(
-                    "Gemini's request limit has been reached, Boss."
-                );
-
-            } else {
-
-                addAI(
-                    "Gemini returned an error, Boss."
-                );
+                reason = data.error.message;
             }
+
+            addAI(
+                "Gemini error: " + reason
+            );
 
             return;
         }
 
-
         let answer = "";
-
 
         if (
             data.candidates &&
@@ -436,364 +198,149 @@ ${question}
             data.candidates[0].content &&
             data.candidates[0].content.parts
         ) {
-
-            answer =
-                data.candidates[0].content.parts
-                    .map(function (part) {
-                        return part.text || "";
-                    })
-                    .join("")
-                    .trim();
-
+            answer = data.candidates[0].content.parts
+                .map(part => part.text || "")
+                .join("")
+                .trim();
         }
-
 
         if (!answer) {
-
-            answer =
-                "I could not generate a response, Boss.";
-
+            addAI("Gemini gave an empty response, Boss.");
+            return;
         }
 
-
         addAI(answer);
-
         speak(answer);
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        console.error(
-            "Connection error:",
-            error
-        );
+        console.error(error);
 
         addAI(
-            "I could not connect to Gemini right now, Boss."
+            "Connection error: " + error.message
         );
     }
-
 }
-
-
-// =====================================================
-// SEND MESSAGE
-// =====================================================
 
 async function sendMessage() {
 
-    const text =
-        msg.value.trim();
+    const text = msg.value.trim();
 
-
-    if (!text) {
-        return;
-    }
-
+    if (!text) return;
 
     msg.value = "";
 
+    addMessage(text, "user");
 
-    addMessage(
-        text,
-        "user"
-    );
-
-
-    // MEMORY STATEMENT
-
-    const lower =
-        text.toLowerCase();
-
+    const lower = text.toLowerCase();
 
     if (
         lower.includes("remember that") ||
         lower.includes("remember my")
     ) {
-
         if (remember(text)) {
-
-            addAI(
-                "Got it, Boss. I have saved that in my memory."
-            );
-
+            addAI("Got it, Boss. I have saved that in my memory.");
             return;
         }
     }
 
+    const memoryAnswer = memoryQuestion(text);
 
-    // MEMORY QUESTION
-
-    const savedAnswer =
-        memoryQuestion(text);
-
-
-    if (savedAnswer) {
-
-        addAI(savedAnswer);
-
-        speak(savedAnswer);
-
+    if (memoryAnswer) {
+        addAI(memoryAnswer);
+        speak(memoryAnswer);
         return;
     }
 
-
-    // NORMAL GEMINI QUESTION
-
-    const thinking =
-        document.createElement("div");
-
-    thinking.className =
-        "msg ai";
-
-    thinking.textContent =
-        "D.I.S.C.O: Thinking...";
-
-    chat.appendChild(thinking);
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-
     await askGemini(text);
-
-
-    if (thinking.parentNode) {
-        thinking.remove();
-    }
-
 }
-
-
-// =====================================================
-// SEND BUTTON
-// =====================================================
 
 if (send) {
-
-    send.addEventListener(
-        "click",
-        sendMessage
-    );
-
+    send.onclick = sendMessage;
 }
-
-
-// =====================================================
-// ENTER
-// =====================================================
 
 if (msg) {
-
-    msg.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Enter") {
-
-                event.preventDefault();
-
-                sendMessage();
-
-            }
-
+    msg.onkeydown = function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessage();
         }
-    );
-
+    };
 }
-
-
-// =====================================================
-// CLEAR MEMORY
-// =====================================================
 
 if (clearBtn) {
-
-    clearBtn.addEventListener(
-        "click",
-        function () {
-
-            memory = {};
-
-            localStorage.removeItem(
-                MEMORY_STORAGE
-            );
-
-            addAI(
-                "Memory cleared, Boss."
-            );
-
-        }
-    );
-
+    clearBtn.onclick = function() {
+        memory = {};
+        localStorage.removeItem(MEMORY_STORAGE);
+        addAI("Memory cleared, Boss.");
+    };
 }
-
-
-// =====================================================
-// CHANGE API KEY
-// =====================================================
 
 if (changeKey) {
+    changeKey.onclick = function() {
 
-    changeKey.addEventListener(
-        "click",
-        function () {
+        const key = prompt(
+            "Enter your new Gemini API key:"
+        );
 
-            const newKey =
-                prompt(
-                    "Enter your new Gemini API key:"
-                );
+        if (!key || !key.trim()) return;
 
+        apiKey = key.trim();
 
-            if (!newKey || !newKey.trim()) {
-                return;
-            }
+        localStorage.setItem(
+            API_KEY_STORAGE,
+            apiKey
+        );
 
-
-            apiKey =
-                newKey.trim();
-
-
-            localStorage.setItem(
-                API_KEY_STORAGE,
-                apiKey
-            );
-
-
-            addAI(
-                "API key changed successfully, Boss."
-            );
-
-        }
-    );
-
+        addAI("API key changed, Boss.");
+    };
 }
 
-
-// =====================================================
-// VOICE INPUT
-// =====================================================
-
-const Recognition =
+const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
+if (mic && SpeechRecognition) {
 
-if (mic && Recognition) {
+    const recognition = new SpeechRecognition();
 
-    const recognition =
-        new Recognition();
+    recognition.lang = "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
+    mic.onclick = function() {
 
-    recognition.lang =
-        "en-IN";
-
-
-    recognition.continuous =
-        false;
-
-
-    recognition.interimResults =
-        false;
-
-
-    mic.addEventListener(
-        "click",
-        function () {
-
-            try {
-
-                recognition.start();
-
-                mic.textContent =
-                    "🔴";
-
-            }
-
-            catch (error) {
-
-                console.log(error);
-
-            }
-
+        try {
+            recognition.start();
+            mic.textContent = "🔴";
+        } catch (error) {
+            console.log(error);
         }
-    );
+    };
 
+    recognition.onresult = function(event) {
 
-    recognition.onresult =
-        function (event) {
+        msg.value =
+            event.results[0][0].transcript;
 
-            const text =
-                event.results[0][0].transcript;
+        sendMessage();
+    };
 
-
-            msg.value =
-                text;
-
-
-            sendMessage();
-
-        };
-
-
-    recognition.onend =
-        function () {
-
-            mic.textContent =
-                "🎙️";
-
-        };
-
+    recognition.onend = function() {
+        mic.textContent = "🎙️";
+    };
 }
-
-
-// =====================================================
-// IMAGE BUTTON
-// =====================================================
 
 if (imgBtn && imgInput) {
+    imgBtn.onclick = function() {
+        imgInput.click();
+    };
 
-    imgBtn.addEventListener(
-        "click",
-        function () {
-
-            imgInput.click();
-
+    imgInput.onchange = function() {
+        if (imgInput.files.length) {
+            addAI("Image selected, Boss.");
         }
-    );
-
-
-    imgInput.addEventListener(
-        "change",
-        function () {
-
-            if (
-                imgInput.files &&
-                imgInput.files.length > 0
-            ) {
-
-                addAI(
-                    "Image selected, Boss."
-                );
-
-            }
-
-        }
-    );
-
+    };
 }
 
-
-// =====================================================
-// START
-// =====================================================
-
-console.log(
-    "D.I.S.C.O loaded successfully."
-);
-
-console.log(
-    "Memory:",
-    memory
-);
+console.log("D.I.S.C.O loaded successfully.");
