@@ -1,6 +1,8 @@
 // ==========================================
 // D.I.S.C.O AI
+// FULL SCRIPT
 // ==========================================
+
 
 // ==========================================
 // ELEMENTS
@@ -23,9 +25,11 @@ const imgInput = document.getElementById("img-input");
 let API_KEY = localStorage.getItem("disco_api_key");
 
 function askForAPIKey() {
+
     const key = prompt("Enter your Gemini API Key:");
 
     if (key && key.trim()) {
+
         API_KEY = key.trim();
 
         localStorage.setItem(
@@ -33,7 +37,7 @@ function askForAPIKey() {
             API_KEY
         );
 
-        add(
+        addMessage(
             "D.I.S.C.O: API key saved, Boss.",
             "ai"
         );
@@ -54,22 +58,26 @@ let MEMORY = JSON.parse(
 );
 
 function saveMemory() {
+
     localStorage.setItem(
         "disco_memory",
         JSON.stringify(MEMORY)
     );
 }
 
+
 function addMemory(text) {
-    if (!text) return;
 
     MEMORY.push(text);
 
     saveMemory();
 }
 
+
 function getMemory() {
+
     if (MEMORY.length === 0) {
+
         return "No memories saved.";
     }
 
@@ -81,27 +89,32 @@ function getMemory() {
 // ADD MESSAGE
 // ==========================================
 
-function add(text, type) {
+function addMessage(text, type) {
 
-    const message = document.createElement("div");
+    const message =
+        document.createElement("div");
 
-    message.className = "msg " + type;
+    message.className =
+        "msg " + type;
 
     message.textContent = text;
 
     chat.appendChild(message);
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop =
+        chat.scrollHeight;
 }
 
 
 // ==========================================
-// MEMORY COMMANDS
+// MEMORY PROCESSING
 // ==========================================
 
 function processMemory(text) {
 
-    const lower = text.toLowerCase().trim();
+    const lower =
+        text.toLowerCase().trim();
+
 
     // REMEMBER
     if (
@@ -109,16 +122,18 @@ function processMemory(text) {
         lower.startsWith("remember that ")
     ) {
 
-        let memory = text
-            .replace(/^remember that /i, "")
-            .replace(/^remember /i, "")
-            .trim();
+        let memory =
+            text
+                .replace(/^remember that /i, "")
+                .replace(/^remember /i, "")
+                .trim();
+
 
         if (memory) {
 
             addMemory(memory);
 
-            add(
+            addMessage(
                 "D.I.S.C.O: I'll remember that, Boss.",
                 "ai"
             );
@@ -139,8 +154,9 @@ function processMemory(text) {
         lower === "memory"
     ) {
 
-        add(
-            "D.I.S.C.O MEMORY:\n" + getMemory(),
+        addMessage(
+            "D.I.S.C.O MEMORY:\n" +
+            getMemory(),
             "ai"
         );
 
@@ -158,24 +174,37 @@ function processMemory(text) {
 
 async function sendMessage() {
 
-    const text = input.value.trim();
+    const text =
+        input.value.trim();
 
-    if (!text) return;
 
-    add(text, "user");
+    if (!text) {
 
-    input.value = "";
-
-    // Memory commands
-    if (processMemory(text)) {
         return;
     }
 
-    // Check API key
+
+    addMessage(
+        text,
+        "user"
+    );
+
+
+    input.value = "";
+
+
+    // MEMORY COMMAND
+    if (processMemory(text)) {
+
+        return;
+    }
+
+
+    // API CHECK
     if (!API_KEY) {
 
-        add(
-            "D.I.S.C.O: Please enter your API key, Boss.",
+        addMessage(
+            "D.I.S.C.O: API key required, Boss.",
             "ai"
         );
 
@@ -184,31 +213,40 @@ async function sendMessage() {
         return;
     }
 
-    // Thinking message
-    const thinking = document.createElement("div");
 
-    thinking.className = "msg ai";
+    // PROCESSING MESSAGE
+    const thinking =
+        document.createElement("div");
+
+    thinking.className =
+        "msg ai";
 
     thinking.textContent =
         "D.I.S.C.O: Processing...";
 
     chat.appendChild(thinking);
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop =
+        chat.scrollHeight;
 
 
     try {
 
-        const reply = await askGemini(text);
+        const reply =
+            await askGemini(text);
+
 
         thinking.remove();
 
-        add(
+
+        addMessage(
             reply,
             "ai"
         );
 
+
         speak(reply);
+
 
     } catch (error) {
 
@@ -216,8 +254,8 @@ async function sendMessage() {
 
         console.error(error);
 
-        add(
-            "D.I.S.C.O: Error connecting to Gemini, Boss.",
+        addMessage(
+            "D.I.S.C.O: Gemini connection error, Boss.",
             "ai"
         );
     }
@@ -235,44 +273,59 @@ async function askGemini(text) {
         + API_KEY;
 
 
+    const memoryText =
+        getMemory();
+
+
     const prompt =
         "You are D.I.S.C.O, a helpful AI assistant. " +
-        "Answer clearly and simply. " +
         "Call the user Boss. " +
-        "Do not repeat the same answer for different questions.\n\n" +
-        "User: " + text;
+        "Answer clearly and simply. " +
+        "Give different answers depending on the user's question.\n\n" +
+
+        "USER MEMORY:\n" +
+        memoryText +
+        "\n\nUSER MESSAGE:\n" +
+        text;
 
 
-    const response = await fetch(
-        url,
-        {
-            method: "POST",
+    const response =
+        await fetch(
+            url,
+            {
+                method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            {
-                                text: prompt
-                            }
-                        ]
-                    }
-                ]
-            })
-        }
-    );
+                body: JSON.stringify({
+
+                    contents: [
+
+                        {
+                            parts: [
+
+                                {
+                                    text: prompt
+                                }
+
+                            ]
+                        }
+
+                    ]
+                })
+            }
+        );
 
 
     if (!response.ok) {
 
-        const errorText =
+        const error =
             await response.text();
 
-        console.error(errorText);
+        console.error(error);
 
         throw new Error(
             "Gemini API Error"
@@ -285,318 +338,6 @@ async function askGemini(text) {
 
 
     const reply =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-
-    if (!reply) {
-
-        throw new Error(
-            "No Gemini response"
-        );
-    }
-
-
-    return reply;
-}
-
-
-// ==========================================
-// SEND BUTTON
-// ==========================================
-
-if (send) {
-
-    send.addEventListener(
-        "click",
-        sendMessage
-    );
-}
-
-
-// ==========================================
-// ENTER KEY
-// ==========================================
-
-if (input) {
-
-    input.addEventListener(
-        "keydown",
-        function (event) {
-
-            if (event.key === "Enter") {
-
-                event.preventDefault();
-
-                sendMessage();
-            }
-        }
-    );
-}
-
-
-// ==========================================
-// CHANGE API KEY
-// ==========================================
-
-if (changeKey) {
-
-    changeKey.addEventListener(
-        "click",
-        function () {
-
-            const key = prompt(
-                "Enter your new Gemini API Key:"
-            );
-
-            if (key && key.trim()) {
-
-                API_KEY = key.trim();
-
-                localStorage.setItem(
-                    "disco_api_key",
-                    API_KEY
-                );
-
-                add(
-                    "D.I.S.C.O: API key changed, Boss.",
-                    "ai"
-                );
-            }
-        }
-    );
-}
-
-
-// ==========================================
-// CLEAR MEMORY
-// ==========================================
-
-if (clearBtn) {
-
-    clearBtn.addEventListener(
-        "click",
-        function () {
-
-            const confirmClear =
-                confirm(
-                    "Clear all D.I.S.C.O memory?"
-                );
-
-            if (!confirmClear) return;
-
-            MEMORY = [];
-
-            localStorage.removeItem(
-                "disco_memory"
-            );
-
-            add(
-                "D.I.S.C.O: Memory cleared, Boss.",
-                "ai"
-            );
-
-            speak(
-                "Memory cleared, Boss."
-            );
-        }
-    );
-}
-
-
-// ==========================================
-// MICROPHONE
-// ==========================================
-
-let recognition = null;
-
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-
-if (SpeechRecognition) {
-
-    recognition =
-        new SpeechRecognition();
-
-    recognition.lang = "en-IN";
-
-    recognition.continuous = false;
-
-    recognition.interimResults = false;
-
-
-    recognition.onstart = function () {
-
-        if (mic) {
-            mic.textContent = "🔴";
-        }
-    };
-
-
-    recognition.onend = function () {
-
-        if (mic) {
-            mic.textContent = "🎙️";
-        }
-    };
-
-
-    recognition.onerror = function (event) {
-
-        console.error(
-            "Microphone error:",
-            event.error
-        );
-
-        if (mic) {
-            mic.textContent = "🎙️";
-        }
-    };
-
-
-    recognition.onresult =
-        function (event) {
-
-            const result =
-                event.results[0][0].transcript;
-
-            input.value = result;
-
-            sendMessage();
-        };
-
-
-    if (mic) {
-
-        mic.addEventListener(
-            "click",
-            function () {
-
-                try {
-
-                    recognition.start();
-
-                } catch (error) {
-
-                    console.error(error);
-                }
-            }
-        );
-    }
-
-} else {
-
-    if (mic) {
-
-        mic.addEventListener(
-            "click",
-            function () {
-
-                add(
-                    "D.I.S.C.O: Speech recognition is not supported in this browser, Boss.",
-                    "ai"
-                );
-            }
-        );
-    }
-}
-
-
-// ==========================================
-// IMAGE BUTTON
-// ==========================================
-
-if (imgBtn && imgInput) {
-
-    imgBtn.addEventListener(
-        "click",
-        function () {
-
-            imgInput.click();
-
-        }
-    );
-
-
-    imgInput.addEventListener(
-        "change",
-        function () {
-
-            const file =
-                imgInput.files[0];
-
-            if (!file) return;
-
-
-            add(
-                "Image selected: " + file.name,
-                "user"
-            );
-
-
-            add(
-                "D.I.S.C.O: Image received, Boss.",
-                "ai"
-            );
-
-
-            speak(
-                "Image received, Boss."
-            );
-        }
-    );
-}
-
-
-// ==========================================
-// VOICE OUTPUT
-// ==========================================
-
-function speak(text) {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-
-    window.speechSynthesis.cancel();
-
-
-    const cleanText =
-        text
-            .replace(/[*#_`]/g, "")
-            .trim();
-
-
-    if (!cleanText) return;
-
-
-    const speech =
-        new SpeechSynthesisUtterance(
-            cleanText
-        );
-
-
-    speech.lang = "en-IN";
-
-    speech.rate = 0.9;
-
-    speech.pitch = 1;
-
-
-    window.speechSynthesis.speak(
-        speech
-    );
-}
-
-
-// ==========================================
-// STARTUP MESSAGE
-// ==========================================
-
-console.log(
-    "D.I.S.C.O script loaded successfully."
-);
+        data
+        ?.candidates
+        ?.[
