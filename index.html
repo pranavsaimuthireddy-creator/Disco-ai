@@ -1,58 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>D.I.S.C.O AI</title>
 
-    <link rel="stylesheet" href="style.css?v=1001">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div class="scanlines"></div>
+    <div class="background-grid"></div>
 
-    <!-- HEADER -->
     <header>
-
         <div class="top-bar">
-            <span class="menu-icon">☰</span>
-
-            <span class="system-online">
+            <span class="menu">☰</span>
+            <span class="online">
                 ● SYSTEM ONLINE
             </span>
-
-            <span class="bot-icon">◉</span>
+            <span>◉</span>
         </div>
 
         <h1>D.I.S.C.O</h1>
-
         <p>MOBILE AI SYSTEM</p>
-
     </header>
 
 
     <!-- CORE -->
+
     <section class="core-section">
 
         <div class="core">
 
-            <div class="core-ring ring-outer"></div>
-            <div class="core-ring ring-middle"></div>
-            <div class="core-ring ring-inner"></div>
+            <div class="ring ring1"></div>
+            <div class="ring ring2"></div>
+            <div class="ring ring3"></div>
 
-            <div class="core-lines"></div>
-
-            <div class="core-centre">
-
+            <div class="core-text">
                 <strong>D.I.S.C.O</strong>
-
                 <span>CORE ACTIVE</span>
-
                 <i></i>
-
             </div>
 
         </div>
@@ -60,8 +48,9 @@
     </section>
 
 
-    <!-- SYSTEM STATUS -->
-    <section class="status-panel">
+    <!-- STATUS -->
+
+    <section class="panel">
 
         <div class="panel-title">
             ⚡ SYSTEM STATUS
@@ -70,25 +59,25 @@
         <div class="status-grid">
 
             <div class="status-card">
-                <div class="status-icon">▣</div>
+                <div class="icon">▣</div>
                 <h3>AI CORE</h3>
                 <span>● ONLINE</span>
             </div>
 
             <div class="status-card">
-                <div class="status-icon">⌁</div>
+                <div class="icon">⌁</div>
                 <h3>NETWORK</h3>
                 <span>● ONLINE</span>
             </div>
 
             <div class="status-card">
-                <div class="status-icon">🎙</div>
+                <div class="icon">♬</div>
                 <h3>VOICE</h3>
                 <span>● READY</span>
             </div>
 
             <div class="status-card">
-                <div class="status-icon">🧠</div>
+                <div class="icon">🧠</div>
                 <h3>MEMORY</h3>
                 <span>● ONLINE</span>
             </div>
@@ -99,28 +88,22 @@
 
 
     <!-- CHAT -->
+
     <section class="chat-panel">
 
         <div class="terminal">
 
-            <div class="terminal-bar">
-
-                <div class="terminal-dots">
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                </div>
-
-                <span>D.I.S.C.O TERMINAL</span>
-
+            <div class="terminal-top">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
-
 
             <div id="chat" class="chat">
 
                 <div class="msg ai">
-                    <b>D.I.S.C.O:</b>
-                    Systems online.<br>
+                    D.I.S.C.O: Systems online.
+                    <br>
                     How may I assist you, Boss?
                 </div>
 
@@ -132,67 +115,66 @@
 
 
     <!-- INPUT -->
+
     <section class="input-section">
 
-        <input
-            id="msg"
-            type="text"
-            placeholder="Ask D.I.S.C.O..."
-            autocomplete="off"
-        >
+        <div class="input-box">
 
+            <input
+                id="msg"
+                type="text"
+                placeholder="Ask D.I.S.C.O..."
+                autocomplete="off"
+            >
 
-        <div class="button-row">
+            <div class="buttons">
 
-            <button id="send" class="send-btn">
-                SEND
-            </button>
+                <button id="send" type="button">
+                    SEND
+                </button>
 
-            <button id="mic" class="icon-btn">
-                🎙️
-            </button>
+                <button id="mic" type="button">
+                    🎙️
+                </button>
 
-            <button id="clear-btn" class="icon-btn">
-                🗑️
-            </button>
+                <button id="clear-btn" type="button">
+                    🗑️
+                </button>
 
-            <button id="change-key" class="key-btn">
-                🔑
-            </button>
+                <button id="change-key" type="button">
+                    🔑
+                </button>
 
-            <button id="img-btn" class="icon-btn">
-                🖼️
-            </button>
+                <button id="img-btn" type="button">
+                    🖼️
+                </button>
+
+                <input
+                    id="img-input"
+                    type="file"
+                    accept="image/*"
+                    hidden
+                >
+
+            </div>
 
         </div>
-
-
-        <input
-            type="file"
-            id="img-input"
-            accept="image/*"
-            hidden
-        >
 
     </section>
 
 
     <!-- FOOTER -->
+
     <footer>
-
         <span>‹‹</span>
-
-        <strong>
-            D.I.S.C.O: ALWAYS WITH YOU
-        </strong>
-
+        <strong>D.I.S.C.O : ALWAYS WITH YOU</strong>
         <span>››</span>
-
     </footer>
 
 
-    <script src="script.js?v=1001"></script>
+    <!-- IMPORTANT: CACHE BUSTER -->
+
+    <script src="script.js?v=2001"></script>
 
 </body>
-
 </html>
