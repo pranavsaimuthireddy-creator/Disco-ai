@@ -10,7 +10,7 @@ const MEMORY_NAME = "disco_memory";
 
 
 /* =========================
-   GET HTML ELEMENTS
+   HTML ELEMENTS
 ========================= */
 
 const chat = document.getElementById("chat");
@@ -36,8 +36,7 @@ function askForApiKey() {
 
     let key = prompt(
         "D.I.S.C.O needs your Gemini API key.\n\n" +
-        "Enter your API key below.\n\n" +
-        "Do not share your API key with anyone."
+        "Enter your API key below."
     );
 
     if (!key) {
@@ -57,7 +56,7 @@ function askForApiKey() {
 
 
 /* =========================
-   MEMORY SYSTEM
+   MEMORY
 ========================= */
 
 function getMemory() {
@@ -75,7 +74,7 @@ function getMemory() {
 
     } catch (error) {
 
-        console.log("Memory error:", error);
+        console.log("Memory read error:", error);
 
         return {};
     }
@@ -92,7 +91,7 @@ function saveMemory(memory) {
 
 
 /* =========================
-   SAVE USER MEMORY
+   EXTRACT MEMORY
 ========================= */
 
 function extractMemory(text) {
@@ -102,18 +101,26 @@ function extractMemory(text) {
     let changed = false;
 
 
-    /* NAME */
+    /*
+    NAME
+
+    Correctly handles:
+
+    my name is Pranav
+    my name is Pranav and my favourite colour is blue
+    I am Pranav
+    I'm Pranav
+    */
 
     const nameMatch = text.match(
-        /(?:my name is|i am|i'm)\s+([a-zA-Z][a-zA-Z ]{1,30})/i
+        /(?:my\s+name\s+is|i\s+am|i'm)\s+([a-zA-Z]+)(?=\s+and\s+my\s+favo[u]?rite|\s*[,.!?]|$)/i
     );
+
 
     if (nameMatch) {
 
-        let name =
-            nameMatch[1]
-                .trim()
-                .replace(/[.!?,]+$/, "");
+        const name =
+            nameMatch[1].trim();
 
         if (name) {
 
@@ -124,51 +131,126 @@ function extractMemory(text) {
     }
 
 
-    /* FAVOURITE COLOUR */
+    /*
+    FAVOURITE COLOUR
+
+    Handles:
+
+    my favourite colour is blue
+    my favorite color is blue
+    */
 
     const colourMatch = text.match(
-        /(?:my favourite colour is|my favorite color is|my favourite color is|my favorite colour is)\s+([a-zA-Z]+)/i
+        /my\s+favo[u]?rite\s+colou?r\s+is\s+([a-zA-Z]+)/i
     );
+
 
     if (colourMatch) {
 
-        memory.favouriteColour =
+        const colour =
             colourMatch[1].trim();
 
-        changed = true;
+        if (colour) {
+
+            memory.favouriteColour =
+                colour;
+
+            changed = true;
+        }
     }
 
-
-    /* SAVE */
 
     if (changed) {
 
         saveMemory(memory);
 
-        return true;
+        console.log(
+            "MEMORY SAVED:",
+            memory
+        );
     }
 
-    return false;
+
+    return changed;
 }
 
 
 /* =========================
-   MEMORY QUESTIONS
+   MEMORY ANSWERS
 ========================= */
 
 function answerFromMemory(text) {
 
-    const memory = getMemory();
+    const memory =
+        getMemory();
 
     const lower =
-        text.toLowerCase();
+        text.toLowerCase().trim();
 
 
-    /* NAME */
+    /*
+    BOTH NAME + COLOUR
+    */
+
+    const asksName =
+        lower.includes("my name");
+
+    const asksColour =
+        lower.includes("favourite colour") ||
+        lower.includes("favorite color") ||
+        lower.includes("favourite color") ||
+        lower.includes("favorite colour");
+
+
+    if (
+        asksName &&
+        asksColour
+    ) {
+
+        let answer = "";
+
+
+        if (memory.name) {
+
+            answer +=
+                "Your name is " +
+                memory.name +
+                ", Boss.";
+        } else {
+
+            answer +=
+                "I don't know your name yet, Boss.";
+        }
+
+
+        answer += "\n";
+
+
+        if (memory.favouriteColour) {
+
+            answer +=
+                "Your favourite colour is " +
+                memory.favouriteColour +
+                ", Boss.";
+        } else {
+
+            answer +=
+                "I don't know your favourite colour yet, Boss.";
+        }
+
+
+        return answer;
+    }
+
+
+    /*
+    NAME ONLY
+    */
 
     if (
         lower.includes("what is my name") ||
         lower.includes("what's my name") ||
+        lower.includes("tell me my name") ||
         lower.includes("do you know my name")
     ) {
 
@@ -181,19 +263,24 @@ function answerFromMemory(text) {
             );
         }
 
+
         return (
             "I don't know your name yet, Boss."
         );
     }
 
 
-    /* FAVOURITE COLOUR */
+    /*
+    COLOUR ONLY
+    */
 
     if (
         lower.includes("what is my favourite colour") ||
         lower.includes("what's my favourite colour") ||
+        lower.includes("tell me my favourite colour") ||
         lower.includes("what is my favorite color") ||
-        lower.includes("what's my favorite color")
+        lower.includes("what's my favorite color") ||
+        lower.includes("tell me my favorite color")
     ) {
 
         if (memory.favouriteColour) {
@@ -205,22 +292,26 @@ function answerFromMemory(text) {
             );
         }
 
+
         return (
             "I don't know your favourite colour yet, Boss."
         );
     }
 
 
-    /* SHOW MEMORY */
+    /*
+    SHOW ALL MEMORY
+    */
 
     if (
-        lower.includes("what do you remember about me") ||
         lower.includes("what do you remember") ||
-        lower.includes("show my memory")
+        lower.includes("show my memory") ||
+        lower.includes("what do you remember about me")
     ) {
 
         const keys =
             Object.keys(memory);
+
 
         if (keys.length === 0) {
 
@@ -229,54 +320,32 @@ function answerFromMemory(text) {
             );
         }
 
-        let result =
-            "Here is what I remember about you, Boss:\n\n";
+
+        let answer =
+            "Here is what I remember about you, Boss:\n";
 
 
         if (memory.name) {
 
-            result +=
-                "Name: " +
-                memory.name +
-                "\n";
+            answer +=
+                "\nName: " +
+                memory.name;
         }
 
 
         if (memory.favouriteColour) {
 
-            result +=
-                "Favourite colour: " +
-                memory.favouriteColour +
-                "\n";
+            answer +=
+                "\nFavourite colour: " +
+                memory.favouriteColour;
         }
 
 
-        return result;
+        return answer;
     }
 
 
     return null;
-}
-
-
-/* =========================
-   CLEAR MEMORY
-========================= */
-
-function clearMemory() {
-
-    localStorage.removeItem(
-        MEMORY_NAME
-    );
-
-    addMessage(
-        "ai",
-        "D.I.S.C.O: Memory cleared, Boss."
-    );
-
-    speak(
-        "Memory cleared, Boss."
-    );
 }
 
 
@@ -295,15 +364,12 @@ function addMessage(type, text) {
     message.textContent =
         text;
 
-    chat.appendChild(
-        message
-    );
+    chat.appendChild(message);
 
 
     const terminal =
-        document.querySelector(
-            ".chat-terminal"
-        );
+        document.querySelector(".chat-terminal");
+
 
     if (terminal) {
 
@@ -314,13 +380,10 @@ function addMessage(type, text) {
 
 
 /* =========================
-   GEMINI AI
+   GEMINI
 ========================= */
 
-async function askGemini(
-    userText,
-    imageData = null
-) {
+async function askGemini(userText, imageData = null) {
 
     let apiKey =
         getApiKey();
@@ -330,6 +393,7 @@ async function askGemini(
 
         apiKey =
             askForApiKey();
+
 
         if (!apiKey) {
 
@@ -345,57 +409,44 @@ async function askGemini(
 
 
     const memoryText =
-        Object.keys(memory).length > 0
-            ? JSON.stringify(memory)
-            : "No saved memory.";
+        JSON.stringify(memory);
 
-
-    /*
-       INDIAN ENGLISH AI INSTRUCTION
-    */
 
     const systemInstruction = `
 You are D.I.S.C.O, a helpful personal AI assistant.
 
 Always call the user "Boss".
 
-Use natural Indian English in every response.
+Use natural Indian English.
 
-Use clear, simple English commonly understood in India.
+Use simple, clear English commonly understood in India.
 
-Use natural Indian English spelling, grammar, vocabulary and phrasing where appropriate.
+Use Indian English spelling and phrasing where appropriate.
 
-Do not use unnecessarily complicated British or American expressions.
+Never invent information about the user.
 
-Keep answers friendly, clear, natural and easy to understand.
-
-You have a small local memory supplied by the website.
+The website has saved memory.
 
 Saved memory:
 ${memoryText}
 
-Use the saved memory when answering questions about the user.
+Use this memory when the user asks about themselves.
 
-If the user tells you something to remember, acknowledge it naturally.
-
-Do not invent memories.
-
-Do not claim to remember information that is not in the saved memory.
+If something is not in the saved memory, say that you do not know it.
 `;
 
 
-    const parts = [];
+    const parts = [
 
+        {
+            text:
+                systemInstruction +
+                "\n\nUser message:\n" +
+                userText
+        }
 
-    parts.push({
-        text:
-            systemInstruction +
-            "\n\nUser message:\n" +
-            userText
-    });
+    ];
 
-
-    /* IMAGE */
 
     if (imageData) {
 
@@ -415,7 +466,7 @@ Do not claim to remember information that is not in the saved memory.
         parts.push({
 
             text:
-                "Analyse the uploaded image and answer the user's request."
+                "Analyse this image and answer the user's request."
         });
     }
 
@@ -467,13 +518,9 @@ Do not claim to remember information that is not in the saved memory.
         );
 
 
-        const errorMessage =
-            data?.error?.message ||
-            "Gemini request failed.";
-
-
         throw new Error(
-            errorMessage
+            data?.error?.message ||
+            "Gemini request failed."
         );
     }
 
@@ -482,8 +529,8 @@ Do not claim to remember information that is not in the saved memory.
         data
             ?.candidates?.[0]
             ?.content?.parts
-            ?.map(part =>
-                part.text || ""
+            ?.map(
+                part => part.text || ""
             )
             ?.join("")
             ?.trim();
@@ -525,530 +572,25 @@ async function sendMessage() {
     input.value = "";
 
 
-    /* SAVE MEMORY */
+    /*
+    STEP 1:
+    SAVE MEMORY FIRST
+    */
 
     const remembered =
         extractMemory(text);
 
 
-    /* CHECK MEMORY */
+    /*
+    STEP 2:
+    CHECK LOCAL MEMORY FIRST
+
+    Gemini is NOT called if
+    this is a memory question.
+    */
 
     const memoryAnswer =
         answerFromMemory(text);
 
 
-    if (memoryAnswer) {
-
-        addMessage(
-            "ai",
-            "D.I.S.C.O: " +
-            memoryAnswer
-        );
-
-        speak(
-            memoryAnswer
-        );
-
-        return;
-    }
-
-
-    /* MEMORY CONFIRMATION */
-
-    if (remembered) {
-
-        const memory =
-            getMemory();
-
-        let savedItems = [];
-
-
-        if (memory.name) {
-
-            savedItems.push(
-                "Name: " +
-                memory.name
-            );
-        }
-
-
-        if (memory.favouriteColour) {
-
-            savedItems.push(
-                "Favourite colour: " +
-                memory.favouriteColour
-            );
-        }
-
-
-        const confirmation =
-            "I'll remember that, Boss.\n\n" +
-            savedItems.join("\n");
-
-
-        addMessage(
-            "ai",
-            "D.I.S.C.O: " +
-            confirmation
-        );
-
-
-        speak(
-            confirmation
-        );
-
-
-        return;
-    }
-
-
-    /* PROCESSING MESSAGE */
-
-    const thinking =
-        document.createElement("div");
-
-
-    thinking.className =
-        "msg ai";
-
-
-    thinking.textContent =
-        "D.I.S.C.O: Processing...";
-
-
-    chat.appendChild(
-        thinking
-    );
-
-
-    try {
-
-        const answer =
-            await askGemini(text);
-
-
-        thinking.remove();
-
-
-        addMessage(
-            "ai",
-            "D.I.S.C.O: " +
-            answer
-        );
-
-
-        speak(answer);
-
-    } catch (error) {
-
-        thinking.remove();
-
-
-        addMessage(
-            "ai",
-            "D.I.S.C.O: " +
-            error.message
-        );
-
-
-        console.log(
-            "D.I.S.C.O error:",
-            error
-        );
-    }
-}
-
-
-/* =========================
-   SEND BUTTON
-========================= */
-
-if (send) {
-
-    send.addEventListener(
-        "click",
-        sendMessage
-    );
-}
-
-
-/* =========================
-   ENTER KEY
-========================= */
-
-if (input) {
-
-    input.addEventListener(
-        "keydown",
-        function(event) {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                event.preventDefault();
-
-                sendMessage();
-            }
-
-        }
-    );
-}
-
-
-/* =========================
-   CLEAR BUTTON
-========================= */
-
-if (clearBtn) {
-
-    clearBtn.addEventListener(
-        "click",
-        function() {
-
-            const answer =
-                confirm(
-                    "Clear D.I.S.C.O memory?"
-                );
-
-
-            if (answer) {
-
-                clearMemory();
-            }
-
-        }
-    );
-}
-
-
-/* =========================
-   CHANGE API KEY
-========================= */
-
-if (changeKey) {
-
-    changeKey.addEventListener(
-        "click",
-        function() {
-
-            const answer =
-                confirm(
-                    "Do you want to change your Gemini API key?"
-                );
-
-
-            if (!answer) {
-                return;
-            }
-
-
-            localStorage.removeItem(
-                KEY_NAME
-            );
-
-
-            const newKey =
-                askForApiKey();
-
-
-            if (newKey) {
-
-                addMessage(
-                    "ai",
-                    "D.I.S.C.O: API key changed, Boss."
-                );
-            }
-
-        }
-    );
-}
-
-
-/* =========================
-   VOICE INPUT
-========================= */
-
-let recognition = null;
-
-
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-
-if (SpeechRecognition) {
-
-    recognition =
-        new SpeechRecognition();
-
-
-    /*
-       INDIAN ENGLISH VOICE INPUT
-    */
-
-    recognition.lang =
-        "en-IN";
-
-
-    recognition.continuous =
-        false;
-
-
-    recognition.interimResults =
-        false;
-
-
-    recognition.onstart =
-        function() {
-
-            if (mic) {
-
-                mic.textContent =
-                    "🔴";
-            }
-        };
-
-
-    recognition.onend =
-        function() {
-
-            if (mic) {
-
-                mic.textContent =
-                    "🎙️";
-            }
-        };
-
-
-    recognition.onerror =
-        function() {
-
-            if (mic) {
-
-                mic.textContent =
-                    "🎙️";
-            }
-        };
-
-
-    recognition.onresult =
-        function(event) {
-
-            const spoken =
-                event.results[0][0]
-                    .transcript;
-
-
-            input.value =
-                spoken;
-
-
-            sendMessage();
-        };
-
-
-    if (mic) {
-
-        mic.addEventListener(
-            "click",
-            function() {
-
-                try {
-
-                    recognition.start();
-
-                } catch (error) {
-
-                    console.log(
-                        "Voice error:",
-                        error
-                    );
-                }
-
-            }
-        );
-    }
-
-} else {
-
-    if (mic) {
-
-        mic.addEventListener(
-            "click",
-            function() {
-
-                alert(
-                    "Voice input is not supported by this browser."
-                );
-
-            }
-        );
-    }
-}
-
-
-/* =========================
-   VOICE OUTPUT
-========================= */
-
-function speak(text) {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-
-    speechSynthesis.cancel();
-
-
-    const cleanText =
-        text
-            .replace(
-                /[*_#`]/g,
-                ""
-            )
-            .trim();
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            cleanText
-        );
-
-
-    /*
-       INDIAN ENGLISH VOICE
-    */
-
-    utterance.lang =
-        "en-IN";
-
-
-    utterance.rate =
-        0.95;
-
-
-    utterance.pitch =
-        1;
-
-
-    speechSynthesis.speak(
-        utterance
-    );
-}
-
-
-/* =========================
-   IMAGE BUTTON
-========================= */
-
-if (imgBtn && imgInput) {
-
-    imgBtn.addEventListener(
-        "click",
-        function() {
-
-            imgInput.click();
-        }
-    );
-
-
-    imgInput.addEventListener(
-        "change",
-        async function() {
-
-            const file =
-                imgInput.files[0];
-
-
-            if (!file) {
-                return;
-            }
-
-
-            if (
-                !file.type.startsWith(
-                    "image/"
-                )
-            ) {
-
-                alert(
-                    "Please select an image."
-                );
-
-                return;
-            }
-
-
-            addMessage(
-                "user",
-                "🖼️ Image uploaded"
-            );
-
-
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                async function(event) {
-
-                    const result =
-                        event.target.result;
-
-
-                    const base64 =
-                        result.split(",")[1];
-
-
-                    const thinking =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    thinking.className =
-                        "msg ai";
-
-
-                    thinking.textContent =
-                        "D.I.S.C.O: Analysing image...";
-
-
-                    chat.appendChild(
-                        thinking
-                    );
-
-
-                    try {
-
-                        const answer =
-                            await askGemini(
-
-                                "Analyse this image and describe what you see.",
-
-                                {
-
-                                    mimeType:
-                                        file.type,
-
-                                    base64:
-                                        base64
-                                }
-                            );
-
-
-                        thinking.remove();
-
-
-                        addMessage(
-                            "ai",
-                            "D.I.S.C.O: " +
-                            answer
-                        );
-
-
-                        speak(answer);
+    if (memory
