@@ -1,560 +1,919 @@
 /* =========================================
-   D.I.S.C.O MOBILE AI SYSTEM
-   RESTORED MOBILE UI
+   D.I.S.C.O AI
+   GEMINI + MEMORY + VOICE
 ========================================= */
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+
+/* =========================
+   SETTINGS
+========================= */
+
+const MODEL = "gemini-3.8-flash";
+
+const KEY_STORAGE = "disco_api_key";
+
+const MEMORY_STORAGE = "disco_memory";
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const chat =
+    document.getElementById("chat");
+
+const msg =
+    document.getElementById("msg");
+
+const send =
+    document.getElementById("send");
+
+const mic =
+    document.getElementById("mic");
+
+const clearBtn =
+    document.getElementById("clear-btn");
+
+const changeKey =
+    document.getElementById("change-key");
+
+const imgBtn =
+    document.getElementById("img-btn");
+
+const imgInput =
+    document.getElementById("img-input");
+
+
+/* =========================
+   DATA
+========================= */
+
+let apiKey =
+    localStorage.getItem(KEY_STORAGE) || "";
+
+let memory =
+    JSON.parse(
+        localStorage.getItem(MEMORY_STORAGE) || "{}"
+    );
+
+
+/* =========================
+   CHAT DISPLAY
+========================= */
+
+function addUser(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.className = "msg user";
+
+    div.textContent = text;
+
+    chat.appendChild(div);
+
+    chat.scrollTop =
+        chat.scrollHeight;
 }
 
-html {
-    scroll-behavior: smooth;
+
+function addAI(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.className = "msg ai";
+
+    div.innerHTML =
+        "<b>D.I.S.C.O:</b> " +
+        escapeHTML(text)
+        .replace(/\n/g, "<br>");
+
+    chat.appendChild(div);
+
+    chat.scrollTop =
+        chat.scrollHeight;
 }
 
-body {
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at 50% 25%, rgba(0, 220, 255, 0.12), transparent 32%),
-        radial-gradient(circle at 20% 70%, rgba(0, 100, 255, 0.08), transparent 30%),
-        #02070b;
-    color: #00f6ff;
-    font-family: "Orbitron", Arial, sans-serif;
-    overflow-x: hidden;
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
 }
 
-/* =========================================
-   BACKGROUND
-========================================= */
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-        linear-gradient(
-            rgba(0, 255, 255, 0.025) 1px,
-            transparent 1px
+/* =========================
+   MEMORY
+========================= */
+
+function saveMemory() {
+
+    localStorage.setItem(
+        MEMORY_STORAGE,
+        JSON.stringify(memory)
+    );
+}
+
+
+function rememberUser(text) {
+
+    let saved = false;
+
+
+    /* NAME */
+
+    const nameMatch =
+        text.match(
+            /my\s+name\s+is\s+([a-zA-Z][a-zA-Z\s]{0,30})/i
         );
-    background-size: 100% 4px;
-    z-index: -1;
-}
 
-.scanlines {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 3px,
-            rgba(0, 255, 255, 0.025) 4px
+    if (nameMatch) {
+
+        memory.name =
+            nameMatch[1]
+                .trim()
+                .split(/\s+/)[0];
+
+        saved = true;
+    }
+
+
+    /* FAVOURITE COLOUR */
+
+    const colourMatch =
+        text.match(
+            /my\s+favou?rite\s+colou?r\s+is\s+([a-zA-Z]+)/i
         );
-    z-index: 20;
-}
 
-/* =========================================
-   HEADER
-========================================= */
+    if (colourMatch) {
 
-header {
-    text-align: center;
-    padding: 22px 15px 8px;
-}
+        memory.colour =
+            colourMatch[1].trim();
 
-.top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    margin-bottom: 10px;
-    color: #00eaff;
-}
-
-.menu-icon {
-    font-size: 20px;
-}
-
-.system-online {
-    color: #00ff9d;
-    font-size: 10px;
-}
-
-.bot-icon {
-    font-size: 20px;
-}
-
-header h1 {
-    font-size: 36px;
-    letter-spacing: 7px;
-    color: #00f6ff;
-    text-shadow:
-        0 0 8px #00f6ff,
-        0 0 25px rgba(0, 246, 255, 0.8);
-}
-
-header p {
-    margin-top: 4px;
-    font-size: 11px;
-    letter-spacing: 5px;
-    color: #1597ad;
-}
-
-/* =========================================
-   CORE
-========================================= */
-
-.core-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 35px 0 42px;
-}
-
-.core {
-    position: relative;
-    width: 350px;
-    height: 350px;
-    max-width: 85vw;
-    max-height: 85vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.core-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 2px solid #00eaff;
-    box-shadow:
-        0 0 10px #00eaff,
-        inset 0 0 10px rgba(0, 234, 255, 0.5);
-}
-
-.ring-outer {
-    width: 100%;
-    height: 100%;
-    border-style: dotted;
-    animation: rotate 18s linear infinite;
-}
-
-.ring-middle {
-    width: 86%;
-    height: 86%;
-    border-color: #0077ff;
-    animation: rotateReverse 12s linear infinite;
-}
-
-.ring-inner {
-    width: 68%;
-    height: 68%;
-    animation: pulse 3s ease-in-out infinite;
-}
-
-.core-lines {
-    position: absolute;
-    width: 54%;
-    height: 54%;
-    border-radius: 50%;
-    border: 1px solid rgba(0, 234, 255, 0.2);
-}
-
-.core-centre {
-    position: absolute;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.core-centre strong {
-    font-size: 23px;
-    letter-spacing: 3px;
-    text-shadow: 0 0 12px #00eaff;
-}
-
-.core-centre span {
-    margin-top: 12px;
-    font-size: 11px;
-    color: #00d991;
-    letter-spacing: 1px;
-}
-
-.core-centre i {
-    display: block;
-    width: 12px;
-    height: 12px;
-    margin-top: 12px;
-    border-radius: 50%;
-    background: #00ff9d;
-    box-shadow: 0 0 15px #00ff9d;
-}
-
-/* =========================================
-   SYSTEM STATUS
-========================================= */
-
-.panel {
-    width: calc(100% - 30px);
-    max-width: 700px;
-    margin: 0 auto;
-}
-
-.panel-title {
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(0, 234, 255, 0.3);
-    font-size: 15px;
-    letter-spacing: 2px;
-    color: #00eaff;
-}
-
-.status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin-top: 18px;
-}
-
-.status-card {
-    min-height: 130px;
-    padding: 18px;
-    border: 1px solid rgba(0, 234, 255, 0.25);
-    border-radius: 13px;
-    background:
-        linear-gradient(
-            145deg,
-            rgba(0, 60, 75, 0.22),
-            rgba(0, 10, 16, 0.8)
-        );
-    box-shadow:
-        inset 0 0 20px rgba(0, 234, 255, 0.03),
-        0 0 8px rgba(0, 234, 255, 0.04);
-}
-
-.status-icon {
-    font-size: 23px;
-    margin-bottom: 16px;
-    color: #00eaff;
-}
-
-.status-card h3 {
-    font-size: 13px;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-}
-
-.status-online {
-    color: #00ff9d;
-    font-size: 10px;
-}
-
-/* =========================================
-   CHAT
-========================================= */
-
-.chat-panel {
-    width: calc(100% - 30px);
-    max-width: 700px;
-    margin: 28px auto 0;
-}
-
-.chat-terminal {
-    height: 270px;
-    border: 1px solid rgba(0, 234, 255, 0.35);
-    border-radius: 14px;
-    background: rgba(0, 5, 9, 0.88);
-    overflow: hidden;
-    box-shadow:
-        inset 0 0 30px rgba(0, 234, 255, 0.035),
-        0 0 15px rgba(0, 234, 255, 0.05);
-}
-
-.terminal-dots {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 0 15px;
-    border-bottom: 1px solid rgba(0, 234, 255, 0.18);
-}
-
-.terminal-dots span {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #00b7cc;
-    box-shadow: 0 0 8px #00b7cc;
-}
-
-.chat {
-    height: calc(100% - 40px);
-    padding: 14px;
-    overflow-y: auto;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-.chat::-webkit-scrollbar {
-    width: 4px;
-}
-
-.chat::-webkit-scrollbar-thumb {
-    background: #00d9ff;
-    border-radius: 10px;
-}
-
-.msg {
-    max-width: 90%;
-    margin-bottom: 12px;
-    padding: 10px 12px;
-    border-radius: 9px;
-    word-wrap: break-word;
-}
-
-.msg.ai {
-    background: rgba(0, 220, 255, 0.07);
-    border-left: 3px solid #00eaff;
-    color: #b8fbff;
-}
-
-.msg.user {
-    margin-left: auto;
-    background: rgba(0, 255, 150, 0.07);
-    border-right: 3px solid #00ff9d;
-    color: #d7fff1;
-    text-align: right;
-}
-
-/* =========================================
-   INPUT AREA
-========================================= */
-
-.input-section {
-    width: calc(100% - 30px);
-    max-width: 700px;
-    margin: 15px auto 0;
-    padding-bottom: 25px;
-}
-
-.input-area {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-#msg {
-    width: 100%;
-    height: 48px;
-    padding: 0 14px;
-    border: 1px solid rgba(0, 234, 255, 0.45);
-    border-radius: 10px;
-    outline: none;
-    background: rgba(0, 15, 22, 0.95);
-    color: white;
-    font-size: 14px;
-    box-shadow: inset 0 0 12px rgba(0, 234, 255, 0.04);
-}
-
-#msg::placeholder {
-    color: #48727a;
-}
-
-#msg:focus {
-    border-color: #00eaff;
-    box-shadow:
-        0 0 10px rgba(0, 234, 255, 0.2),
-        inset 0 0 12px rgba(0, 234, 255, 0.04);
-}
-
-#button-area {
-    display: grid;
-    grid-template-columns: 1.4fr 0.7fr 0.7fr 0.8fr 0.7fr;
-    gap: 7px;
-}
-
-#button-area button {
-    min-height: 42px;
-    border: 1px solid rgba(0, 234, 255, 0.5);
-    border-radius: 9px;
-    background: rgba(0, 30, 40, 0.85);
-    color: #00eaff;
-    font-weight: bold;
-    font-size: 11px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-#button-area button:active {
-    transform: scale(0.95);
-}
-
-#button-area button:hover {
-    background: rgba(0, 234, 255, 0.12);
-    box-shadow: 0 0 12px rgba(0, 234, 255, 0.25);
-}
-
-#send {
-    color: #00ffae !important;
-    border-color: rgba(0, 255, 174, 0.55) !important;
-}
-
-#mic {
-    font-size: 17px !important;
-}
-
-#clear-btn {
-    color: #ff7272 !important;
-}
-
-#change-key {
-    color: #ffd75a !important;
-}
-
-#img-btn {
-    font-size: 16px !important;
-}
-
-/* =========================================
-   FOOTER
-========================================= */
-
-footer {
-    width: calc(100% - 30px);
-    max-width: 700px;
-    margin: 5px auto 25px;
-    padding: 15px 0;
-    border-top: 1px solid rgba(0, 234, 255, 0.15);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #277984;
-    font-size: 9px;
-    letter-spacing: 1px;
-}
-
-/* =========================================
-   ANIMATIONS
-========================================= */
-
-@keyframes rotate {
-    from {
-        transform: rotate(0deg);
+        saved = true;
     }
 
-    to {
-        transform: rotate(360deg);
+
+    if (saved) {
+
+        saveMemory();
+
+        return true;
     }
+
+
+    return false;
 }
 
-@keyframes rotateReverse {
-    from {
-        transform: rotate(360deg);
-    }
 
-    to {
-        transform: rotate(0deg);
-    }
-}
+function answerMemoryQuestion(text) {
 
-@keyframes pulse {
-    0%,
-    100% {
-        box-shadow:
-            0 0 10px #00eaff,
-            inset 0 0 10px rgba(0, 234, 255, 0.4);
-    }
+    const q =
+        text.toLowerCase();
 
-    50% {
-        box-shadow:
-            0 0 25px #00eaff,
-            inset 0 0 25px rgba(0, 234, 255, 0.6);
-    }
-}
+    const answers = [];
 
-/* =========================================
-   MOBILE
-========================================= */
 
-@media (max-width: 500px) {
+    /* NAME */
 
-    header {
-        padding-top: 18px;
-    }
+    if (
+        q.includes("what is my name") ||
+        q.includes("what's my name") ||
+        q.includes("do you know my name")
+    ) {
 
-    header h1 {
-        font-size: 31px;
-        letter-spacing: 5px;
-    }
+        if (memory.name) {
 
-    header p {
-        font-size: 9px;
-        letter-spacing: 4px;
-    }
+            answers.push(
+                "Your name is " +
+                memory.name +
+                ", Boss."
+            );
 
-    .core-section {
-        padding: 28px 0 34px;
-    }
+        } else {
 
-    .core {
-        width: 300px;
-        height: 300px;
-    }
-
-    .core-centre strong {
-        font-size: 20px;
-    }
-
-    .status-card {
-        min-height: 120px;
-        padding: 15px;
-    }
-
-    .chat-terminal {
-        height: 250px;
-    }
-
-    #button-area {
-        grid-template-columns: 1.3fr 0.7fr 0.7fr;
-    }
-
-    #send {
-        grid-column: span 1;
-    }
-
-    footer {
-        font-size: 8px;
-    }
-}
-
-/* =========================================
-   VERY SMALL PHONES
-========================================= */
-
-@media (max-width: 360px) {
-
-    header h1 {
-        font-size: 27px;
-        letter-spacing: 4px;
-    }
-
-    .core {
-        width: 270px;
-        height: 270px;
-    }
-
-    .status-grid {
-        gap: 9px;
-    }
-
-    .status-card {
-        padding: 12px;
-    }
-
-    #button-area button {
-        font-size: 9px;
-    }
+            answers.push(
+                "You have not told me your name yet, Boss."
+            );
         }
+    }
+
+
+    /* COLOUR */
+
+    if (
+        q.includes("what is my favourite colour") ||
+        q.includes("what is my favorite color") ||
+        q.includes("what is my favourite color") ||
+        q.includes("what is my favorite colour") ||
+        q.includes("what's my favourite colour") ||
+        q.includes("what's my favorite color")
+    ) {
+
+        if (memory.colour) {
+
+            answers.push(
+                "Your favourite colour is " +
+                memory.colour +
+                ", Boss."
+            );
+
+        } else {
+
+            answers.push(
+                "You have not told me your favourite colour yet, Boss."
+            );
+        }
+    }
+
+
+    if (answers.length === 0) {
+
+        return null;
+    }
+
+
+    return answers.join(" ");
+}
+
+
+/* =========================
+   API KEY
+========================= */
+
+function getApiKey() {
+
+    if (apiKey) {
+
+        return true;
+    }
+
+
+    const key =
+        prompt(
+            "Enter your Gemini API key:"
+        );
+
+
+    if (!key || !key.trim()) {
+
+        addAI(
+            "I need your Gemini API key before I can connect to Gemini, Boss."
+        );
+
+        return false;
+    }
+
+
+    apiKey =
+        key.trim();
+
+
+    localStorage.setItem(
+        KEY_STORAGE,
+        apiKey
+    );
+
+
+    addAI(
+        "Gemini connection key saved, Boss."
+    );
+
+
+    return true;
+}
+
+
+/* =========================
+   INDIAN ENGLISH PROMPT
+========================= */
+
+function createPrompt(question) {
+
+    return `
+You are D.I.S.C.O, a personal AI assistant.
+
+Always call the user "Boss".
+
+Speak in natural Indian English.
+
+Use simple and clear English commonly understood in India.
+
+Do not use exaggerated American or British expressions.
+
+Be friendly, respectful and helpful.
+
+Give direct answers.
+
+Do not unnecessarily repeat the user's question.
+
+You have a small local memory.
+
+Saved memory:
+${JSON.stringify(memory)}
+
+Use saved memory when relevant.
+
+Never invent memories.
+
+User's message:
+${question}
+`;
+}
+
+
+/* =========================
+   GEMINI
+========================= */
+
+async function askGemini(question) {
+
+    if (!getApiKey()) {
+
+        return;
+    }
+
+
+    addAI("Thinking, Boss...");
+
+
+    const thinkingMessage =
+        chat.lastElementChild;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "https://generativelanguage.googleapis.com/v1beta/models/" +
+                MODEL +
+                ":generateContent",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "x-goog-api-key":
+                            apiKey
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            contents: [
+
+                                {
+
+                                    parts: [
+
+                                        {
+
+                                            text:
+                                                createPrompt(
+                                                    question
+                                                )
+                                        }
+
+                                    ]
+
+                                }
+
+                            ]
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Gemini response:",
+            data
+        );
+
+
+        /* REMOVE THINKING MESSAGE */
+
+        if (
+            thinkingMessage &&
+            thinkingMessage.classList.contains("ai")
+        ) {
+
+            thinkingMessage.remove();
+        }
+
+
+        /* API ERROR */
+
+        if (!response.ok) {
+
+            let errorMessage =
+                "Gemini could not answer.";
+
+            if (
+                data &&
+                data.error &&
+                data.error.message
+            ) {
+
+                errorMessage =
+                    data.error.message;
+            }
+
+
+            addAI(
+                "Gemini error: " +
+                errorMessage
+            );
+
+            return;
+        }
+
+
+        /* GET RESPONSE */
+
+        let answer = "";
+
+
+        if (
+            data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts
+        ) {
+
+            answer =
+                data.candidates[0].content.parts
+                    .map(
+                        part =>
+                            part.text || ""
+                    )
+                    .join("")
+                    .trim();
+        }
+
+
+        if (!answer) {
+
+            addAI(
+                "Gemini returned an empty response, Boss."
+            );
+
+            return;
+        }
+
+
+        addAI(answer);
+
+        speak(answer);
+
+    } catch (error) {
+
+        if (
+            thinkingMessage &&
+            thinkingMessage.classList.contains("ai")
+        ) {
+
+            thinkingMessage.remove();
+        }
+
+
+        console.error(error);
+
+
+        addAI(
+            "Connection error, Boss: " +
+            error.message
+        );
+    }
+}
+
+
+/* =========================
+   SEND
+========================= */
+
+async function sendMessage() {
+
+    const text =
+        msg.value.trim();
+
+
+    if (!text) {
+
+        return;
+    }
+
+
+    msg.value = "";
+
+
+    addUser(text);
+
+
+    /* MEMORY COMMAND */
+
+    const lower =
+        text.toLowerCase();
+
+
+    if (
+        lower.includes("remember that") ||
+        lower.includes("remember my") ||
+        lower.startsWith("remember ")
+    ) {
+
+        if (
+            rememberUser(text)
+        ) {
+
+            const reply =
+                "Got it, Boss. I have saved that in my memory.";
+
+            addAI(reply);
+
+            speak(reply);
+
+            return;
+        }
+    }
+
+
+    /* MEMORY QUESTION */
+
+    const memoryAnswer =
+        answerMemoryQuestion(text);
+
+
+    if (memoryAnswer) {
+
+        addAI(memoryAnswer);
+
+        speak(memoryAnswer);
+
+        return;
+    }
+
+
+    /* GEMINI */
+
+    await askGemini(text);
+}
+
+
+/* =========================
+   SEND BUTTON
+========================= */
+
+if (send) {
+
+    send.addEventListener(
+        "click",
+        sendMessage
+    );
+}
+
+
+/* =========================
+   ENTER KEY
+========================= */
+
+if (msg) {
+
+    msg.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
+            }
+
+        }
+    );
+}
+
+
+/* =========================
+   CLEAR MEMORY
+========================= */
+
+if (clearBtn) {
+
+    clearBtn.addEventListener(
+        "click",
+        function() {
+
+            memory = {};
+
+            localStorage.removeItem(
+                MEMORY_STORAGE
+            );
+
+            const reply =
+                "Memory cleared, Boss.";
+
+            addAI(reply);
+
+            speak(reply);
+        }
+    );
+}
+
+
+/* =========================
+   CHANGE API KEY
+========================= */
+
+if (changeKey) {
+
+    changeKey.addEventListener(
+        "click",
+        function() {
+
+            const key =
+                prompt(
+                    "Enter your new Gemini API key:"
+                );
+
+
+            if (
+                !key ||
+                !key.trim()
+            ) {
+
+                return;
+            }
+
+
+            apiKey =
+                key.trim();
+
+
+            localStorage.setItem(
+                KEY_STORAGE,
+                apiKey
+            );
+
+
+            const reply =
+                "API key changed successfully, Boss.";
+
+            addAI(reply);
+
+            speak(reply);
+        }
+    );
+}
+
+
+/* =========================
+   VOICE OUTPUT
+========================= */
+
+function speak(text) {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        return;
+    }
+
+
+    speechSynthesis.cancel();
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            text
+        );
+
+
+    utterance.lang =
+        "en-IN";
+
+    utterance.rate =
+        0.92;
+
+    utterance.pitch =
+        0.85;
+
+
+    const voices =
+        speechSynthesis.getVoices();
+
+
+    /* Prefer Indian English voice */
+
+    const indianVoice =
+        voices.find(
+            voice =>
+                voice.lang &&
+                voice.lang
+                    .toLowerCase()
+                    .startsWith("en-in")
+        );
+
+
+    if (indianVoice) {
+
+        utterance.voice =
+            indianVoice;
+    }
+
+
+    speechSynthesis.speak(
+        utterance
+    );
+}
+
+
+/* =========================
+   LOAD VOICES
+========================= */
+
+if (
+    "speechSynthesis" in window
+) {
+
+    speechSynthesis.onvoiceschanged =
+        function() {
+
+            speechSynthesis
+                .getVoices();
+        };
+}
+
+
+/* =========================
+   SPEECH RECOGNITION
+========================= */
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+if (
+    mic &&
+    SpeechRecognition
+) {
+
+    const recognition =
+        new SpeechRecognition();
+
+
+    recognition.lang =
+        "en-IN";
+
+
+    recognition.continuous =
+        false;
+
+
+    recognition.interimResults =
+        false;
+
+
+    mic.addEventListener(
+        "click",
+        function() {
+
+            try {
+
+                recognition.start();
+
+                mic.textContent =
+                    "🔴";
+
+            } catch (error) {
+
+                console.log(error);
+            }
+
+        }
+    );
+
+
+    recognition.onresult =
+        function(event) {
+
+            const transcript =
+                event.results[0][0]
+                    .transcript;
+
+
+            msg.value =
+                transcript;
+
+
+            sendMessage();
+        };
+
+
+    recognition.onend =
+        function() {
+
+            mic.textContent =
+                "🎙️";
+        };
+
+
+    recognition.onerror =
+        function() {
+
+            mic.textContent =
+                "🎙️";
+
+            addAI(
+                "I could not hear that clearly, Boss."
+            );
+        };
+
+} else if (mic) {
+
+    mic.addEventListener(
+        "click",
+        function() {
+
+            addAI(
+                "Voice input is not supported by this browser, Boss."
+            );
+        }
+    );
+}
+
+
+/* =========================
+   IMAGE BUTTON
+========================= */
+
+if (
+    imgBtn &&
+    imgInput
+) {
+
+    imgBtn.addEventListener(
+        "click",
+        function() {
+
+            imgInput.click();
+        }
+    );
+
+
+    imgInput.addEventListener(
+        "change",
+        function() {
+
+            if (
+                imgInput.files &&
+                imgInput.files.length
+            ) {
+
+                const file =
+                    imgInput.files[0];
+
+
+                addAI(
+                    "Image selected: " +
+                    file.name +
+                    ", Boss."
+                );
+            }
+
+        }
+    );
+}
+
+
+/* =========================
+   STARTUP
+========================= */
+
+console.log(
+    "D.I.S.C.O SYSTEM ONLINE"
+);
+
+console.log(
+    "Gemini model:",
+    MODEL
+);
