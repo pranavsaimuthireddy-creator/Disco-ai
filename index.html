@@ -3,133 +3,196 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>D.I.S.C.O AI</title>
 
-    <!-- FORCE NEW CSS -->
-    <link rel="stylesheet" href="style.css?v=20260924FIX1">
+    <link rel="stylesheet" href="style.css?v=100">
 </head>
 
 <body>
 
-<div class="scanlines"></div>
+    <div class="scanlines"></div>
 
-<header>
+    <!-- HEADER -->
+    <header>
 
-    <div class="top-bar">
-        <span class="menu-icon">☰</span>
+        <div class="top-bar">
+            <span class="menu-icon">☰</span>
 
-        <span class="system-online">
-            ● SYSTEM ONLINE
-        </span>
-
-        <span class="bot-icon">◉</span>
-    </div>
-
-    <h1>D.I.S.C.O</h1>
-
-    <p>MOBILE AI SYSTEM</p>
-
-</header>
-
-
-<section class="core-section">
-
-    <div class="core">
-
-        <div class="core-ring ring-outer"></div>
-        <div class="core-ring ring-middle"></div>
-        <div class="core-ring ring-inner"></div>
-
-        <div class="core-lines"></div>
-
-        <div class="core-centre">
-
-            <strong>D.I.S.C.O</strong>
-
-            <span>CORE ACTIVE</span>
-
-            <i></i>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<section class="panel status-panel">
-
-    <div class="panel-title">
-        ⚡ SYSTEM STATUS
-    </div>
-
-    <div class="status-grid">
-
-        <div class="status-card">
-
-            <div class="status-icon">▣</div>
-
-            <h3>AI CORE</h3>
-
-            <span class="status-online">
-                ● ONLINE
+            <span class="system-online">
+                ● SYSTEM ONLINE
             </span>
 
+            <span class="bot-icon">◉</span>
         </div>
 
+        <h1>D.I.S.C.O</h1>
 
-        <div class="status-card">
+        <p>MOBILE AI SYSTEM</p>
 
-            <div class="status-icon">⌁</div>
-
-            <h3>NETWORK</h3>
-
-            <span class="status-online">
-                ● ONLINE
-            </span>
-
-        </div>
+    </header>
 
 
-        <div class="status-card">
+    <!-- CORE -->
+    <section class="core-section">
 
-            <div class="status-icon">♬</div>
+        <div class="core">
 
-            <h3>VOICE</h3>
+            <div class="core-ring ring-outer"></div>
+            <div class="core-ring ring-middle"></div>
+            <div class="core-ring ring-inner"></div>
 
-            <span class="status-online">
-                ● READY
-            </span>
+            <div class="core-lines"></div>
 
-        </div>
+            <div class="core-centre">
 
+                <strong>D.I.S.C.O</strong>
 
-        <div class="status-card">
+                <span>CORE ACTIVE</span>
 
-            <div class="status-icon">🧠</div>
+                <i></i>
 
-            <h3>MEMORY</h3>
-
-            <span class="status-online">
-                ● ONLINE
-            </span>
+            </div>
 
         </div>
 
-    </div>
-
-</section>
+    </section>
 
 
-<section class="chat-panel">
+    <!-- SYSTEM STATUS -->
+    <section class="status-panel">
 
-    <div class="chat-terminal">
+        <div class="panel-title">
+            ⚡ SYSTEM STATUS
+        </div>
 
-        <div class="terminal-dots">
+        <div class="status-grid">
 
-            <span></span>
-            <span></span>
-           
+            <div class="status-card">
+                <div class="status-icon">▣</div>
+                <h3>AI CORE</h3>
+                <span>● ONLINE</span>
+            </div>
+
+            <div class="status-card">
+                <div class="status-icon">⌁</div>
+                <h3>NETWORK</h3>
+                <span>● ONLINE</span>
+            </div>
+
+            <div class="status-card">
+                <div class="status-icon">🎙</div>
+                <h3>VOICE</h3>
+                <span>● READY</span>
+            </div>
+
+            <div class="status-card">
+                <div class="status-icon">🧠</div>
+                <h3>MEMORY</h3>
+                <span>● ONLINE</span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- CHAT -->
+    <section class="chat-panel">
+
+        <div class="terminal">
+
+            <div class="terminal-bar">
+
+                <div class="terminal-dots">
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                </div>
+
+                <span>D.I.S.C.O TERMINAL</span>
+
+            </div>
+
+
+            <div id="chat" class="chat">
+
+                <div class="msg ai">
+                    <b>D.I.S.C.O:</b>
+                    Systems online.<br>
+                    How may I assist you, Boss?
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- INPUT -->
+    <section class="input-section">
+
+        <input
+            id="msg"
+            type="text"
+            placeholder="Ask D.I.S.C.O..."
+            autocomplete="off"
+        >
+
+
+        <div class="button-row">
+
+            <button id="send" class="send-btn">
+                SEND
+            </button>
+
+            <button id="mic" class="icon-btn">
+                🎙️
+            </button>
+
+            <button id="clear-btn" class="icon-btn">
+                🗑️
+            </button>
+
+            <button id="change-key" class="key-btn">
+                🔑
+            </button>
+
+            <button id="img-btn" class="icon-btn">
+                🖼️
+            </button>
+
+        </div>
+
+
+        <input
+            type="file"
+            id="img-input"
+            accept="image/*"
+            hidden
+        >
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <span>‹‹</span>
+
+        <strong>
+            D.I.S.C.O: ALWAYS WITH YOU
+        </strong>
+
+        <span>››</span>
+
+    </footer>
+
+
+    <script src="script.js?v=100"></script>
+
+</body>
+
+</html>
