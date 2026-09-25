@@ -1,105 +1,213 @@
 "use strict";
 
+/* =========================================================
+   D.I.S.C.O MOBILE EDITION
+   COMPLETE SCRIPT
+   ========================================================= */
+
+
 /* =========================
-   D.I.S.C.O STABLE SCRIPT
+   SETTINGS
+   ========================= */
+
+const MODEL = "gemini-3.8-flash";
+
+const API_KEY_STORAGE = "disco_api_key";
+const MEMORY_STORAGE = "disco_memory";
+
+
+/* =========================
+   ELEMENTS
    ========================= */
 
 const chat = document.getElementById("chat");
 const msg = document.getElementById("msg");
 const send = document.getElementById("send");
 const mic = document.getElementById("mic");
+
 const clearBtn = document.getElementById("clear-btn");
 const keyBtn = document.getElementById("change-key");
+
 const imgBtn = document.getElementById("img-btn");
 const imgInput = document.getElementById("img-input");
 
+
+/* =========================
+   VARIABLES
+   ========================= */
+
 let timer = null;
+let recognition = null;
+let memory = [];
+
+try {
+    memory = JSON.parse(
+        localStorage.getItem(MEMORY_STORAGE) || "[]"
+    );
+
+    if (!Array.isArray(memory)) {
+        memory = [];
+    }
+
+} catch {
+    memory = [];
+}
 
 
 /* =========================
-   CHAT
+   CHAT FUNCTIONS
    ========================= */
 
-function addMessage(text, type) {
-    if (!chat) return;
+function addMessage(text, type = "ai") {
 
     const div = document.createElement("div");
-    div.className = "msg " + type;
-    div.textContent = text;
+
+    div.className = `message ${type}`;
+
+    const label =
+        type === "user"
+            ? "<b>Boss:</b> "
+            : "<b>D.I.S.C.O:</b> ";
+
+    div.innerHTML =
+        label +
+        escapeHTML(String(text))
+            .replace(/\n/g, "<br>");
 
     chat.appendChild(div);
+
     chat.scrollTop = chat.scrollHeight;
 }
 
 
+function escapeHTML(text) {
+
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function userMessage(text) {
+    addMessage(text, "user");
+}
+
+
+function aiMessage(text) {
+    addMessage(text, "ai");
+}
+
+
 /* =========================
-   VOICE
+   VOICE OUTPUT
    ========================= */
 
 function speak(text) {
-    if (!("speechSynthesis" in window)) return;
+
+    if (!("speechSynthesis" in window)) {
+        return;
+    }
 
     window.speechSynthesis.cancel();
 
-    const voice = new SpeechSynthesisUtterance(text);
+    const utterance =
+        new SpeechSynthesisUtterance(text);
 
-    voice.lang = "en-IN";
-    voice.rate = 0.95;
-    voice.pitch = 0.9;
-    voice.volume = 1;
+    utterance.lang = "en-IN";
 
-    const voices = speechSynthesis.getVoices();
+    utterance.rate = 0.95;
+    utterance.pitch = 0.85;
+    utterance.volume = 1;
+
+    const voices =
+        window.speechSynthesis.getVoices();
 
     const indianVoice =
-        voices.find(v => v.lang === "en-IN") ||
-        voices.find(v => v.lang.startsWith("en"));
+        voices.find(v =>
+            v.lang &&
+            v.lang.toLowerCase() === "en-in"
+        );
 
     if (indianVoice) {
-        voice.voice = indianVoice;
+        utterance.voice = indianVoice;
     }
 
-    speechSynthesis.speak(voice);
+    window.speechSynthesis.speak(utterance);
+}
+
+
+window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+};
+
+
+/* =========================
+   API KEY
+   ========================= */
+
+function getAPIKey() {
+
+    let key =
+        localStorage.getItem(API_KEY_STORAGE);
+
+    if (!key) {
+
+        key = prompt(
+            "Boss, enter your Gemini API key.\n\n" +
+            "Your key stays in this browser's local storage."
+        );
+
+        if (key) {
+
+            key = key.trim();
+
+            localStorage.setItem(
+                API_KEY_STORAGE,
+                key
+            );
+        }
+    }
+
+    return key;
 }
 
 
 /* =========================
-   ANSWER
+   EXACT INDIA TIME
    ========================= */
 
-function answer(text) {
-    addMessage("D.I.S.C.O: " + text, "ai");
-    speak(text);
-}
+function getExactTime() {
 
-
-/* =========================
-   TIME
-   ========================= */
-
-function getTime() {
     const now = new Date();
 
-    return now.toLocaleTimeString("en-IN", {
-        hour: "numeric",
+    return new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit"
-    });
+        second: "2-digit",
+        hour12: true
+    }).format(now);
 }
 
 
 /* =========================
-   DATE
+   EXACT INDIA DATE
    ========================= */
 
-function getDate() {
+function getExactDate() {
+
     const now = new Date();
 
-    return now.toLocaleDateString("en-IN", {
+    return new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric"
-    });
+    }).format(now);
 }
 
 
@@ -109,88 +217,80 @@ function getDate() {
 
 function getLocation() {
 
-    if (!navigator.geolocation) {
-        return Promise.resolve(
-            "Your browser does not support location, Boss."
-        );
-    }
+    return new Promise((resolve, reject) => {
 
-    return new Promise(function(resolve) {
+        if (!navigator.geolocation) {
+
+            reject(
+                new Error(
+                    "Geolocation is not supported."
+                )
+            );
+
+            return;
+        }
 
         navigator.geolocation.getCurrentPosition(
-            async function(position) {
 
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
+            async position => {
+
+                const lat =
+                    position.coords.latitude;
+
+                const lon =
+                    position.coords.longitude;
 
                 try {
 
-                    const url =
-                        "https://nominatim.openstreetmap.org/reverse" +
-                        "?format=jsonv2" +
-                        "&lat=" + lat +
-                        "&lon=" + lon +
-                        "&zoom=10" +
-                        "&addressdetails=1";
+                    const response =
+                        await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+                        );
 
-                    const response = await fetch(url);
-                    const data = await response.json();
+                    const data =
+                        await response.json();
 
-                    const address = data.address || {};
+                    const address =
+                        data.address || {};
 
                     const city =
                         address.city ||
                         address.town ||
                         address.village ||
                         address.county ||
-                        "your area";
+                        "Unknown place";
 
                     const state =
-                        address.state || "";
+                        address.state ||
+                        "";
 
                     resolve(
-                        "You are currently around " +
-                        city +
-                        (state ? ", " + state : "") +
-                        ", Boss."
+                        `${city}, ${state}`
                     );
 
-                } catch (error) {
+                } catch {
 
                     resolve(
-                        "I found your coordinates, but I could not find the place name, Boss."
+                        `Latitude ${lat.toFixed(4)}, Longitude ${lon.toFixed(4)}`
                     );
                 }
             },
 
-            function(error) {
+            error => {
 
-                if (error.code === 1) {
-                    resolve(
-                        "Location permission was denied. Please allow location access for this website, Boss."
-                    );
-                } else if (error.code === 2) {
-                    resolve(
-                        "Your location is currently unavailable, Boss."
-                    );
-                } else if (error.code === 3) {
-                    resolve(
-                        "Location request timed out, Boss."
-                    );
-                } else {
-                    resolve(
-                        "I could not access your location, Boss."
-                    );
-                }
+                reject(
+                    new Error(
+                        "Location permission was not available."
+                    )
+                );
             },
 
             {
                 enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 60000
+                timeout: 10000,
+                maximumAge: 0
             }
         );
-
     });
 }
 
@@ -199,211 +299,114 @@ function getLocation() {
    WEATHER
    ========================= */
 
-async function getWeather(text) {
+async function getWeather() {
 
-    let latitude;
-    let longitude;
-    let place = "your location";
+    if (!navigator.geolocation) {
+        throw new Error("Location is not supported.");
+    }
 
-    const cityMatch =
-        text.match(/weather\s+(?:in|at|for)\s+(.+)/i);
+    const position =
+        await new Promise((resolve, reject) => {
 
-    try {
-
-        /* WEATHER FOR CITY */
-
-        if (cityMatch) {
-
-            const city =
-                cityMatch[1]
-                    .replace(/[?.!]+$/, "")
-                    .trim();
-
-            const geoURL =
-                "https://geocoding-api.open-meteo.com/v1/search" +
-                "?name=" + encodeURIComponent(city) +
-                "&count=1" +
-                "&language=en" +
-                "&format=json";
-
-            const geoResponse =
-                await fetch(geoURL);
-
-            if (!geoResponse.ok) {
-                return "I could not connect to the weather service, Boss.";
-            }
-
-            const geoData =
-                await geoResponse.json();
-
-            if (
-                !geoData.results ||
-                geoData.results.length === 0
-            ) {
-                return "I could not find that city, Boss.";
-            }
-
-            latitude =
-                geoData.results[0].latitude;
-
-            longitude =
-                geoData.results[0].longitude;
-
-            place =
-                geoData.results[0].name;
-
-        }
-
-        /* WEATHER AT CURRENT LOCATION */
-
-        else {
-
-            if (!navigator.geolocation) {
-                return "Your browser does not support location, Boss.";
-            }
-
-            const position =
-                await new Promise(function(resolve, reject) {
-
-                    navigator.geolocation.getCurrentPosition(
-                        resolve,
-                        reject,
-                        {
-                            enableHighAccuracy: false,
-                            timeout: 15000,
-                            maximumAge: 60000
-                        }
-                    );
-
-                });
-
-            latitude =
-                position.coords.latitude;
-
-            longitude =
-                position.coords.longitude;
-        }
-
-
-        /* GET WEATHER */
-
-        const weatherURL =
-            "https://api.open-meteo.com/v1/forecast" +
-            "?latitude=" + latitude +
-            "&longitude=" + longitude +
-            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code" +
-            "&timezone=auto";
-
-        const response =
-            await fetch(weatherURL);
-
-        if (!response.ok) {
-            return "The weather service is unavailable right now, Boss.";
-        }
-
-        const data =
-            await response.json();
-
-        if (!data.current) {
-            return "I could not get the current weather, Boss.";
-        }
-
-        const current =
-            data.current;
-
-        const description =
-            weatherDescription(
-                current.weather_code
+            navigator.geolocation.getCurrentPosition(
+                resolve,
+                reject,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
             );
 
-        return (
-            "Current weather in " +
-            place +
-            " is " +
-            current.temperature_2m +
-            "°C. " +
-            description +
-            ". It feels like " +
-            current.apparent_temperature +
-            "°C. " +
-            "Humidity is " +
-            current.relative_humidity_2m +
-            "%. " +
-            "Wind speed is " +
-            current.wind_speed_10m +
-            " km/h, Boss."
+        });
+
+    const lat =
+        position.coords.latitude;
+
+    const lon =
+        position.coords.longitude;
+
+
+    const weatherResponse =
+        await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`
         );
 
-    } catch (error) {
 
-        return (
-            "I could not get the weather. " +
-            "Please allow location access and try again, Boss."
-        );
+    if (!weatherResponse.ok) {
+        throw new Error("Weather service unavailable.");
     }
+
+
+    const weather =
+        await weatherResponse.json();
+
+
+    const current =
+        weather.current;
+
+
+    const code =
+        Number(current.weather_code);
+
+
+    const description =
+        weatherDescription(code);
+
+
+    return {
+        temperature:
+            current.temperature_2m,
+
+        feels:
+            current.apparent_temperature,
+
+        humidity:
+            current.relative_humidity_2m,
+
+        wind:
+            current.wind_speed_10m,
+
+        description
+    };
 }
 
 
-/* =========================
-   WEATHER DESCRIPTION
-   ========================= */
-
 function weatherDescription(code) {
 
-    if (code === 0) {
-        return "The sky is clear";
-    }
+    const descriptions = {
 
-    if (code === 1 || code === 2) {
-        return "It is partly cloudy";
-    }
+        0: "clear sky",
 
-    if (code === 3) {
-        return "It is cloudy";
-    }
+        1: "mainly clear",
+        2: "partly cloudy",
+        3: "overcast",
 
-    if (
-        code === 45 ||
-        code === 48
-    ) {
-        return "There is fog";
-    }
+        45: "foggy",
+        48: "depositing rime fog",
 
-    if (
-        code >= 51 &&
-        code <= 57
-    ) {
-        return "There is light drizzle";
-    }
+        51: "light drizzle",
+        53: "moderate drizzle",
+        55: "dense drizzle",
 
-    if (
-        code >= 61 &&
-        code <= 67
-    ) {
-        return "It is raining";
-    }
+        61: "slight rain",
+        63: "moderate rain",
+        65: "heavy rain",
 
-    if (
-        code >= 71 &&
-        code <= 77
-    ) {
-        return "There is snowfall";
-    }
+        71: "slight snow",
+        73: "moderate snow",
+        75: "heavy snow",
 
-    if (
-        code >= 80 &&
-        code <= 82
-    ) {
-        return "There are rain showers";
-    }
+        80: "slight rain showers",
+        81: "moderate rain showers",
+        82: "violent rain showers",
 
-    if (
-        code >= 95
-    ) {
-        return "There is a thunderstorm";
-    }
+        95: "thunderstorm",
+        96: "thunderstorm with hail",
+        99: "heavy thunderstorm with hail"
+    };
 
-    return "The weather conditions are changing";
+    return descriptions[code] || "unknown conditions";
 }
 
 
@@ -411,333 +414,1361 @@ function weatherDescription(code) {
    TIMER
    ========================= */
 
-function startTimer(text) {
+function startTimer(seconds) {
 
-    const match =
-        text.match(
-            /(\d+)\s*(second|seconds|minute|minutes|hour|hours)/i
+    seconds =
+        Number(seconds);
+
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+
+        aiMessage(
+            "Boss, please give me a valid timer duration."
         );
 
-    if (!match) {
-        return "Tell me the timer duration, Boss.";
+        return;
     }
 
-    const number =
-        Number(match[1]);
-
-    const unit =
-        match[2].toLowerCase();
-
-    let milliseconds;
-
-    if (unit.startsWith("second")) {
-        milliseconds =
-            number * 1000;
-    } else if (unit.startsWith("minute")) {
-        milliseconds =
-            number * 60000;
-    } else {
-        milliseconds =
-            number * 3600000;
-    }
 
     if (timer) {
         clearTimeout(timer);
     }
 
-    timer =
-        setTimeout(function() {
 
-            answer(
+    const totalSeconds =
+        Math.round(seconds);
+
+
+    aiMessage(
+        `Timer started for ${totalSeconds} seconds.`
+    );
+
+    speak(
+        `Timer started for ${totalSeconds} seconds.`
+    );
+
+
+    timer =
+        setTimeout(() => {
+
+            aiMessage(
+                "Boss, your timer is finished."
+            );
+
+            speak(
                 "Boss, your timer is finished."
             );
 
             timer = null;
 
-        }, milliseconds);
+        }, totalSeconds * 1000);
+}
 
-    return (
-        "Timer set for " +
-        number +
-        " " +
-        unit +
-        ", Boss."
+
+function stopTimer() {
+
+    if (!timer) {
+
+        aiMessage(
+            "Boss, there is no active timer."
+        );
+
+        return;
+    }
+
+
+    clearTimeout(timer);
+
+    timer = null;
+
+
+    aiMessage(
+        "Timer cancelled, Boss."
+    );
+
+    speak(
+        "Timer cancelled, Boss."
     );
 }
 
 
 /* =========================
-   COMMAND PROCESSOR
+   CALCULATOR
    ========================= */
 
-async function processCommand(text) {
+function calculate(expression) {
 
-    const lower =
-        text.toLowerCase().trim();
+    let clean =
+        expression
+            .replace(/what is/gi, "")
+            .replace(/calculate/gi, "")
+            .replace(/calculator/gi, "")
+            .replace(/plus/gi, "+")
+            .replace(/minus/gi, "-")
+            .replace(/times/gi, "*")
+            .replace(/multiplied by/gi, "*")
+            .replace(/divided by/gi, "/")
+            .replace(/×/g, "*")
+            .replace(/÷/g, "/")
+            .trim();
+
+
+    if (!/^[0-9+\-*/().%\s]+$/.test(clean)) {
+
+        return null;
+    }
+
+
+    try {
+
+        const result =
+            Function(
+                `"use strict"; return (${clean})`
+            )();
+
+        if (!Number.isFinite(result)) {
+            return null;
+        }
+
+        return result;
+
+    } catch {
+
+        return null;
+    }
+}
+
+
+/* =========================
+   MEMORY
+   ========================= */
+
+function saveMemory(text) {
+
+    memory.push(text);
+
+    localStorage.setItem(
+        MEMORY_STORAGE,
+        JSON.stringify(memory)
+    );
+}
+
+
+function learnFromSentence(question) {
+
+    const match =
+        question.match(
+            /remember that\s+(.+)/i
+        );
+
+    if (!match) {
+        return false;
+    }
+
+
+    const fact =
+        match[1].trim();
+
+
+    saveMemory(fact);
+
+
+    aiMessage(
+        `Got it, Boss. I will remember: ${fact}`
+    );
+
+    speak(
+        "Got it Boss. I will remember that."
+    );
+
+    return true;
+}
+
+
+function memoryAnswer(question) {
+
+    const q =
+        question.toLowerCase();
+
+
+    if (
+        q.includes("what is my name") ||
+        q.includes("what's my name")
+    ) {
+
+        const fact =
+            memory.find(m =>
+                /name\s+(is|:)/i.test(m)
+            );
+
+
+        if (fact) {
+
+            const match =
+                fact.match(
+                    /name\s+(?:is|:)\s*(.+)/i
+                );
+
+
+            if (match) {
+
+                const name =
+                    match[1]
+                        .replace(/[.!?]+$/, "")
+                        .trim();
+
+                aiMessage(
+                    `Your name is ${name}, Boss.`
+                );
+
+                speak(
+                    `Your name is ${name}, Boss.`
+                );
+
+                return true;
+            }
+        }
+    }
+
+
+    if (
+        q.includes("favourite colour") ||
+        q.includes("favorite colour") ||
+        q.includes("favourite color") ||
+        q.includes("favorite color")
+    ) {
+
+        const fact =
+            memory.find(m =>
+                /favo?u?rite\s+colo[u]?r/i.test(m)
+            );
+
+
+        if (fact) {
+
+            const match =
+                fact.match(
+                    /favo?u?rite\s+colo[u]?r\s+(?:is|:)\s*(.+)/i
+                );
+
+
+            if (match) {
+
+                const colour =
+                    match[1]
+                        .replace(/[.!?]+$/, "")
+                        .trim();
+
+                aiMessage(
+                    `Your favourite colour is ${colour}, Boss.`
+                );
+
+                speak(
+                    `Your favourite colour is ${colour}, Boss.`
+                );
+
+                return true;
+            }
+        }
+    }
+
+
+    for (const fact of memory) {
+
+        const words =
+            q
+                .replace(/[?.,!]/g, "")
+                .split(/\s+/)
+                .filter(Boolean);
+
+
+        const factLower =
+            fact.toLowerCase();
+
+
+        if (
+            words.length >= 2 &&
+            words.some(word =>
+                word.length > 3 &&
+                factLower.includes(word)
+            )
+        ) {
+            aiMessage(
+                `Boss, I remember: ${fact}`
+            );
+
+            speak(
+                `Boss, I remember: ${fact}`
+            );
+
+            return true;
+        }
+    }
+
+
+    return false;
+}
+
+
+/* =========================
+   OPEN / SEARCH
+   ========================= */
+
+function openYouTube() {
+
+    window.open(
+        "https://www.youtube.com/",
+        "_blank"
+    );
+}
+
+
+function openGoogle() {
+
+    window.open(
+        "https://www.google.com/",
+        "_blank"
+    );
+}
+
+
+function openGitHub() {
+
+    window.open(
+        "https://github.com/",
+        "_blank"
+    );
+}
+
+
+function searchYouTube(query) {
+
+    window.open(
+        "https://www.youtube.com/results?search_query=" +
+        encodeURIComponent(query),
+        "_blank"
+    );
+}
+
+
+function searchGoogle(query) {
+
+    window.open(
+        "https://www.google.com/search?q=" +
+        encodeURIComponent(query),
+        "_blank"
+    );
+}
+
+
+/* =========================
+   BATTERY
+   ========================= */
+
+async function getBatteryInfo() {
+
+    if (!navigator.getBattery) {
+
+        return "Battery information is not available in this browser.";
+    }
+
+
+    const battery =
+        await navigator.getBattery();
+
+
+    const level =
+        Math.round(
+            battery.level * 100
+        );
+
+
+    const charging =
+        battery.charging
+            ? "and the device is charging"
+            : "and the device is not charging";
+
+
+    return `Battery is at ${level} percent ${charging}.`;
+}
+
+
+/* =========================
+   DEVICE INFORMATION
+   ========================= */
+
+function getDeviceInfo() {
+
+    const ua =
+        navigator.userAgent;
+
+
+    let device =
+        "Unknown device";
+
+
+    if (/Android/i.test(ua)) {
+        device = "Android device";
+    }
+
+    else if (/iPhone/i.test(ua)) {
+        device = "iPhone";
+    }
+
+    else if (/iPad/i.test(ua)) {
+        device = "iPad";
+    }
+
+    else if (/Windows/i.test(ua)) {
+        device = "Windows computer";
+    }
+
+    else if (/Mac/i.test(ua)) {
+        device = "Mac computer";
+    }
+
+
+    return {
+        device,
+        browser: navigator.userAgent,
+        language: navigator.language,
+        online: navigator.onLine,
+        screen:
+            `${screen.width} x ${screen.height}`
+    };
+}
+
+
+/* =========================
+   NETWORK
+   ========================= */
+
+function getNetworkInfo() {
+
+    const online =
+        navigator.onLine;
+
+
+    let type =
+        "unknown connection";
+
+
+    if (navigator.connection) {
+
+        type =
+            navigator.connection.effectiveType ||
+            navigator.connection.type ||
+            "unknown connection";
+    }
+
+
+    return online
+        ? `Internet connection is online. Connection type: ${type}.`
+        : "Internet connection is offline.";
+}
+
+
+/* =========================
+   DIRECT TOOLS
+   ========================= */
+
+async function handleDirectTool(question) {
+
+    const q =
+        question.toLowerCase().trim();
 
 
     /* TIME */
 
     if (
-        lower === "time" ||
-        lower.includes("what time") ||
-        lower.includes("current time") ||
-        lower.includes("tell me the time") ||
-        lower.includes("what is the time")
+        q === "time" ||
+        q.includes("what time is it") ||
+        q.includes("current time") ||
+        q.includes("exact time") ||
+        q.includes("tell me the time")
     ) {
 
-        return (
-            "The current time is " +
-            getTime() +
-            ", Boss."
+        const time =
+            getExactTime();
+
+        aiMessage(
+            `The exact current time in India is ${time}, Boss.`
         );
+
+        speak(
+            `The exact current time in India is ${time}, Boss.`
+        );
+
+        return true;
     }
 
 
     /* DATE */
 
     if (
-        lower === "date" ||
-        lower.includes("what is the date") ||
-        lower.includes("what's the date") ||
-        lower.includes("today's date") ||
-        lower.includes("todays date") ||
-        lower.includes("what day is it") ||
-        lower.includes("what is today")
+        q === "date" ||
+        q.includes("what is today's date") ||
+        q.includes("what's today's date") ||
+        q.includes("today's date") ||
+        q.includes("current date") ||
+        q.includes("what day is it")
     ) {
 
-        return (
-            "Today is " +
-            getDate() +
-            ", Boss."
+        const date =
+            getExactDate();
+
+        aiMessage(
+            `Today is ${date}, Boss.`
         );
+
+        speak(
+            `Today is ${date}, Boss.`
+        );
+
+        return true;
     }
 
 
     /* LOCATION */
 
     if (
-        lower.includes("where am i") ||
-        lower.includes("my location") ||
-        lower.includes("current location") ||
-        lower.includes("where am i located")
+        q === "location" ||
+        q.includes("where am i") ||
+        q.includes("my location") ||
+        q.includes("current location")
     ) {
 
-        return await getLocation();
+        try {
+
+            const location =
+                await getLocation();
+
+            aiMessage(
+                `Boss, your approximate current location is ${location}.`
+            );
+
+            speak(
+                `Boss, your approximate current location is ${location}.`
+            );
+
+        } catch {
+
+            aiMessage(
+                "Boss, I could not access your location. Please allow location permission for this website."
+            );
+        }
+
+        return true;
     }
 
 
     /* WEATHER */
 
     if (
-        lower === "weather" ||
-        lower.includes("weather") ||
-        lower.includes("temperature")
+        q === "weather" ||
+        q.includes("weather") ||
+        q.includes("temperature")
     ) {
 
-        return await getWeather(text);
-    }
+        try {
+
+            const weather =
+                await getWeather();
 
 
-    /* STOP TIMER */
+            const answer =
+                `Current weather: ${weather.description}. ` +
+                `Temperature ${weather.temperature} degrees Celsius. ` +
+                `Feels like ${weather.feels} degrees. ` +
+                `Humidity ${weather.humidity} percent. ` +
+                `Wind speed ${weather.wind} kilometres per hour.`;
 
-    if (
-        lower.includes("stop timer") ||
-        lower.includes("cancel timer")
-    ) {
+            aiMessage(answer);
 
-        if (timer) {
+            speak(answer);
 
-            clearTimeout(timer);
-            timer = null;
+        } catch {
 
-            return "Timer cancelled, Boss.";
-
+            aiMessage(
+                "Boss, I could not get the weather. Please allow location permission and make sure you are connected to the internet."
+            );
         }
 
-        return "There is no active timer, Boss.";
+        return true;
     }
 
 
-    /* START TIMER */
+    /* TIMER */
 
-    if (lower.includes("timer")) {
+    const timerMatch =
+        q.match(
+            /(?:set|start|create)\s+(?:a\s+)?timer\s+(?:for\s+)?(\d+(?:\.\d+)?)\s*(seconds?|minutes?|mins?|hours?|hrs?)/i
+        );
 
-        return startTimer(text);
+
+    if (timerMatch) {
+
+        let amount =
+            Number(timerMatch[1]);
+
+        const unit =
+            timerMatch[2].toLowerCase();
+
+
+        if (unit.startsWith("minute") || unit.startsWith("min")) {
+            amount *= 60;
+        }
+
+        else if (
+            unit.startsWith("hour") ||
+            unit.startsWith("hr")
+        ) {
+            amount *= 3600;
+        }
+
+
+        startTimer(amount);
+
+        return true;
     }
 
-
-    /* OPEN YOUTUBE */
 
     if (
-        lower === "open youtube"
+        q.includes("stop timer") ||
+        q.includes("cancel timer") ||
+        q === "stop"
     ) {
 
-        window.open(
-            "https://www.youtube.com/",
-            "_blank"
-        );
+        stopTimer();
 
-        return "Opening YouTube, Boss.";
-    }
-
-
-    /* OPEN GOOGLE */
-
-    if (
-        lower === "open google"
-    ) {
-
-        window.open(
-            "https://www.google.com/",
-            "_blank"
-        );
-
-        return "Opening Google, Boss.";
-    }
-
-
-    /* OPEN GITHUB */
-
-    if (
-        lower === "open github"
-    ) {
-
-        window.open(
-            "https://github.com/",
-            "_blank"
-        );
-
-        return "Opening GitHub, Boss.";
-    }
-
-
-    /* GOOGLE SEARCH */
-
-    if (
-        lower.startsWith("google ")
-    ) {
-
-        const query =
-            text.substring(7).trim();
-
-        window.open(
-            "https://www.google.com/search?q=" +
-            encodeURIComponent(query),
-            "_blank"
-        );
-
-        return (
-            "Searching Google for " +
-            query +
-            ", Boss."
-        );
-    }
-
-
-    /* YOUTUBE SEARCH */
-
-    if (
-        lower.startsWith("youtube ")
-    ) {
-
-        const query =
-            text.substring(8).trim();
-
-        window.open(
-            "https://www.youtube.com/results?search_query=" +
-            encodeURIComponent(query),
-            "_blank"
-        );
-
-        return (
-            "Searching YouTube for " +
-            query +
-            ", Boss."
-        );
+        return true;
     }
 
 
     /* CALCULATOR */
 
     if (
-        lower.startsWith("calculate ")
+        q.startsWith("calculate ") ||
+        q.startsWith("calculator ") ||
+        /^what is\s+[0-9]/i.test(q) ||
+        /^[0-9]+\s*[+\-*/×÷]/.test(q)
     ) {
 
-        let expression =
-            text.substring(10).trim();
+        const result =
+            calculate(q);
 
-        expression =
-            expression
-                .replace(/×/g, "*")
-                .replace(/÷/g, "/");
 
-        if (
-            !/^[0-9+\-*/().%\s]+$/.test(expression)
-        ) {
-            return "I can calculate basic mathematics only, Boss.";
-        }
+        if (result !== null) {
 
-        try {
+            const answer =
+                `The answer is ${result}, Boss.`;
 
-            const result =
-                Function(
-                    '"use strict"; return (' +
-                    expression +
-                    ")"
-                )();
+            aiMessage(answer);
 
-            return (
-                "The answer is " +
-                result +
-                ", Boss."
-            );
+            speak(answer);
 
-        } catch (error) {
-
-            return "I could not calculate that, Boss.";
+            return true;
         }
     }
 
 
-    /* DEFAULT */
+    /* YOUTUBE */
 
-    return null;
+    if (
+        q.startsWith("youtube search ") ||
+        q.startsWith("search youtube for ")
+    ) {
+
+        const query =
+            q
+                .replace(
+                    /^youtube search\s*/i,
+                   )
+                .replace(
+                    /^search youtube for\s*/i,
+                    ""
+                )
+                .trim();
+
+
+        if (query) {
+
+            searchYouTube(query);
+
+            aiMessage(
+                `Opening YouTube results for "${query}", Boss.`
+            );
+
+            return true;
+        }
+    }
+
+
+    /* GOOGLE */
+
+    if (
+        q.startsWith("google search ") ||
+        q.startsWith("search google for ")
+    ) {
+
+        const query =
+            q
+                .replace(
+                    /^google search\s*/i,
+                    ""
+                )
+                .replace(
+                    /^search google for\s*/i,
+                    ""
+                )
+                .trim();
+
+
+        if (query) {
+
+            searchGoogle(query);
+
+            aiMessage(
+                `Opening Google results for "${query}", Boss.`
+            );
+
+            return true;
+        }
+    }
+
+
+    /* OPEN YOUTUBE */
+
+    if (
+        q === "open youtube" ||
+        q === "launch youtube"
+    ) {
+
+        openYouTube();
+
+        aiMessage(
+            "Opening YouTube, Boss."
+        );
+
+        return true;
+    }
+
+
+    /* OPEN GOOGLE */
+
+    if (
+        q === "open google" ||
+        q === "launch google"
+    ) {
+
+        openGoogle();
+
+        aiMessage(
+            "Opening Google, Boss."
+        );
+
+        return true;
+    }
+
+
+    /* OPEN GITHUB */
+
+    if (
+        q === "open github" ||
+        q === "launch github"
+    ) {
+
+        openGitHub();
+
+        aiMessage(
+            "Opening GitHub, Boss."
+        );
+
+        return true;
+    }
+
+
+    /* BATTERY */
+
+    if (
+        q.includes("battery") ||
+        q.includes("battery status")
+    ) {
+
+        const answer =
+            await getBatteryInfo();
+
+        aiMessage(
+            `Boss, ${answer}`
+        );
+
+        speak(
+            `Boss, ${answer}`
+        );
+
+        return true;
+    }
+
+
+    /* DEVICE */
+
+    if (
+        q.includes("device information") ||
+        q.includes("device info") ||
+        q === "my device"
+    ) {
+
+        const info =
+            getDeviceInfo();
+
+
+        const answer =
+            `You are using an ${info.device}. ` +
+            `Screen size is ${info.screen}. ` +
+            `Browser language is ${info.language}.`;
+
+
+        aiMessage(answer);
+
+        speak(answer);
+
+        return true;
+    }
+
+
+    /* NETWORK */
+
+    if (
+        q.includes("internet status") ||
+        q.includes("network status") ||
+        q.includes("internet connection")
+    ) {
+
+        const answer =
+            getNetworkInfo();
+
+        aiMessage(
+            `Boss, ${answer}`
+        );
+
+        speak(
+            `Boss, ${answer}`
+        );
+
+        return true;
+    }
+
+
+    return false;
 }
 
 
 /* =========================
-   SEND
+   QUICK TOOL BUTTONS
+   ========================= */
+
+async function runTool(tool) {
+
+    if (tool === "time") {
+
+        const time =
+            getExactTime();
+
+        aiMessage(
+            `The exact current time in India is ${time}, Boss.`
+        );
+
+        speak(
+            `The exact current time in India is ${time}, Boss.`
+        );
+
+        return;
+    }
+
+
+    if (tool === "date") {
+
+        const date =
+            getExactDate();
+
+        aiMessage(
+            `Today is ${date}, Boss.`
+        );
+
+        speak(
+            `Today is ${date}, Boss.`
+        );
+
+        return;
+    }
+
+
+    if (tool === "weather") {
+
+        await handleDirectTool("weather");
+
+        return;
+    }
+
+
+    if (tool === "location") {
+
+        await handleDirectTool("location");
+
+        return;
+    }
+
+
+    if (tool === "timer") {
+
+        const seconds =
+            prompt(
+                "Boss, how many seconds should I set?"
+            );
+
+
+        if (seconds !== null) {
+            startTimer(seconds);
+        }
+
+        return;
+    }
+
+
+    if (tool === "stop") {
+
+        stopTimer();
+
+        return;
+    }
+
+
+    if (tool === "calculator") {
+
+        const expression =
+            prompt(
+                "Boss, enter the calculation.\nExample: 25 * 4 + 10"
+            );
+
+
+        if (expression) {
+
+            const result =
+                calculate(expression);
+
+
+            if (result !== null) {
+
+                aiMessage(
+                    `The answer is ${result}, Boss.`
+                );
+
+                speak(
+                    `The answer is ${result}, Boss.`
+                );
+
+            } else {
+
+                aiMessage(
+                    "Boss, I could not calculate that expression."
+                );
+            }
+        }
+
+        return;
+    }
+
+
+    if (tool === "translate") {
+
+        msg.value =
+            "Translate this to Telugu: ";
+
+        msg.focus();
+
+        return;
+    }
+
+
+    if (tool === "youtube") {
+
+        const query =
+            prompt(
+                "Boss, what should I search on YouTube?"
+            );
+
+
+        if (query) {
+
+            searchYouTube(query);
+
+            aiMessage(
+                `Opening YouTube results for "${query}", Boss.`
+            );
+        }
+
+        return;
+    }
+
+
+    if (tool === "google") {
+
+        const query =
+            prompt(
+                "Boss, what should I search on Google?"
+            );
+
+
+        if (query) {
+
+            searchGoogle(query);
+
+            aiMessage(
+                `Opening Google results for "${query}", Boss.`
+            );
+        }
+
+        return;
+    }
+
+
+    if (tool === "github") {
+
+        openGitHub();
+
+        aiMessage(
+            "Opening GitHub, Boss."
+        );
+
+        return;
+    }
+
+
+    if (tool === "openyoutube") {
+
+        openYouTube();
+
+        aiMessage(
+            "Opening YouTube, Boss."
+        );
+
+        return;
+    }
+
+
+    if (tool === "opengoogle") {
+
+        openGoogle();
+
+        aiMessage(
+            "Opening Google, Boss."
+        );
+
+        return;
+    }
+
+
+    if (tool === "battery") {
+
+        const answer =
+            await getBatteryInfo();
+
+        aiMessage(
+            `Boss, ${answer}`
+        );
+
+        speak(
+            `Boss, ${answer}`
+        );
+
+        return;
+    }
+
+
+    if (tool === "device") {
+
+        const info =
+            getDeviceInfo();
+
+        const answer =
+            `You are using an ${info.device}. ` +
+            `Screen size is ${info.screen}.`;
+
+        aiMessage(answer);
+
+        speak(answer);
+
+        return;
+    }
+
+
+    if (tool === "network") {
+
+        const answer =
+            getNetworkInfo();
+
+        aiMessage(
+            `Boss, ${answer}`
+        );
+
+        speak(
+            `Boss, ${answer}`
+        );
+
+        return;
+    }
+}
+
+
+/* =========================
+   GEMINI
+   ========================= */
+
+async function askGemini(question) {
+
+    const apiKey =
+        getAPIKey();
+
+
+    if (!apiKey) {
+
+        aiMessage(
+            "Boss, no Gemini API key was provided."
+        );
+
+        return;
+    }
+
+
+    const systemPrompt = `
+You are D.I.S.C.O, a helpful personal AI assistant.
+
+Address the user as Boss.
+
+Use simple Indian English.
+
+Give clear and useful answers.
+
+Do not invent the current time, date, weather or location.
+Those are handled by D.I.S.C.O's direct tools.
+
+If the user asks about something that needs current information,
+say that a live web search may be required.
+
+If the user asks for Telugu translation,
+translate the requested sentence into natural Telugu.
+
+Keep answers reasonably concise unless the user asks for detail.
+`;
+
+
+    const requestBody = {
+
+        systemInstruction: {
+            parts: [
+                {
+                    text: systemPrompt
+                }
+            ]
+        },
+
+        contents: [
+            {
+                role: "user",
+
+                parts: [
+                    {
+                        text: question
+                    }
+                ]
+            }
+        ],
+
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800
+        }
+    };
+
+
+    try {
+
+        const response =
+            await fetch(
+                "https://generativelanguage.googleapis.com/v1beta/models/" +
+                MODEL +
+                ":generateContent",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "x-goog-api-key":
+                            apiKey
+                    },
+
+                    body:
+                        JSON.stringify(
+                            requestBody
+                        )
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            console.error(
+                "Gemini error:",
+                data
+            );
+
+
+            if (
+                response.status === 400 ||
+                response.status === 401 ||
+                response.status === 403
+            ) {
+
+                aiMessage(
+                    "Boss, the Gemini API key was rejected. Use CHANGE API KEY and enter a valid key."
+                );
+
+                return;
+            }
+
+
+            if (response.status === 404) {
+
+                aiMessage(
+                    "Boss, the selected Gemini model is not available for this API request."
+                );
+
+                return;
+            }
+
+
+            if (response.status === 429) {
+
+                aiMessage(
+                    "Boss, Gemini has reached its current request limit. Please wait and try again."
+                );
+
+                return;
+            }
+
+
+            if (response.status === 503) {
+
+                aiMessage(
+                    "Boss, Gemini is temporarily busy. Please try again shortly."
+                );
+
+                return;
+            }
+
+
+            aiMessage(
+                "Boss, Gemini returned an error. Please check the API key and try again."
+            );
+
+            return;
+        }
+
+
+        const answer =
+            data?.candidates?.[0]?.content?.parts
+                ?.map(part => part.text || "")
+                .join("")
+                .trim();
+
+
+        if (!answer) {
+
+            aiMessage(
+                "Boss, I did not receive a usable answer from Gemini."
+            );
+
+            return;
+        }
+
+
+        aiMessage(answer);
+
+        speak(answer);
+
+
+    } catch (error) {
+
+        console.error(
+            "Gemini connection error:",
+            error
+        );
+
+
+        aiMessage(
+            "Boss, I could not connect to Gemini. Please check your internet connection."
+        );
+    }
+}
+
+
+/* =========================
+   SEND MESSAGE
    ========================= */
 
 async function sendMessage() {
 
-    if (!msg) return;
-
-    const text =
+    const question =
         msg.value.trim();
 
-    if (!text) return;
 
-    addMessage(
-        text,
-        "user"
-    );
-
-    msg.value = "";
-
-    const result =
-        await processCommand(text);
-
-    if (result) {
-
-        answer(result);
+    if (!question) {
         return;
     }
 
-    answer(
-        "I received your message, Boss. Gemini can handle general questions when your API connection is available."
-    );
+
+    userMessage(question);
+
+    msg.value = "";
+
+
+    /* MEMORY LEARNING */
+
+    if (
+        learnFromSentence(question)
+    ) {
+        return;
+    }
+
+
+    /* MEMORY QUESTIONS */
+
+    if (
+        memoryAnswer(question)
+    ) {
+        return;
+    }
+
+
+    /* DIRECT TOOLS */
+
+    const usedTool =
+        await handleDirectTool(question);
+
+
+    if (usedTool) {
+        return;
+    }
+
+
+    /* GEMINI */
+
+    await askGemini(question);
 }
 
 
@@ -762,7 +1793,7 @@ if (msg) {
 
     msg.addEventListener(
         "keydown",
-        function(event) {
+        event => {
 
             if (event.key === "Enter") {
 
@@ -776,24 +1807,39 @@ if (msg) {
 
 
 /* =========================
-   CLEAR BUTTON
+   CLEAR MEMORY
    ========================= */
 
 if (clearBtn) {
 
     clearBtn.addEventListener(
         "click",
-        function() {
+        () => {
 
-            localStorage.removeItem(
-                "disco_memory"
-            );
+            const confirmed =
+                confirm(
+                    "Boss, clear all D.I.S.C.O memory?"
+                );
 
-            if (chat) {
-                chat.innerHTML = "";
+
+            if (!confirmed) {
+                return;
             }
 
-            answer(
+
+            memory = [];
+
+
+            localStorage.removeItem(
+                MEMORY_STORAGE
+            );
+
+
+            aiMessage(
+                "Memory cleared, Boss."
+            );
+
+            speak(
                 "Memory cleared, Boss."
             );
         }
@@ -802,29 +1848,42 @@ if (clearBtn) {
 
 
 /* =========================
-   CHANGE KEY BUTTON
+   CHANGE API KEY
    ========================= */
 
 if (keyBtn) {
 
     keyBtn.addEventListener(
         "click",
-        function() {
+        () => {
+
+            localStorage.removeItem(
+                API_KEY_STORAGE
+            );
+
 
             const key =
                 prompt(
-                    "Enter your Gemini API key:"
+                    "Boss, enter your new Gemini API key."
                 );
+
 
             if (key) {
 
                 localStorage.setItem(
-                    "disco_api_key",
+                    API_KEY_STORAGE,
                     key.trim()
                 );
 
-                answer(
-                    "API key updated, Boss."
+
+                aiMessage(
+                    "Gemini API key updated, Boss."
+                );
+
+            } else {
+
+                aiMessage(
+                    "API key was not changed."
                 );
             }
         }
@@ -833,19 +1892,31 @@ if (keyBtn) {
 
 
 /* =========================
-   MICROPHONE
+   VOICE INPUT
    ========================= */
 
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+function setupVoiceInput() {
 
-let recognition = null;
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
-if (SpeechRecognition) {
+
+    if (!SpeechRecognition) {
+
+        if (mic) {
+            mic.disabled = true;
+            mic.title =
+                "Voice input is not supported by this browser";
+        }
+
+        return;
+    }
+
 
     recognition =
         new SpeechRecognition();
+
 
     recognition.lang =
         "en-IN";
@@ -858,7 +1929,7 @@ if (SpeechRecognition) {
 
 
     recognition.onstart =
-        function() {
+        () => {
 
             if (mic) {
                 mic.textContent = "🔴";
@@ -866,63 +1937,62 @@ if (SpeechRecognition) {
         };
 
 
-    recognition.onresult =
-        function(event) {
-
-            const text =
-                event.results[0][0]
-                    .transcript;
-
-            if (msg) {
-                msg.value = text;
-            }
-
-            sendMessage();
-        };
-
-
     recognition.onend =
-        function() {
+        () => {
 
             if (mic) {
-                mic.textContent = "🎙️";
+                mic.textContent = "🎤";
             }
         };
 
 
     recognition.onerror =
-        function() {
+        error => {
+
+            console.error(
+                "Voice error:",
+                error
+            );
 
             if (mic) {
-                mic.textContent = "🎙️";
+                mic.textContent = "🎤";
             }
         };
+
+
+    recognition.onresult =
+        event => {
+
+            const transcript =
+                event.results[0][0].transcript;
+
+
+            msg.value =
+                transcript;
+
+
+            sendMessage();
+        };
+
+
+    if (mic) {
+
+        mic.addEventListener(
+            "click",
+            () => {
+
+                try {
+                    recognition.start();
+                } catch {
+                    // Already running.
+                }
+            }
+        );
+    }
 }
 
 
-if (mic) {
-
-    mic.addEventListener(
-        "click",
-        function() {
-
-            if (!recognition) {
-
-                answer(
-                    "Voice recognition is not supported by this browser, Boss."
-                );
-
-                return;
-            }
-
-            try {
-                recognition.start();
-            } catch (error) {
-                /* Already running */
-            }
-        }
-    );
-}
+setupVoiceInput();
 
 
 /* =========================
@@ -933,8 +2003,7 @@ if (imgBtn && imgInput) {
 
     imgBtn.addEventListener(
         "click",
-        function() {
-
+        () => {
             imgInput.click();
         }
     );
@@ -942,20 +2011,21 @@ if (imgBtn && imgInput) {
 
     imgInput.addEventListener(
         "change",
-        function() {
+        () => {
 
-            if (!imgInput.files.length) {
+            const file =
+                imgInput.files?.[0];
+
+
+            if (!file) {
                 return;
             }
 
-            const file =
-                imgInput.files[0];
 
-            answer(
-                "Image selected: " +
-                file.name +
-                ", Boss."
+            aiMessage(
+                `Boss, I received the image "${file.name}". Image analysis can be connected to Gemini vision when your API/model supports image input.`
             );
+
 
             imgInput.value = "";
         }
@@ -964,9 +2034,35 @@ if (imgBtn && imgInput) {
 
 
 /* =========================
+   ONLINE / OFFLINE
+   ========================= */
+
+window.addEventListener(
+    "online",
+    () => {
+
+        aiMessage(
+            "Network connection restored, Boss."
+        );
+    }
+);
+
+
+window.addEventListener(
+    "offline",
+    () => {
+
+        aiMessage(
+            "Boss, the device is currently offline."
+        );
+    }
+);
+
+
+/* =========================
    STARTUP
    ========================= */
 
 console.log(
-    "D.I.S.C.O is ready."
+    "D.I.S.C.O MOBILE EDITION loaded successfully."
 );
