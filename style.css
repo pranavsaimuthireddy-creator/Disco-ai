@@ -1,5 +1,6 @@
 /* ===============================
-   D.I.S.C.O GOLD HUD
+   D.I.S.C.O. GOLD HUD
+   WITH MEMORY / VOICE / VISION BOXES
 =============================== */
 
 * {
@@ -15,7 +16,6 @@ body {
 }
 
 body {
-    margin: 0;
     background:
         radial-gradient(circle at 50% 40%, #30250b 0%, #0b0903 35%, #020202 70%, #000 100%);
     color: #f6c85f;
@@ -23,16 +23,18 @@ body {
     overflow-x: hidden;
 }
 
-/* GRID */
+/* BACKGROUND GRID */
 
 body::before {
     content: "";
     position: fixed;
     inset: 0;
     pointer-events: none;
+
     background:
         linear-gradient(rgba(246, 200, 95, 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(246, 200, 95, 0.035) 1px, transparent 1px);
+
     background-size: 36px 36px;
     z-index: -2;
 }
@@ -45,11 +47,15 @@ body::after {
     left: 0;
     right: 0;
     top: -10%;
+
     height: 2px;
+
     background: #f6c85f;
     box-shadow: 0 0 18px #f6c85f;
+
     opacity: 0.35;
     animation: scanLine 5s linear infinite;
+
     pointer-events: none;
     z-index: 10;
 }
@@ -84,6 +90,7 @@ header h1 {
     font-size: clamp(30px, 8vw, 58px);
     letter-spacing: 8px;
     color: #f6c85f;
+
     text-shadow:
         0 0 8px #f6c85f,
         0 0 25px rgba(246, 200, 95, 0.7);
@@ -103,26 +110,31 @@ header p {
 }
 
 /* ===============================
-   CORE
+   DISCO CORE
 =============================== */
 
 .core-area {
     position: relative;
     width: 100%;
     height: 390px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     perspective: 1000px;
 }
 
 .disco-core {
     position: relative;
+
     width: 260px;
     height: 260px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     transform-style: preserve-3d;
 }
 
@@ -130,8 +142,10 @@ header p {
 
 .ball {
     position: relative;
+
     width: 150px;
     height: 150px;
+
     border-radius: 50%;
     overflow: hidden;
 
@@ -152,12 +166,16 @@ header p {
         0 0 70px rgba(246, 200, 95, 0.35);
 
     transform-style: preserve-3d;
+
     animation: ballFloat 4s ease-in-out infinite;
+
     z-index: 5;
 }
 
 @keyframes ballFloat {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0) rotateY(0deg);
     }
 
@@ -166,9 +184,12 @@ header p {
     }
 }
 
+/* BALL SURFACE */
+
 .ball-surface {
     position: absolute;
     inset: 0;
+
     border-radius: 50%;
 
     background:
@@ -186,21 +207,32 @@ header p {
     opacity: 0.8;
 }
 
+/* BALL HIGHLIGHT */
+
 .ball-highlight {
     position: absolute;
+
     width: 60px;
     height: 38px;
+
     top: 17px;
     left: 25px;
+
     border-radius: 50%;
+
     background: rgba(255, 255, 255, 0.6);
+
     filter: blur(5px);
+
     transform: rotate(-25deg);
 }
+
+/* BALL LIGHT */
 
 .ball-light {
     position: absolute;
     inset: 0;
+
     border-radius: 50%;
 
     background:
@@ -216,52 +248,69 @@ header p {
         );
 }
 
+/* BALL LETTER */
+
 .ball-letter {
     position: absolute;
     inset: 0;
+
     display: flex;
     align-items: center;
     justify-content: center;
 
     font-size: 38px;
     font-weight: 900;
+
     color: #111;
 
     text-shadow: 0 0 10px #fff;
 }
 
-/* ORBITS */
+/* ===============================
+   ORBITS
+=============================== */
 
 .orbit {
     position: absolute;
+
     border: 1px solid rgba(246, 200, 95, 0.65);
+
     border-radius: 50%;
+
     transform-style: preserve-3d;
+
     pointer-events: none;
 }
 
 .orbit1 {
     width: 230px;
     height: 95px;
+
     transform: rotateX(70deg);
+
     animation: orbit1 5s linear infinite;
 }
 
 .orbit2 {
     width: 240px;
     height: 115px;
+
     transform: rotateY(70deg);
+
     animation: orbit2 7s linear infinite;
 }
 
 .orbit3 {
     width: 270px;
     height: 270px;
+
     border-style: dashed;
+
     animation: orbit3 12s linear infinite;
 }
 
 @keyframes orbit1 {
+
     from {
         transform: rotateX(70deg) rotateZ(0deg);
     }
@@ -272,6 +321,7 @@ header p {
 }
 
 @keyframes orbit2 {
+
     from {
         transform: rotateY(70deg) rotateZ(0deg);
     }
@@ -282,6 +332,7 @@ header p {
 }
 
 @keyframes orbit3 {
+
     from {
         transform: rotateZ(0deg);
     }
@@ -296,6 +347,7 @@ header p {
 =============================== */
 
 body.listening .ball {
+
     box-shadow:
         0 0 20px red,
         0 0 45px red,
@@ -311,7 +363,9 @@ body.listening .orbit {
 }
 
 @keyframes listeningPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
 
@@ -325,6 +379,7 @@ body.listening .orbit {
 =============================== */
 
 body.reasoning .ball {
+
     box-shadow:
         0 0 20px #ff8c00,
         0 0 50px #ff8c00,
@@ -338,6 +393,7 @@ body.reasoning .orbit {
 }
 
 @keyframes reasoningSpin {
+
     from {
         transform: rotateY(0deg) rotateX(0deg);
     }
@@ -352,7 +408,9 @@ body.reasoning .orbit {
 =============================== */
 
 body.speaking .ball {
-    animation: speakingPulse 0.6s ease-in-out infinite alternate;
+
+    animation:
+        speakingPulse 0.6s ease-in-out infinite alternate;
 }
 
 body.speaking .orbit {
@@ -360,6 +418,7 @@ body.speaking .orbit {
 }
 
 @keyframes speakingPulse {
+
     from {
         transform: scale(1);
     }
@@ -379,33 +438,42 @@ body.speaking .orbit {
 }
 
 #stateText {
+
     font-size: 13px;
     font-weight: bold;
     letter-spacing: 4px;
 }
 
 #stateDot {
+
     display: inline-block;
+
     width: 9px;
     height: 9px;
+
     margin-right: 7px;
+
     border-radius: 50%;
 
     background: #f6c85f;
+
     box-shadow: 0 0 12px #f6c85f;
 }
 
 body.listening #stateDot {
+
     background: red;
     box-shadow: 0 0 15px red;
 }
 
 body.reasoning #stateDot {
+
     background: #ff8c00;
     box-shadow: 0 0 15px #ff8c00;
 }
 
 body.speaking #stateDot {
+
     background: #f6c85f;
     box-shadow: 0 0 18px #f6c85f;
 }
@@ -413,61 +481,219 @@ body.speaking #stateDot {
 /* ACTIVITY */
 
 #activity {
+
     text-align: center;
+
     margin: 10px 0 20px;
+
     font-size: 10px;
+
     letter-spacing: 3px;
+
     color: #8c702c;
 }
 
-/* ===============================
-   STATUS BOXES
-=============================== */
+/* =================================================
+   SYSTEM BOXES
+================================================= */
 
 .status-grid {
+
     width: 100%;
+
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin: 15px auto 20px;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 12px;
+
+    margin: 15px auto 25px;
 }
 
+/* INDIVIDUAL BOX */
+
 .status-card {
-    min-height: 65px;
-    padding: 10px;
 
-    border: 1px solid rgba(246, 200, 95, 0.35);
+    position: relative;
 
-    background: rgba(15, 12, 5, 0.7);
+    min-height: 82px;
 
-    border-radius: 10px;
+    padding: 15px 10px;
+
+    border: 1px solid rgba(246, 200, 95, 0.55);
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(246, 200, 95, 0.10),
+            rgba(0, 0, 0, 0.72)
+        );
 
     text-align: center;
 
-    font-size: 9px;
-    letter-spacing: 1px;
+    font-size: 10px;
+
+    letter-spacing: 2px;
+
+    box-shadow:
+        inset 0 0 18px rgba(246, 200, 95, 0.04),
+        0 0 12px rgba(246, 200, 95, 0.08);
+
+    transition: 0.25s ease;
+
+    overflow: hidden;
 }
+
+/* BOX TOP LINE */
+
+.status-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 15%;
+
+    width: 70%;
+    height: 1px;
+
+    background: #f6c85f;
+
+    box-shadow: 0 0 10px #f6c85f;
+}
+
+/* BOX CORNER */
+
+.status-card::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: 7px;
+    bottom: 7px;
+
+    width: 7px;
+    height: 7px;
+
+    border-right: 1px solid #f6c85f;
+    border-bottom: 1px solid #f6c85f;
+}
+
+/* HOVER */
+
+.status-card:hover {
+
+    transform: translateY(-3px);
+
+    border-color: #f6c85f;
+
+    box-shadow:
+        0 0 20px rgba(246, 200, 95, 0.25),
+        inset 0 0 20px rgba(246, 200, 95, 0.08);
+}
+
+/* ICON / TITLE */
+
+.status-card strong {
+
+    display: block;
+
+    color: #f6c85f;
+
+    font-size: 12px;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 8px;
+
+    text-shadow:
+        0 0 8px rgba(246, 200, 95, 0.6);
+}
+
+/* STATUS TEXT */
 
 .status-card span {
+
     display: block;
-    margin-top: 6px;
-    color: #f6c85f;
+
+    color: #b49342;
+
+    font-size: 9px;
+
+    letter-spacing: 1px;
+
+    margin-top: 5px;
 }
 
-/* ===============================
-   CHAT BOX
-=============================== */
+/* MEMORY BOX */
+
+.status-card.memory {
+
+    border-color: #f6c85f;
+
+    box-shadow:
+        0 0 15px rgba(246, 200, 95, 0.15),
+        inset 0 0 20px rgba(246, 200, 95, 0.05);
+}
+
+.status-card.memory strong {
+
+    color: #ffe48a;
+}
+
+/* VOICE BOX */
+
+.status-card.voice {
+    border-color: #cda94c;
+}
+
+/* VISION BOX */
+
+.status-card.vision {
+    border-color: #b89032;
+}
+
+/* NETWORK BOX */
+
+.status-card.network {
+    border-color: #9d7d27;
+}
+
+/* CORE BOX */
+
+.status-card.core {
+    border-color: #f6c85f;
+}
+
+/* SYSTEM BOX */
+
+.status-card.system {
+    border-color: #d4ad4e;
+}
+
+/* =================================================
+   CHAT
+================================================= */
 
 #chat {
+
     width: 100%;
+
     max-width: 900px;
 
     height: 300px;
 
     margin: 20px auto;
+
     padding: 16px;
 
     display: flex;
+
     flex-direction: column;
 
     gap: 12px;
@@ -481,12 +707,13 @@ body.speaking #stateDot {
     background: rgba(0, 0, 0, 0.38);
 
     scrollbar-width: thin;
+
     scrollbar-color:
         #f6c85f
         rgba(0, 0, 0, 0.4);
 }
 
-/* CHAT SCROLLBAR */
+/* SCROLLBAR */
 
 #chat::-webkit-scrollbar {
     width: 6px;
@@ -494,19 +721,23 @@ body.speaking #stateDot {
 
 #chat::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.4);
-    border-radius: 10px;
 }
 
 #chat::-webkit-scrollbar-thumb {
+
     background: #f6c85f;
+
     border-radius: 10px;
+
     box-shadow: 0 0 8px #f6c85f;
 }
 
 /* MESSAGE */
 
 .message {
+
     width: fit-content;
+
     max-width: 75%;
 
     padding: 11px 15px;
@@ -518,17 +749,22 @@ body.speaking #stateDot {
     line-height: 1.5;
 
     word-wrap: break-word;
+
     overflow-wrap: break-word;
 
     white-space: pre-wrap;
+
+    background: rgba(246, 200, 95, 0.04);
 }
 
-/* D.I.S.C.O. MESSAGE = LEFT */
+/* AI LEFT */
 
 .message.ai {
+
     align-self: flex-start;
 
     margin-right: auto;
+
     margin-left: 0;
 
     text-align: left;
@@ -536,12 +772,14 @@ body.speaking #stateDot {
     border-bottom-left-radius: 4px;
 }
 
-/* USER MESSAGE = RIGHT */
+/* USER RIGHT */
 
 .message.user {
+
     align-self: flex-end;
 
     margin-left: auto;
+
     margin-right: 0;
 
     text-align: left;
@@ -549,24 +787,29 @@ body.speaking #stateDot {
     border-bottom-right-radius: 4px;
 }
 
-/* ===============================
-   INPUT
-=============================== */
+/* =================================================
+   INPUT CONTROLS
+================================================= */
 
 .controls {
+
     width: 100%;
+
     max-width: 900px;
 
     margin: 15px auto;
 
     display: flex;
+
     align-items: center;
 
     gap: 8px;
 }
 
 #msg {
+
     flex: 1;
+
     min-width: 0;
 
     height: 48px;
@@ -591,18 +834,18 @@ body.speaking #stateDot {
 }
 
 #msg:focus {
+
     border-color: #f6c85f;
 
     box-shadow:
         0 0 15px rgba(246, 200, 95, 0.25);
 }
 
-/* ===============================
-   BUTTONS
-=============================== */
+/* BUTTONS */
 
 button,
 .image-button {
+
     min-height: 44px;
 
     padding: 0 15px;
@@ -628,6 +871,7 @@ button,
 
 button:hover,
 .image-button:hover {
+
     background: #f6c85f;
 
     color: #000;
@@ -638,11 +882,16 @@ button:hover,
 
 button:active,
 .image-button:active {
+
     transform: scale(0.95);
 }
 
+/* MIC */
+
 #mic {
+
     width: 48px;
+
     min-width: 48px;
 
     padding: 0;
@@ -651,23 +900,27 @@ button:active,
 }
 
 body.listening #mic {
+
     border-color: red;
+
     color: red;
 
     box-shadow:
         0 0 18px red;
 }
 
+/* SEND */
+
 #send {
     min-width: 70px;
 }
 
-/* ===============================
-   EXTRA CONTROLS
-=============================== */
+/* EXTRA CONTROLS */
 
 .extra-controls {
+
     width: 100%;
+
     max-width: 900px;
 
     margin: 10px auto;
@@ -683,13 +936,16 @@ body.listening #mic {
 
 #clear-btn,
 #key-btn {
+
     font-size: 10px;
 }
 
 .image-button {
+
     display: inline-flex;
 
     align-items: center;
+
     justify-content: center;
 }
 
@@ -697,11 +953,10 @@ body.listening #mic {
     display: none;
 }
 
-/* ===============================
-   FOOTER
-=============================== */
+/* FOOTER */
 
 footer {
+
     text-align: center;
 
     padding: 25px 0;
@@ -713,9 +968,9 @@ footer {
     letter-spacing: 2px;
 }
 
-/* ===============================
+/* =================================================
    MOBILE
-=============================== */
+================================================= */
 
 @media (max-width: 600px) {
 
@@ -724,12 +979,16 @@ footer {
     }
 
     header h1 {
+
         font-size: 30px;
+
         letter-spacing: 5px;
     }
 
     header p {
+
         font-size: 8px;
+
         letter-spacing: 2px;
     }
 
@@ -741,23 +1000,48 @@ footer {
         transform: scale(0.82);
     }
 
-    /* STATUS BOXES */
+    /* 2 COLUMNS ON PHONE */
 
     .status-grid {
-        grid-template-columns: repeat(2, 1fr);
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 9px;
     }
 
-    /* CHAT */
+    .status-card {
+
+        min-height: 75px;
+
+        padding: 12px 7px;
+
+        font-size: 9px;
+    }
+
+    .status-card strong {
+        font-size: 10px;
+    }
+
+    .status-card span {
+        font-size: 8px;
+    }
 
     #chat {
+
         height: 300px;
+
         min-height: 150px;
+
         padding: 10px;
     }
 
     .message {
+
         max-width: 82%;
+
         font-size: 13px;
+
         padding: 10px 13px;
     }
 
@@ -766,6 +1050,7 @@ footer {
     }
 
     #msg {
+
         height: 44px;
 
         font-size: 13px;
@@ -779,12 +1064,16 @@ footer {
     }
 
     #send {
+
         min-width: 58px;
+
         padding: 0 10px;
     }
 
     #mic {
+
         width: 42px;
+
         min-width: 42px;
     }
 }
@@ -801,11 +1090,13 @@ footer {
         transform: scale(0.7);
     }
 
-    #send {
-        display: none;
+    .status-grid {
+
+        grid-template-columns:
+            1fr 1fr;
     }
 
-    .status-grid {
-        grid-template-columns: 1fr 1fr;
+    #send {
+        display: none;
     }
    }
