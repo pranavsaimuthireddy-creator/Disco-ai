@@ -2,47 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>D.I.S.C.O AI</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <title>D.I.S.C.O — Mobile AI</title>
+
+    <link rel="stylesheet" href="style.css?v=5000">
 </head>
 
 <body>
 
-    <div class="background-grid"></div>
+    <!-- BACKGROUND HUD -->
 
-    <header>
-        <div class="top-bar">
-            <span class="menu">☰</span>
-            <span class="online">
-                ● SYSTEM ONLINE
-            </span>
-            <span>◉</span>
+    <div class="hud-grid"></div>
+
+    <div class="scan-line"></div>
+
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+        <div class="brand">
+            D.I.S.C.O
         </div>
 
-        <h1>D.I.S.C.O</h1>
-        <p>MOBILE AI SYSTEM</p>
+        <div class="subtitle">
+            MOBILE AI CORE
+        </div>
+
     </header>
 
 
-    <!-- CORE -->
+    <!-- REACTOR -->
 
-    <section class="core-section">
+    <section class="reactor-section">
 
-        <div class="core">
+        <div class="reactor">
 
-            <div class="ring ring1"></div>
-            <div class="ring ring2"></div>
-            <div class="ring ring3"></div>
+            <div class="reactor-ring ring-one"></div>
 
-            <div class="core-text">
-                <strong>D.I.S.C.O</strong>
-                <span>CORE ACTIVE</span>
-                <i></i>
+            <div class="reactor-ring ring-two"></div>
+
+            <div class="reactor-ring ring-three"></div>
+
+            <div class="reactor-core">
+
+                <span>AI</span>
+
             </div>
 
+        </div>
+
+        <div class="reactor-status">
+            <span class="status-dot"></span>
+            D.I.S.C.O ONLINE
         </div>
 
     </section>
@@ -50,36 +67,44 @@
 
     <!-- STATUS -->
 
-    <section class="panel">
+    <section class="status-panel">
 
-        <div class="panel-title">
-            ⚡ SYSTEM STATUS
+        <div class="section-title">
+            SYSTEM STATUS
         </div>
 
         <div class="status-grid">
 
             <div class="status-card">
-                <div class="icon">▣</div>
-                <h3>AI CORE</h3>
-                <span>● ONLINE</span>
+                <div class="status-icon">◈</div>
+                <div class="status-name">AI CORE</div>
+                <div class="status-value">
+                    <span></span> ONLINE
+                </div>
             </div>
 
             <div class="status-card">
-                <div class="icon">⌁</div>
-                <h3>NETWORK</h3>
-                <span>● ONLINE</span>
+                <div class="status-icon">⚡</div>
+                <div class="status-name">NETWORK</div>
+                <div class="status-value">
+                    <span></span> ONLINE
+                </div>
             </div>
 
             <div class="status-card">
-                <div class="icon">♬</div>
-                <h3>VOICE</h3>
-                <span>● READY</span>
+                <div class="status-icon">◉</div>
+                <div class="status-name">VOICE</div>
+                <div class="status-value">
+                    <span></span> READY
+                </div>
             </div>
 
             <div class="status-card">
-                <div class="icon">🧠</div>
-                <h3>MEMORY</h3>
-                <span>● ONLINE</span>
+                <div class="status-icon">◎</div>
+                <div class="status-name">MEMORY</div>
+                <div class="status-value">
+                    <span></span> ACTIVE
+                </div>
             </div>
 
         </div>
@@ -91,21 +116,29 @@
 
     <section class="chat-panel">
 
-        <div class="terminal">
+        <div class="chat-header">
 
-            <div class="terminal-top">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
+            <span class="led"></span>
+            <span class="led"></span>
+            <span class="led"></span>
 
-            <div id="chat" class="chat">
+            <span class="chat-title">
+                D.I.S.C.O / COMMUNICATION
+            </span>
 
-                <div class="msg ai">
-                    D.I.S.C.O: Systems online.
-                    <br>
-                    How may I assist you, Boss?
-                </div>
+        </div>
+
+
+        <div
+            id="chat"
+            class="chat"
+        >
+
+            <div class="intro-message">
+
+                <strong>D.I.S.C.O: Systems online.</strong>
+
+                <span>Your personal AI assistant.</span>
 
             </div>
 
@@ -116,49 +149,64 @@
 
     <!-- INPUT -->
 
-    <section class="input-section">
+    <section class="control-panel">
 
-        <div class="input-box">
+        <input
+            id="msg"
+            type="text"
+            placeholder="Talk to D.I.S.C.O..."
+            autocomplete="off"
+        >
 
-            <input
-                id="msg"
-                type="text"
-                placeholder="Ask D.I.S.C.O..."
-                autocomplete="off"
+        <div class="buttons">
+
+            <button
+                id="send"
+                class="send-btn"
             >
+                SEND
+            </button>
 
-            <div class="buttons">
+            <button
+                id="mic-btn"
+                class="icon-btn"
+                title="Voice input"
+            >
+                🎙️
+            </button>
 
-                <button id="send" type="button">
-                    SEND
-                </button>
+            <button
+                id="clear-btn"
+                class="icon-btn"
+                title="Clear memory"
+            >
+                🗑️
+            </button>
 
-                <button id="mic" type="button">
-                    🎙️
-                </button>
+            <button
+                id="key-btn"
+                class="icon-btn"
+                title="Change Gemini API key"
+            >
+                🔑
+            </button>
 
-                <button id="clear-btn" type="button">
-                    🗑️
-                </button>
-
-                <button id="change-key" type="button">
-                    🔑
-                </button>
-
-                <button id="img-btn" type="button">
-                    🖼️
-                </button>
-
-                <input
-                    id="img-input"
-                    type="file"
-                    accept="image/*"
-                    hidden
-                >
-
-            </div>
+            <button
+                id="img-btn"
+                class="icon-btn"
+                title="Analyse image"
+            >
+                🖼️
+            </button>
 
         </div>
+
+        <input
+            id="img-input"
+            type="file"
+            accept="image/*"
+            hidden
+        >
 
     </section>
 
@@ -166,15 +214,19 @@
     <!-- FOOTER -->
 
     <footer>
-        <span>‹‹</span>
-        <strong>D.I.S.C.O : ALWAYS WITH YOU</strong>
-        <span>››</span>
+
+        <span>«</span>
+
+        <strong>
+            D.I.S.C.O • ALWAYS WITH YOU
+        </strong>
+
+        <span>»</span>
+
     </footer>
 
 
-    <!-- IMPORTANT: CACHE BUSTER -->
-
-    <script src="script.js?v=2001"></script>
+    <script src="script.js?v=5000"></script>
 
 </body>
-</html>
+    </html>
