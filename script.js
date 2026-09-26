@@ -1,20 +1,23 @@
-// ======================================================
-// D.I.S.C.O - MOBILE AI CORE
-// Complete script.js
-// ======================================================
+/* =====================================================
+   D.I.S.C.O
+   3D CORE + MEMORY + VOICE + GEMINI
+   ===================================================== */
 
 const MODEL = "gemini-3.8-flash";
 
 const API_KEY_NAME = "disco_api_key";
 const MEMORY_NAME = "disco_memory";
 
-let lastActionUrl = "";
-let timerId = null;
 let voices = [];
+let recognition = null;
+let timerId = null;
+let lastActionUrl = "";
+let listening = false;
 
-// ======================================================
-// ELEMENTS
-// ======================================================
+
+/* =====================================================
+   ELEMENTS
+   ===================================================== */
 
 const chat = document.getElementById("chat");
 const msgInput = document.getElementById("msg");
@@ -24,12 +27,21 @@ const clearBtn = document.getElementById("clear-btn");
 const keyBtn = document.getElementById("key-btn");
 const imgInput = document.getElementById("img-input");
 
-// ======================================================
-// VOICES
-// ======================================================
+const stateText = document.getElementById("stateText");
+const activity = document.getElementById("activity");
+const networkStatus = document.getElementById("networkStatus");
+
+
+/* =====================================================
+   VOICES
+   ===================================================== */
 
 function loadVoices() {
-    voices = speechSynthesis.getVoices();
+
+    voices =
+        window.speechSynthesis
+            ? speechSynthesis.getVoices()
+            : [];
 }
 
 loadVoices();
@@ -38,45 +50,81 @@ if ("onvoiceschanged" in speechSynthesis) {
     speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-// Try to select a male-sounding English voice.
-// The actual available voices depend on the device/browser.
-function getMaleVoice() {
-    const englishVoices = voices.filter(v =>
-        v.lang &&
-        (
-            v.lang.toLowerCase().startsWith("en-in") ||
-            v.lang.toLowerCase().startsWith("en-gb") ||
-            v.lang.toLowerCase().startsWith("en-us") ||
-            v.lang.toLowerCase().startsWith("en")
-        )
-    );
 
-    const maleWords = [
+function getPreferredVoice() {
+
+    const english =
+        voices.filter(v =>
+            v.lang &&
+            v.lang.toLowerCase().startsWith("en")
+        );
+
+    const preferredNames = [
         "male",
-        "man",
         "ravi",
         "david",
-        "mark",
-        "george",
         "daniel",
         "alex",
-        "james",
-        "john"
+        "mark",
+        "george",
+        "james"
     ];
 
-    const maleVoice = englishVoices.find(v => {
-        const name = v.name.toLowerCase();
-        return maleWords.some(word => name.includes(word));
-    });
+    const male =
+        english.find(v =>
+            preferredNames.some(
+                name =>
+                    v.name.toLowerCase()
+                        .includes(name)
+            )
+        );
 
-    return maleVoice || englishVoices.find(v =>
-        v.lang.toLowerCase().startsWith("en-in")
-    ) || englishVoices[0] || voices[0];
+    return (
+        male ||
+        english.find(v =>
+            v.lang
+                .toLowerCase()
+                .startsWith("en-in")
+        ) ||
+        english[0] ||
+        voices[0]
+    );
 }
 
-// ======================================================
-// SPEECH
-// ======================================================
+
+/* =====================================================
+   UI STATE
+   ===================================================== */
+
+function setState(
+    mode,
+    text,
+    activityText
+) {
+
+    document.body.classList.remove(
+        "listening",
+        "reasoning",
+        "speaking"
+    );
+
+    if (mode) {
+        document.body.classList.add(mode);
+    }
+
+    if (stateText) {
+        stateText.textContent = text;
+    }
+
+    if (activity) {
+        activity.textContent = activityText;
+    }
+}
+
+
+/* =====================================================
+   SPEAK
+   ===================================================== */
 
 function speak(text) {
 
@@ -86,74 +134,126 @@ function speak(text) {
 
     speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance =
+        new SpeechSynthesisUtterance(text);
 
-    const voice = getMaleVoice();
+    const voice =
+        getPreferredVoice();
 
     if (voice) {
         utterance.voice = voice;
     }
 
     utterance.lang = "en-IN";
+
     utterance.rate = 0.92;
+
     utterance.pitch = 0.78;
+
     utterance.volume = 1;
 
-    document.body.classList.add("speaking");
+
+    utterance.onstart = () => {
+
+        setState(
+            "speaking",
+            "SPEAKING",
+            "D.I.S.C.O IS SPEAKING"
+        );
+    };
+
 
     utterance.onend = () => {
-        document.body.classList.remove("speaking");
+
+        setState(
+            "",
+            "READY",
+            "SYSTEM READY"
+        );
     };
 
+
     utterance.onerror = () => {
-        document.body.classList.remove("speaking");
+
+        setState(
+            "",
+            "READY",
+            "SYSTEM READY"
+        );
     };
+
 
     speechSynthesis.speak(utterance);
 }
 
-// ======================================================
-// CHAT DISPLAY
-// ======================================================
 
-function addMessage(text, sender = "ai") {
+/* =====================================================
+   CHAT
+   ===================================================== */
 
-    if (!chat) return;
+function addMessage(text, sender) {
 
-    const box = document.createElement("div");
+    const box =
+        document.createElement("div");
 
-    box.className = sender === "user"
-        ? "msg user-msg"
-        : "msg ai-msg";
+    box.className =
+        sender === "user"
+            ? "msg user-msg"
+            : "msg ai-msg";
 
-    box.innerHTML = `
-        <div class="msg-label">
-            ${sender === "user" ? "BOSS" : "D.I.S.C.O"}
-        </div>
-        <div class="msg-text"></div>
-    `;
 
-    box.querySelector(".msg-text").textContent = text;
+    const label =
+        document.createElement("div");
+
+    label.className =
+        "msg-label";
+
+    label.textContent =
+        sender === "user"
+            ? "BOSS"
+            : "D.I.S.C.O";
+
+
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "msg-text";
+
+    content.textContent = text;
+
+
+    box.appendChild(label);
+
+    box.appendChild(content);
 
     chat.appendChild(box);
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop =
+        chat.scrollHeight;
 }
 
-// ======================================================
-// MEMORY
-// ======================================================
+
+/* =====================================================
+   MEMORY
+   ===================================================== */
 
 function getMemory() {
 
     try {
+
         return JSON.parse(
-            localStorage.getItem(MEMORY_NAME) || "{}"
+            localStorage.getItem(
+                MEMORY_NAME
+            ) || "{}"
         );
+
     } catch {
+
         return {};
     }
 }
+
 
 function saveMemory(memory) {
 
@@ -163,102 +263,133 @@ function saveMemory(memory) {
     );
 }
 
-// ======================================================
-// REMEMBER INFORMATION
-// ======================================================
 
-function rememberInformation(text) {
+/* =====================================================
+   SAVE MEMORY
+   ===================================================== */
 
-    const memory = getMemory();
+function remember(text) {
 
-    let changed = false;
+    const memory =
+        getMemory();
 
-    // Name
-    const nameMatch = text.match(
-        /(?:my name is|remember that my name is)\s+([a-zA-Z][a-zA-Z ]{1,30})/i
-    );
+    let saved = false;
+
+
+    /* NAME */
+
+    const nameMatch =
+        text.match(
+            /my name is\s+([a-zA-Z][a-zA-Z ]{1,30})/i
+        );
 
     if (nameMatch) {
 
-        let name = nameMatch[1]
-            .trim()
-            .replace(/[.!?,]+$/, "");
+        let name =
+            nameMatch[1]
+                .trim()
+                .replace(/[.!?,]+$/, "");
 
-        // If another memory phrase follows, stop there.
-        name = name.split(
-            /\s+(?:and|my favourite|my favorite)\s+/i
-        )[0].trim();
+        name =
+            name.split(
+                /\s+(?:and|my favourite|my favorite)\s+/i
+            )[0]
+                .trim();
 
         memory.name = name;
-        changed = true;
+
+        saved = true;
     }
 
-    // Favourite colour
-    const colourMatch = text.match(
-        /(?:my favourite colour is|my favorite colour is|my favourite color is|my favorite color is)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)?)/i
-    );
+
+    /* FAVOURITE COLOUR */
+
+    const colourMatch =
+        text.match(
+            /my favou?rite colou?r is\s+([a-zA-Z ]+)/i
+        );
 
     if (colourMatch) {
 
-        const colour = colourMatch[1]
-            .trim()
-            .replace(/[.!?,]+$/, "");
+        let colour =
+            colourMatch[1]
+                .trim()
+                .replace(/[.!?,]+$/, "");
 
-        memory.favouriteColour = colour;
-        changed = true;
+        colour =
+            colour.split(
+                /\s+(?:and|my name)\s+/i
+            )[0]
+                .trim();
+
+        memory.favouriteColour =
+            colour;
+
+        saved = true;
     }
 
-    // Generic remember statement
-    const genericMatch = text.match(
-        /remember that\s+(.+)/i
-    );
 
-    if (genericMatch && !changed) {
+    /* GENERIC MEMORY */
+
+    const generic =
+        text.match(
+            /remember that\s+(.+)/i
+        );
+
+    if (generic && !saved) {
 
         if (!memory.notes) {
             memory.notes = [];
         }
 
         memory.notes.push(
-            genericMatch[1].trim()
+            generic[1].trim()
         );
 
-        changed = true;
+        saved = true;
     }
 
-    if (changed) {
+
+    if (saved) {
+
         saveMemory(memory);
+
         return true;
     }
 
     return false;
 }
 
-// ======================================================
-// MEMORY QUESTIONS
-// ======================================================
 
-function answerMemoryQuestion(text) {
+/* =====================================================
+   MEMORY QUESTIONS
+   ===================================================== */
 
-    const memory = getMemory();
+function memoryQuestion(text) {
 
-    const lower = text.toLowerCase();
+    const lower =
+        text.toLowerCase();
 
-    // Name
+    const memory =
+        getMemory();
+
+
+    /* NAME */
+
     if (
         lower.includes("what is my name") ||
         lower.includes("what's my name") ||
         lower.includes("tell me my name")
     ) {
 
-        if (memory.name) {
-            return `Your name is ${memory.name}.`;
-        }
-
-        return "Boss, I don't have your name saved yet.";
+        return memory.name
+            ? `Your name is ${memory.name}, Boss.`
+            : "Boss, I don't have your name saved yet.";
     }
 
-    // Favourite colour
+
+    /* COLOUR */
+
     if (
         lower.includes("what is my favourite colour") ||
         lower.includes("what's my favourite colour") ||
@@ -270,100 +401,112 @@ function answerMemoryQuestion(text) {
         lower.includes("what's my favorite color")
     ) {
 
-        if (memory.favouriteColour) {
-            return `Your favourite colour is ${memory.favouriteColour}.`;
-        }
-
-        return "Boss, I don't have your favourite colour saved yet.";
+        return memory.favouriteColour
+            ? `Your favourite colour is ${memory.favouriteColour}, Boss.`
+            : "Boss, I don't have your favourite colour saved yet.";
     }
 
-    // Combined question
-    const asksName =
-        lower.includes("my name") &&
-        (
-            lower.includes("what") ||
-            lower.includes("tell")
-        );
 
-    const asksColour =
+    /* COMBINED */
+
+    const wantsName =
+        lower.includes("my name");
+
+    const wantsColour =
         lower.includes("favourite colour") ||
         lower.includes("favorite colour") ||
         lower.includes("favourite color") ||
         lower.includes("favorite color");
 
-    if (asksName && asksColour) {
 
-        const name = memory.name
-            ? `Your name is ${memory.name}.`
-            : "I don't have your name saved.";
+    if (
+        wantsName &&
+        wantsColour
+    ) {
 
-        const colour = memory.favouriteColour
-            ? `Your favourite colour is ${memory.favouriteColour}.`
-            : "I don't have your favourite colour saved.";
+        const name =
+            memory.name
+                ? `Your name is ${memory.name}.`
+                : "I don't have your name saved.";
+
+        const colour =
+            memory.favouriteColour
+                ? `Your favourite colour is ${memory.favouriteColour}.`
+                : "I don't have your favourite colour saved.";
 
         return `${name} ${colour}`;
     }
 
-    // Show all memory
+
+    /* ALL MEMORY */
+
     if (
-        lower === "show my memory" ||
-        lower === "what do you remember about me" ||
-        lower === "what do you remember"
+        lower === "what do you remember" ||
+        lower === "show my memory"
     ) {
 
-        const items = [];
+        const answers = [];
 
         if (memory.name) {
-            items.push(`Your name is ${memory.name}.`);
+            answers.push(
+                `Your name is ${memory.name}.`
+            );
         }
 
         if (memory.favouriteColour) {
-            items.push(
+            answers.push(
                 `Your favourite colour is ${memory.favouriteColour}.`
             );
         }
 
-        if (memory.notes && memory.notes.length) {
-            items.push(
+        if (
+            memory.notes &&
+            memory.notes.length
+        ) {
+            answers.push(
                 ...memory.notes.map(
-                    note => `You asked me to remember: ${note}.`
+                    n =>
+                        `You asked me to remember ${n}.`
                 )
             );
         }
 
-        if (!items.length) {
-            return "Boss, I don't have anything saved yet.";
-        }
-
-        return items.join(" ");
+        return answers.length
+            ? answers.join(" ")
+            : "Boss, I don't have anything saved yet.";
     }
+
 
     return null;
 }
 
-// ======================================================
-// CLEAR MEMORY
-// ======================================================
+
+/* =====================================================
+   CLEAR MEMORY
+   ===================================================== */
 
 function clearMemory() {
 
-    localStorage.removeItem(MEMORY_NAME);
+    localStorage.removeItem(
+        MEMORY_NAME
+    );
 
     addMessage(
         "Memory cleared successfully, Boss.",
         "ai"
     );
 
-    speak("Memory cleared successfully, Boss.");
+    speak(
+        "Memory cleared successfully, Boss."
+    );
 }
 
-// ======================================================
-// TIME
-// ======================================================
 
-function getCurrentTime() {
+/* =====================================================
+   TIME
+   ===================================================== */
 
-    const now = new Date();
+function currentTime() {
 
     return new Intl.DateTimeFormat(
         "en-IN",
@@ -374,12 +517,11 @@ function getCurrentTime() {
             second: "2-digit",
             hour12: true
         }
-    ).format(now);
+    ).format(new Date());
 }
 
-function getCurrentDate() {
 
-    const now = new Date();
+function currentDate() {
 
     return new Intl.DateTimeFormat(
         "en-IN",
@@ -390,201 +532,125 @@ function getCurrentDate() {
             month: "long",
             year: "numeric"
         }
-    ).format(now);
+    ).format(new Date());
 }
 
-// ======================================================
-// CALCULATOR
-// ======================================================
 
-function calculate(expression) {
+/* =====================================================
+   CALCULATOR
+   ===================================================== */
+
+function calculate(text) {
+
+    let expression =
+        text
+            .replace(
+                /calculate/gi,
+                ""
+            )
+            .replace(
+                /what is/gi,
+                ""
+            )
+            .replace(
+                /plus/gi,
+                "+"
+            )
+            .replace(
+                /minus/gi,
+                "-"
+            )
+            .replace(
+                /times/gi,
+                "*"
+            )
+            .replace(
+                /multiplied by/gi,
+                "*"
+            )
+            .replace(
+                /divided by/gi,
+                "/"
+            )
+            .replace(
+                /×/g,
+                "*"
+            )
+            .replace(
+                /÷/g,
+                "/"
+            )
+            .trim();
+
+
+    if (
+        !/^[0-9+\-*/().%\s]+$/
+            .test(expression)
+    ) {
+        return null;
+    }
+
 
     try {
 
-        expression = expression
-            .replace(/what is/gi, "")
-            .replace(/calculate/gi, "")
-            .replace(/plus/gi, "+")
-            .replace(/minus/gi, "-")
-            .replace(/times/gi, "*")
-            .replace(/multiplied by/gi, "*")
-            .replace(/divided by/gi, "/")
-            .replace(/into/gi, "*")
-            .replace(/×/g, "*")
-            .replace(/÷/g, "/")
-            .trim();
+        const result =
+            Function(
+                `"use strict"; return (${expression})`
+            )();
 
-        // Only allow calculator characters.
-        if (!/^[0-9+\-*/().%\s]+$/.test(expression)) {
-            return null;
-        }
-
-        const result = Function(
-            `"use strict"; return (${expression})`
-        )();
-
-        if (!Number.isFinite(result)) {
-            return null;
-        }
-
-        return result;
+        return Number.isFinite(result)
+            ? result
+            : null;
 
     } catch {
+
         return null;
     }
 }
 
-// ======================================================
-// BATTERY
-// ======================================================
 
-async function getBattery() {
+/* =====================================================
+   BATTERY
+   ===================================================== */
+
+async function battery() {
 
     if (!navigator.getBattery) {
-        return "Boss, battery information is not available in this browser.";
+
+        return "Boss, battery information is not available.";
     }
 
     try {
 
-        const battery = await navigator.getBattery();
+        const b =
+            await navigator.getBattery();
 
-        const percentage =
-            Math.round(battery.level * 100);
-
-        const charging =
-            battery.charging
-                ? "and the device is charging"
-                : "and the device is not charging";
-
-        return `Battery is ${percentage}% ${charging}.`;
+        return `Battery is ${Math.round(
+            b.level * 100
+        )}%. ${
+            b.charging
+                ? "The device is charging."
+                : "The device is not charging."
+        }`;
 
     } catch {
 
-        return "Boss, I couldn't read the battery information.";
+        return "Boss, I couldn't read the battery.";
     }
 }
 
-// ======================================================
-// NETWORK
-// ======================================================
 
-function getNetwork() {
+/* =====================================================
+   WEATHER
+   ===================================================== */
 
-    if (navigator.onLine) {
-        return "Network is online.";
-    }
-
-    return "Boss, the device appears to be offline.";
-}
-
-// ======================================================
-// DEVICE
-// ======================================================
-
-function getDeviceInfo() {
-
-    return `
-Browser: ${navigator.userAgent}.
-Platform: ${navigator.platform || "Unknown"}.
-Online: ${navigator.onLine ? "Yes" : "No"}.
-`;
-}
-
-// ======================================================
-// TIMER
-// ======================================================
-
-function startTimer(minutes) {
-
-    if (timerId) {
-        clearTimeout(timerId);
-    }
-
-    const ms = minutes * 60 * 1000;
-
-    timerId = setTimeout(() => {
-
-        addMessage(
-            "Boss, your timer is finished.",
-            "ai"
-        );
-
-        speak("Boss, your timer is finished.");
-
-        timerId = null;
-
-    }, ms);
-
-    return `Timer started for ${minutes} minute${minutes === 1 ? "" : "s"}.`;
-}
-
-function stopTimer() {
-
-    if (!timerId) {
-        return "Boss, there is no active timer.";
-    }
-
-    clearTimeout(timerId);
-
-    timerId = null;
-
-    return "Timer stopped.";
-}
-
-// ======================================================
-// YOUTUBE
-// ======================================================
-
-function openYouTubeSearch(query) {
-
-    const cleanQuery = query
-        .replace(/^on youtube/i, "")
-        .replace(/^youtube/i, "")
-        .replace(/^open/i, "")
-        .replace(/^search/i, "")
-        .replace(/^and play/i, "")
-        .replace(/^play/i, "")
-        .trim();
-
-    if (!cleanQuery) {
-        return "Boss, tell me what you want to search for on YouTube.";
-    }
-
-    const url =
-        "https://www.youtube.com/results?search_query=" +
-        encodeURIComponent(cleanQuery);
-
-    lastActionUrl = url;
-
-    window.open(url, "_blank");
-
-    return `Opening YouTube search for ${cleanQuery}.`;
-}
-
-// ======================================================
-// OPEN LAST ACTION
-// ======================================================
-
-function openLastAction() {
-
-    if (!lastActionUrl) {
-        return "Boss, there is nothing recent for me to open.";
-    }
-
-    window.open(lastActionUrl, "_blank");
-
-    return "Opening the last requested page.";
-}
-
-// ======================================================
-// WEATHER
-// ======================================================
-
-async function getWeather() {
+async function weather() {
 
     if (!navigator.geolocation) {
-        return "Boss, location is not available in this browser.";
+
+        return "Boss, location is unavailable.";
     }
+
 
     return new Promise(resolve => {
 
@@ -592,16 +658,18 @@ async function getWeather() {
 
             async position => {
 
-                const lat =
-                    position.coords.latitude;
-
-                const lon =
-                    position.coords.longitude;
-
                 try {
 
+                    const lat =
+                        position.coords.latitude;
+
+                    const lon =
+                        position.coords.longitude;
+
+
                     const url =
-                        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`;
+                        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`;
+
 
                     const response =
                         await fetch(url);
@@ -609,17 +677,18 @@ async function getWeather() {
                     const data =
                         await response.json();
 
-                    const current =
+                    const c =
                         data.current;
 
+
                     resolve(
-                        `The current temperature is ${current.temperature_2m}°C, humidity is ${current.relative_humidity_2m}%, and wind speed is ${current.wind_speed_10m} km/h.`
+                        `The temperature is ${c.temperature_2m}°C, humidity is ${c.relative_humidity_2m}%, and wind speed is ${c.wind_speed_10m} kilometres per hour.`
                     );
 
                 } catch {
 
                     resolve(
-                        "Boss, I couldn't retrieve the weather right now."
+                        "Boss, I couldn't get the weather right now."
                     );
                 }
             },
@@ -627,66 +696,150 @@ async function getWeather() {
             () => {
 
                 resolve(
-                    "Boss, location permission is required to check your local weather."
+                    "Boss, please allow location access to check your weather."
                 );
             }
         );
     });
 }
 
-// ======================================================
-// LOCATION
-// ======================================================
 
-function getLocation() {
+/* =====================================================
+   TIMER
+   ===================================================== */
 
-    if (!navigator.geolocation) {
-        return Promise.resolve(
-            "Boss, location is not available."
-        );
+function startTimer(minutes) {
+
+    if (timerId) {
+        clearTimeout(timerId);
     }
 
-    return new Promise(resolve => {
-
-        navigator.geolocation.getCurrentPosition(
-
-            position => {
-
-                const lat =
-                    position.coords.latitude.toFixed(4);
-
-                const lon =
-                    position.coords.longitude.toFixed(4);
-
-                resolve(
-                    `Your approximate coordinates are latitude ${lat} and longitude ${lon}.`
-                );
-            },
-
+    timerId =
+        setTimeout(
             () => {
 
-                resolve(
-                    "Boss, location permission was not granted."
+                addMessage(
+                    "Boss, your timer is finished.",
+                    "ai"
                 );
-            }
+
+                speak(
+                    "Boss, your timer is finished."
+                );
+
+                timerId = null;
+
+            },
+            minutes * 60000
         );
-    });
+
+
+    return `Timer started for ${minutes} minute${minutes === 1 ? "" : "s"}.`;
 }
 
-// ======================================================
-// GEMINI API KEY
-// ======================================================
+
+function stopTimer() {
+
+    if (!timerId) {
+
+        return "Boss, there is no active timer.";
+    }
+
+    clearTimeout(timerId);
+
+    timerId = null;
+
+    return "Timer stopped, Boss.";
+}
+
+
+/* =====================================================
+   YOUTUBE
+   ===================================================== */
+
+function youtube(text) {
+
+    let query =
+        text
+            .replace(
+                /open youtube/gi,
+                ""
+            )
+            .replace(
+                /search youtube/gi,
+                ""
+            )
+            .replace(
+                /play/gi,
+                ""
+            )
+            .trim();
+
+
+    if (!query) {
+
+        query =
+            "music";
+    }
+
+
+    const url =
+        "https://www.youtube.com/results?search_query=" +
+        encodeURIComponent(query);
+
+
+    lastActionUrl =
+        url;
+
+
+    window.open(
+        url,
+        "_blank"
+    );
+
+
+    return `Opening YouTube search for ${query}.`;
+}
+
+
+/* =====================================================
+   LAST ACTION
+   ===================================================== */
+
+function openLast() {
+
+    if (!lastActionUrl) {
+
+        return "Boss, there is nothing recent to open.";
+    }
+
+    window.open(
+        lastActionUrl,
+        "_blank"
+    );
+
+    return "Opening it now, Boss.";
+}
+
+
+/* =====================================================
+   API KEY
+   ===================================================== */
 
 function getApiKey() {
 
-    return localStorage.getItem(API_KEY_NAME);
+    return localStorage.getItem(
+        API_KEY_NAME
+    );
 }
 
-function setApiKey() {
 
-    const key = prompt(
-        "Enter your Gemini API key:"
-    );
+function changeApiKey() {
+
+    const key =
+        prompt(
+            "Enter your Gemini API key:"
+        );
 
     if (!key) {
         return;
@@ -697,170 +850,224 @@ function setApiKey() {
         key.trim()
     );
 
+
     addMessage(
         "Gemini API key updated.",
         "ai"
     );
 }
 
-// ======================================================
-// GEMINI REQUEST
-// ======================================================
 
-async function askGemini(userText, imageData = null) {
+/* =====================================================
+   WAIT
+   ===================================================== */
 
-    const apiKey = getApiKey();
+function wait(ms) {
+
+    return new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                ms
+            )
+    );
+}
+
+
+/* =====================================================
+   GEMINI
+   ===================================================== */
+
+async function askGemini(
+    question,
+    image = null
+) {
+
+    const apiKey =
+        getApiKey();
+
 
     if (!apiKey) {
 
-        return "Boss, Gemini is not configured yet. Press the KEY button and add your Gemini API key.";
+        return "Boss, Gemini is not configured. Press the 🔑 button to add your API key.";
     }
 
-    const memory = getMemory();
 
-    let memoryText = "";
+    const memory =
+        getMemory();
 
-    if (memory.name) {
-        memoryText += `User's name: ${memory.name}\n`;
+
+    let memoryText =
+        "No saved memory.";
+
+
+    if (
+        memory.name ||
+        memory.favouriteColour
+    ) {
+
+        memoryText = "";
+
+        if (memory.name) {
+            memoryText +=
+                `Name: ${memory.name}\n`;
+        }
+
+        if (memory.favouriteColour) {
+            memoryText +=
+                `Favourite colour: ${memory.favouriteColour}\n`;
+        }
     }
 
-    if (memory.favouriteColour) {
-        memoryText += `User's favourite colour: ${memory.favouriteColour}\n`;
-    }
 
-    if (memory.notes) {
-        memoryText +=
-            `Other saved memories: ${memory.notes.join("; ")}\n`;
-    }
+    const system =
+        `
+You are D.I.S.C.O., a personal AI assistant.
 
-    const systemInstruction = `
-You are D.I.S.C.O., a helpful personal AI assistant.
+Call the user Boss.
 
-Call the user "Boss".
+Use simple Indian English.
 
-Use simple, clear Indian English.
+Be helpful, concise and natural.
 
-Do not claim that you performed an action unless the browser actually performed it.
-
-Answer naturally and directly.
-
-Saved memory:
-${memoryText || "No saved memory."}
+Saved user memory:
+${memoryText}
 `;
+
 
     const parts = [
         {
             text:
-                systemInstruction +
-                "\n\nUser says:\n" +
-                userText
+                system +
+                "\n\nUser question:\n" +
+                question
         }
     ];
 
-    if (imageData) {
+
+    if (image) {
 
         parts.push({
             inline_data: {
-                mime_type: imageData.mimeType,
-                data: imageData.base64
+                mime_type:
+                    image.mimeType,
+
+                data:
+                    image.base64
             }
         });
     }
 
+
     const body = {
+
         contents: [
             {
                 role: "user",
-                parts: parts
+
+                parts
             }
         ],
+
         generationConfig: {
+
             temperature: 0.7,
-            maxOutputTokens: 800
+
+            maxOutputTokens: 700
         }
     };
+
 
     const url =
         `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-    // Retry transient 429 / 503 errors.
-    const maxRetries = 3;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    for (
+        let attempt = 0;
+        attempt < 4;
+        attempt++
+    ) {
 
         try {
 
-            const response = await fetch(url, {
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method: "POST",
 
-                method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json",
 
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": apiKey
-                },
+                            "x-goog-api-key":
+                                apiKey
+                        },
 
-                body: JSON.stringify(body)
-            });
+                        body:
+                            JSON.stringify(body)
+                    }
+                );
 
-            const data = await response.json();
 
-            // Successful response
+            const data =
+                await response.json();
+
+
             if (response.ok) {
 
                 const answer =
-                    data?.candidates?.[0]?.content?.parts
-                        ?.map(part => part.text || "")
+                    data
+                        ?.candidates?.[0]
+                        ?.content?.parts
+                        ?.map(
+                            p => p.text || ""
+                        )
                         .join("")
                         .trim();
 
-                if (answer) {
-                    return answer;
-                }
 
-                return "Boss, Gemini returned an empty response.";
+                return answer ||
+                    "Boss, Gemini returned an empty answer.";
             }
 
-            // 429 = quota/rate limit
-            if (response.status === 429) {
 
-                if (attempt < maxRetries) {
+            /* RETRY 429 */
+
+            if (
+                response.status === 429 ||
+                response.status === 503
+            ) {
+
+                if (attempt < 3) {
 
                     const delay =
-                        1500 * Math.pow(2, attempt) +
-                        Math.random() * 700;
+                        1000 *
+                        Math.pow(
+                            2,
+                            attempt
+                        ) +
+                        Math.random() * 500;
 
-                    await sleep(delay);
+
+                    await wait(delay);
 
                     continue;
                 }
 
-                return "Boss, Gemini has reached its current quota or rate limit. Please wait and try again.";
-            }
 
-            // 503 = temporary overload
-            if (response.status === 503) {
+                if (
+                    response.status === 429
+                ) {
 
-                if (attempt < maxRetries) {
-
-                    const delay =
-                        1500 * Math.pow(2, attempt) +
-                        Math.random() * 700;
-
-                    await sleep(delay);
-
-                    continue;
+                    return "Boss, Gemini has reached its current quota or rate limit. Please try again later.";
                 }
 
-                return "Boss, Gemini is temporaroverloaded. Please try again shortly.";
+
+                return "Boss, Gemini is temporarily overloaded. Please try again shortly.";
             }
 
-            // 400
-            if (response.status === 400) {
 
-                return "Boss, Gemini rejected the request. Please check the model and request settings.";
-            }
-
-            // 401 / 403
             if (
                 response.status === 401 ||
                 response.status === 403
@@ -869,85 +1076,88 @@ ${memoryText || "No saved memory."}
                 return "Boss, the Gemini API key is invalid or does not have permission.";
             }
 
-            // Other errors
-            const errorMessage =
-                data?.error?.message ||
-                "Unknown Gemini error.";
 
-            return `Boss, Gemini returned an error: ${errorMessage}`;
+            if (
+                response.status === 400
+            ) {
 
-        } catch (error) {
+                return "Boss, Gemini rejected the request. Please check the API settings.";
+            }
 
-            if (attempt < maxRetries) {
 
-                const delay =
-                    1500 * Math.pow(2, attempt) +
-                    Math.random() * 700;
+            return `Boss, Gemini returned error ${response.status}.`;
 
-                await sleep(delay);
+        } catch {
+
+            if (attempt < 3) {
+
+                await wait(
+                    1000 *
+                    Math.pow(
+                        2,
+                        attempt
+                    )
+                );
 
                 continue;
             }
+
 
             return "Boss, I couldn't connect to Gemini. Please check your internet connection.";
         }
     }
 
+
     return "Boss, Gemini is temporarily unavailable.";
 }
 
-// ======================================================
-// SLEEP
-// ======================================================
 
-function sleep(ms) {
+/* =====================================================
+   COMMAND ROUTER
+   ===================================================== */
 
-    return new Promise(resolve =>
-        setTimeout(resolve, ms)
-    );
-}
+async function processCommand(
+    text,
+    image = null
+) {
 
-// ======================================================
-// COMMAND ROUTER
-// ======================================================
+    const lower =
+        text.toLowerCase().trim();
 
-async function processCommand(text, imageData = null) {
 
-    const lower = text.toLowerCase().trim();
-
-    // --------------------------------------------------
-    // MEMORY
-    // --------------------------------------------------
+    /* MEMORY SAVE */
 
     if (
         lower.includes("remember that") ||
-        lower.startsWith("remember my")
+        lower.includes("my name is") ||
+        lower.includes("my favourite colour is") ||
+        lower.includes("my favorite color is")
     ) {
 
-        const saved =
-            rememberInformation(text);
-
-        if (saved) {
+        if (
+            remember(text)
+        ) {
 
             return "Done, Boss. I will remember that.";
         }
     }
 
-    const memoryAnswer =
-        answerMemoryQuestion(text);
 
-    if (memoryAnswer) {
-        return memoryAnswer;
+    /* MEMORY QUESTION */
+
+    const remembered =
+        memoryQuestion(text);
+
+    if (remembered) {
+        return remembered;
     }
 
-    // --------------------------------------------------
-    // CLEAR MEMORY
-    // --------------------------------------------------
+
+    /* CLEAR MEMORY */
 
     if (
         lower === "clear memory" ||
-        lower === "forget everything" ||
-        lower === "delete memory"
+        lower === "forget everything"
     ) {
 
         clearMemory();
@@ -955,105 +1165,73 @@ async function processCommand(text, imageData = null) {
         return null;
     }
 
-    // --------------------------------------------------
-    // TIME
-    // --------------------------------------------------
+
+    /* TIME */
 
     if (
-        lower.includes("what time is it") ||
         lower === "time" ||
+        lower.includes("what time") ||
         lower.includes("current time")
     ) {
 
-        return `The current time is ${getCurrentTime()}.`;
+        return `The current time is ${currentTime()}.`;
     }
 
-    // --------------------------------------------------
-    // DATE
-    // --------------------------------------------------
+
+    /* DATE */
 
     if (
-        lower.includes("what is today's date") ||
-        lower.includes("what is the date") ||
         lower === "date" ||
+        lower.includes("what is the date") ||
         lower.includes("today's date")
     ) {
 
-        return `Today is ${getCurrentDate()}.`;
+        return `Today is ${currentDate()}.`;
     }
 
-    // --------------------------------------------------
-    // BATTERY
-    // --------------------------------------------------
+
+    /* BATTERY */
 
     if (
-        lower.includes("battery") ||
-        lower.includes("battery percentage")
+        lower.includes("battery")
     ) {
 
-        return await getBattery();
+        return await battery();
     }
 
-    // --------------------------------------------------
-    // NETWORK
-    // --------------------------------------------------
+
+    /* NETWORK */
 
     if (
-        lower.includes("internet") ||
         lower.includes("network") ||
-        lower.includes("am i online")
+        lower.includes("internet") ||
+        lower.includes("online")
     ) {
 
-        return getNetwork();
+        return navigator.onLine
+            ? "Network is online, Boss."
+            : "Boss, the device appears to be offline.";
     }
 
-    // --------------------------------------------------
-    // DEVICE
-    // --------------------------------------------------
 
-    if (
-        lower.includes("device information") ||
-        lower.includes("device info") ||
-        lower.includes("about my device")
-    ) {
-
-        return getDeviceInfo();
-    }
-
-    // --------------------------------------------------
-    // WEATHER
-    // --------------------------------------------------
+    /* WEATHER */
 
     if (
         lower.includes("weather") ||
-        lower.includes("temperature outside") ||
-        lower.includes("temperature now")
+        lower.includes("temperature")
     ) {
 
-        return await getWeather();
+        return await weather();
     }
 
-    // --------------------------------------------------
-    // LOCATION
-    // --------------------------------------------------
 
-    if (
-        lower === "where am i" ||
-        lower.includes("my location") ||
-        lower.includes("current location")
-    ) {
-
-        return await getLocation();
-    }
-
-    // --------------------------------------------------
-    // TIMER
-    // --------------------------------------------------
+    /* TIMER */
 
     const timerMatch =
         lower.match(
-            /(?:set|start)\s+(?:a\s+)?timer\s+(?:for\s+)?(\d+)\s*(minute|minutes|min|mins|second|seconds|sec|secs)?/i
+            /(?:set|start)\s+(?:a\s+)?timer\s+(?:for\s+)?(\d+)\s*(minute|minutes|min|second|seconds|sec|secs)?/i
         );
+
 
     if (timerMatch) {
 
@@ -1061,17 +1239,27 @@ async function processCommand(text, imageData = null) {
             Number(timerMatch[1]);
 
         const unit =
-            (timerMatch[2] || "minutes").toLowerCase();
+            (
+                timerMatch[2] ||
+                "minutes"
+            ).toLowerCase();
+
 
         if (
             unit.startsWith("second") ||
             unit.startsWith("sec")
         ) {
-            amount = amount / 60;
+
+            amount =
+                amount / 60;
         }
 
-        return startTimer(amount);
+
+        return startTimer(
+            amount
+        );
     }
+
 
     if (
         lower === "stop timer" ||
@@ -1081,54 +1269,48 @@ async function processCommand(text, imageData = null) {
         return stopTimer();
     }
 
-    // --------------------------------------------------
-    // YOUTUBE
-    // --------------------------------------------------
+
+    /* YOUTUBE */
 
     if (
         lower.includes("open youtube") ||
         lower.includes("search youtube") ||
-        lower.startsWith("play ") ||
-        lower.startsWith("search youtube for ")
+        lower.startsWith("play ")
     ) {
 
-        return openYouTubeSearch(text);
+        return youtube(text);
     }
 
-    // --------------------------------------------------
-    // OPEN LAST THING
-    // --------------------------------------------------
+
+    /* OPEN LAST */
 
     if (
         lower === "open it" ||
-        lower === "open that" ||
-        lower === "open the last one"
+        lower === "open that"
     ) {
 
-        return openLastAction();
+        return openLast();
     }
 
-    // --------------------------------------------------
-    // CALCULATOR
-    // --------------------------------------------------
+
+    /* CALCULATOR */
 
     if (
         lower.startsWith("calculate ") ||
         lower.startsWith("what is ")
     ) {
 
-        const result =
+        const answer =
             calculate(text);
 
-        if (result !== null) {
+        if (answer !== null) {
 
-            return `The answer is ${result}.`;
+            return `The answer is ${answer}.`;
         }
     }
 
-    // --------------------------------------------------
-    // SIMPLE GREETINGS
-    // --------------------------------------------------
+
+    /* GREETING */
 
     if (
         lower === "hi" ||
@@ -1139,318 +1321,418 @@ async function processCommand(text, imageData = null) {
         return "Hello, Boss. D.I.S.C.O. is ready.";
     }
 
-    // --------------------------------------------------
-    // ABOUT D.I.S.C.O.
-    // --------------------------------------------------
+
+    /* FEATURES */
 
     if (
         lower.includes("what can you do") ||
-        lower.includes("what are your features") ||
-        lower.includes("what can you do for me")
+        lower.includes("what are your features")
     ) {
 
-        return `
-Boss, I can answer questions with Gemini, remember information, tell the time and date, check weather, check battery and network status, calculate numbers, set timers, use your microphone, analyse images, and open YouTube searches.
-        `.trim();
+        return "Boss, I can answer questions, remember information, use voice input and speech output, analyse images, calculate, check time, date, weather, battery and network, set timers, and open YouTube searches.";
     }
 
-    // --------------------------------------------------
-    // GEMINI
-    // --------------------------------------------------
 
-    return await askGemini(text, imageData);
+    /* GEMINI */
+
+    return await askGemini(
+        text,
+        image
+    );
 }
 
-// ======================================================
-// SEND MESSAGE
-// ======================================================
+
+/* =====================================================
+   SEND
+   ===================================================== */
 
 async function sendMessage() {
-
-    if (!msgInput) return;
 
     const text =
         msgInput.value.trim();
 
-    if (!text) return;
+
+    if (!text) {
+        return;
+    }
+
 
     msgInput.value = "";
 
-    addMessage(text, "user");
 
-    if (sendBtn) {
-        sendBtn.disabled = true;
-    }
-
-    const response =
-        await processCommand(text);
-
-    if (response) {
-
-        addMessage(response, "ai");
-
-        speak(response);
-    }
-
-    if (sendBtn) {
-        sendBtn.disabled = false;
-    }
-}
-
-// ======================================================
-// SEND BUTTON
-// ======================================================
-
-if (sendBtn) {
-
-    sendBtn.addEventListener(
-        "click",
-        sendMessage
+    addMessage(
+        text,
+        "user"
     );
+
+
+    setState(
+        "reasoning",
+        "REASONING",
+        "D.I.S.C.O IS THINKING..."
+    );
+
+
+    sendBtn.disabled = true;
+
+
+    const answer =
+        await processCommand(
+            text
+        );
+
+
+    sendBtn.disabled = false;
+
+
+    if (!answer) {
+
+        setState(
+            "",
+            "READY",
+            "SYSTEM READY"
+        );
+
+        return;
+    }
+
+
+    addMessage(
+        answer,
+        "ai"
+    );
+
+
+    speak(answer);
 }
 
-// ======================================================
-// ENTER KEY
-// ======================================================
 
-if (msgInput) {
+/* =====================================================
+   SEND BUTTON
+   ===================================================== */
 
-    msgInput.addEventListener(
-        "keydown",
-        event => {
+sendBtn.addEventListener(
+    "click",
+    sendMessage
+);
 
-            if (event.key === "Enter") {
 
-                event.preventDefault();
+/* =====================================================
+   ENTER
+   ===================================================== */
 
-                sendMessage();
-            }
+msgInput.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            sendMessage();
         }
-    );
-}
+    }
+);
 
-// ======================================================
-// CLEAR BUTTON
-// ======================================================
 
-if (clearBtn) {
+/* =====================================================
+   CLEAR
+   ===================================================== */
 
-    clearBtn.addEventListener(
-        "click",
-        clearMemory
-    );
-}
+clearBtn.addEventListener(
+    "click",
+    clearMemory
+);
 
-// ======================================================
-// API KEY BUTTON
-// ======================================================
 
-if (keyBtn) {
+/* =====================================================
+   API KEY
+   ===================================================== */
 
-    keyBtn.addEventListener(
-        "click",
-        setApiKey
-    );
-}
+keyBtn.addEventListener(
+    "click",
+    changeApiKey
+);
 
-// ======================================================
-// IMAGE INPUT
-// ======================================================
 
-if (imgInput) {
-
-    imgInput.addEventListener(
-        "change",
-        async event => {
-
-            const file =
-                event.target.files[0];
-
-            if (!file) return;
-
-            if (!file.type.startsWith("image/")) {
-
-                addMessage(
-                    "Boss, please select an image file.",
-                    "ai"
-                );
-
-                return;
-            }
-
-            addMessage(
-                `Image selected: ${file.name}`,
-                "user"
-            );
-
-            const reader =
-                new FileReader();
-
-            reader.onload = async () => {
-
-                const result =
-                    reader.result;
-
-                const base64 =
-                    result.split(",")[1];
-
-                const imageData = {
-                    mimeType: file.type,
-                    base64: base64
-                };
-
-                addMessage(
-                    "Analysing the image...",
-                    "ai"
-                );
-
-                const answer =
-                    await askGemini(
-                        "Analyse this image and describe what you can see clearly.",
-                        imageData
-                    );
-
-                addMessage(
-                    answer,
-                    "ai"
-                );
-
-                speak(answer);
-            };
-
-            reader.readAsDataURL(file);
-
-            imgInput.value = "";
-        }
-    );
-}
-
-// ======================================================
-// MICROPHONE
-// ======================================================
-
-let recognition = null;
+/* =====================================================
+   MICROPHONE
+   ===================================================== */
 
 const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
+
 
 if (SpeechRecognition) {
 
     recognition =
         new SpeechRecognition();
 
-    recognition.lang = "en-IN";
 
-    recognition.continuous = false;
+    recognition.lang =
+        "en-IN";
 
-    recognition.interimResults = false;
+
+    recognition.continuous =
+        false;
+
+
+    recognition.interimResults =
+        false;
+
+
+    recognition.maxAlternatives =
+        1;
+
 
     recognition.onstart = () => {
 
-        document.body.classList.add(
-            "listening"
+        listening = true;
+
+        setState(
+            "listening",
+            "LISTENING",
+            "SPEAK NOW..."
         );
-
-        if (micBtn) {
-            micBtn.textContent = "LISTENING...";
-        }
     };
 
-    recognition.onend = () => {
 
-        document.body.classList.remove(
-            "listening"
-        );
+    recognition.onresult =
+        event => {
 
-        if (micBtn) {
-            micBtn.textContent = "MIC";
-        }
-    };
+            const transcript =
+                event
+                    .results[0][0]
+                    .transcript;
 
-    recognition.onerror = () => {
 
-        document.body.classList.remove(
-            "listening"
-        );
+            msgInput.value =
+                transcript;
 
-        if (micBtn) {
-            micBtn.textContent = "MIC";
-        }
-    };
+            listening = false;
 
-    recognition.onresult = event => {
+            sendMessage();
+        };
 
-        const transcript =
-            event.results[0][0].transcript;
 
-        if (msgInput) {
-            msgInput.value = transcript;
-        }
+    recognition.onerror =
+        event => {
 
-        sendMessage();
-    };
+            listening = false;
 
-    if (micBtn) {
 
-        micBtn.addEventListener(
-            "click",
-            () => {
+            if (
+                event.error ===
+                "not-allowed"
+            ) {
 
-                try {
-                    recognition.start();
-                } catch {
-                    // Already running.
-                }
+                setState(
+                    "",
+                    "READY",
+                    "MICROPHONE PERMISSION REQUIRED"
+                );
+
+            } else {
+
+                setState(
+                    "",
+                    "READY",
+                    "VOICE INPUT ERROR"
+                );
             }
-        );
-    }
+        };
+
+
+    recognition.onend =
+        () => {
+
+            listening = false;
+
+            if (
+                !document.body.classList.contains(
+                    "reasoning"
+                ) &&
+                !document.body.classList.contains(
+                    "speaking"
+                )
+            ) {
+
+                setState(
+                    "",
+                    "READY",
+                    "SYSTEM READY"
+                );
+            }
+        };
+
+
+    micBtn.addEventListener(
+        "click",
+        () => {
+
+            if (listening) {
+
+                recognition.stop();
+
+                return;
+            }
+
+
+            try {
+
+                recognition.start();
+
+            } catch {
+
+                // Already listening.
+            }
+        }
+    );
 
 } else {
 
-    if (micBtn) {
+    micBtn.addEventListener(
+        "click",
+        () => {
 
-        micBtn.addEventListener(
-            "click",
-            () => {
+            addMessage(
+                "Boss, speech recognition is not supported by this browser.",
+                "ai"
+            );
+
+            speak(
+                "Boss, speech recognition is not supported by this browser."
+            );
+        }
+    );
+}
+
+
+/* =====================================================
+   IMAGE
+   ===================================================== */
+
+imgInput.addEventListener(
+    "change",
+    event => {
+
+        const file =
+            event.target.files[0];
+
+
+        if (!file) {
+            return;
+        }
+
+
+        if (
+            !file.type.startsWith(
+                "image/"
+            )
+        ) {
+
+            addMessage(
+                "Boss, please select an image.",
+                "ai"
+            );
+
+            return;
+        }
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            async () => {
+
+                const result =
+                    reader.result;
+
+
+                const base64 =
+                    result.split(",")[1];
+
 
                 addMessage(
-                    "Boss, speech recognition is not supported by this browser.",
+                    `Image selected: ${file.name}`,
+                    "user"
+                );
+
+
+                setState(
+                    "reasoning",
+                    "REASONING",
+                    "ANALYSING IMAGE..."
+                );
+
+
+                const answer =
+                    await askGemini(
+                        "Analyse this image and describe what you can see clearly.",
+                        {
+                            mimeType:
+                                file.type,
+
+                            base64
+                        }
+                    );
+
+
+                addMessage(
+                    answer,
                     "ai"
                 );
 
-                speak(
-                    "Boss, speech recognition is not supported by this browser."
-                );
-            }
-        );
+
+                speak(answer);
+            };
+
+
+        reader.readAsDataURL(file);
+
+
+        imgInput.value = "";
     }
+);
+
+
+/* =====================================================
+   NETWORK STATUS
+   ===================================================== */
+
+function updateNetwork() {
+
+    networkStatus.textContent =
+        navigator.onLine
+            ? "ONLINE"
+            : "OFFLINE";
 }
 
-// ======================================================
-// STARTUP
-// ======================================================
 
 window.addEventListener(
-    "load",
-    () => {
+    "online",
+    updateNetwork
+);
 
-        setTimeout(() => {
+window.addEventListener(
+    "offline",
+    updateNetwork
+);
 
-            const memory =
-                getMemory();
+updateNetwork();
 
-            let startup =
-                "Systems online. How may I assist you, Boss?";
 
-            if (memory.name) {
-                startup =
-                    `Systems online, ${memory.name}. How may I assist you, Boss?`;
-            }
+/* =====================================================
+   STARTUP
+   ===================================================== */
 
-            // Do not automatically speak on page load
-            // because some browsers block autoplay speech.
-
-        }, 500);
-    }
+setState(
+    "",
+    "READY",
+    "SYSTEM READY"
 );
