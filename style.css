@@ -1,51 +1,68 @@
 /* =========================================================
    D.I.S.C.O — GOLD CINEMATIC HUD
-   STYLE.CSS
+   COMPLETE style.css
    ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-    --gold: #ffbf32;
-    --gold-light: #ffe08a;
-    --gold-bright: #fff1b0;
-    --orange: #ff8c00;
-    --dark: #030303;
-    --panel: rgba(12, 10, 5, 0.88);
-    --green: #6dff4d;
+    --gold: #ffbd28;
+    --gold-light: #ffe69a;
+    --gold-bright: #fff4c2;
+    --orange: #ff8500;
+    --dark: #020202;
+    --panel: rgba(10, 8, 3, 0.90);
+    --green: #69ff45;
 }
+
+/* =========================================================
+   RESET
+   ========================================================= */
 
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
-html,
-body {
+html {
     width: 100%;
     min-height: 100%;
 }
 
 body {
+    width: 100%;
+    min-height: 100vh;
+
     background:
-        radial-gradient(circle at 50% 25%, rgba(255, 170, 0, 0.12), transparent 30%),
-        radial-gradient(circle at 50% 55%, rgba(255, 120, 0, 0.07), transparent 40%),
+        radial-gradient(
+            circle at 50% 28%,
+            rgba(255, 170, 0, 0.13),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 50% 55%,
+            rgba(255, 100, 0, 0.06),
+            transparent 42%
+        ),
         #020202;
 
     color: var(--gold-light);
+
     font-family: 'Orbitron', sans-serif;
 
     overflow-x: hidden;
+
     letter-spacing: 0.5px;
 }
 
 /* =========================================================
-   FUTURISTIC BACKGROUND
+   BACKGROUND GRID
    ========================================================= */
 
 body::before {
     content: "";
+
     position: fixed;
     inset: 0;
 
@@ -63,8 +80,13 @@ body::before {
     background-size: 45px 45px;
 
     pointer-events: none;
-    z-index: -3;
+
+    z-index: -5;
 }
+
+/* =========================================================
+   VIGNETTE
+   ========================================================= */
 
 body::after {
     content: "";
@@ -75,12 +97,13 @@ body::after {
     background:
         radial-gradient(
             circle,
-            transparent 40%,
-            rgba(0, 0, 0, 0.65) 100%
+            transparent 38%,
+            rgba(0, 0, 0, 0.75) 100%
         );
 
     pointer-events: none;
-    z-index: -2;
+
+    z-index: -4;
 }
 
 /* =========================================================
@@ -91,8 +114,9 @@ body::after {
     width: 100%;
     max-width: 1200px;
 
-    margin: auto;
-    padding: 18px;
+    margin: 0 auto;
+
+    padding: 15px;
 
     position: relative;
 }
@@ -107,27 +131,32 @@ body::after {
     left: 0;
     right: 0;
 
+    top: -5%;
+
     height: 1px;
 
-    background: linear-gradient(
-        90deg,
-        transparent,
-        var(--gold),
-        transparent
-    );
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            var(--gold),
+            transparent
+        );
 
-    box-shadow: 0 0 15px var(--gold);
+    box-shadow:
+        0 0 12px var(--gold),
+        0 0 25px var(--orange);
 
-    opacity: 0.25;
-
-    animation: scan 5s linear infinite;
+    opacity: 0.35;
 
     pointer-events: none;
 
-    z-index: 20;
+    z-index: 100;
+
+    animation: scanLine 5s linear infinite;
 }
 
-@keyframes scan {
+@keyframes scanLine {
     0% {
         top: -5%;
     }
@@ -144,9 +173,7 @@ body::after {
 .header {
     text-align: center;
 
-    padding: 15px 10px 20px;
-
-    position: relative;
+    padding: 10px 5px 20px;
 }
 
 .header h1 {
@@ -161,53 +188,53 @@ body::after {
     text-shadow:
         0 0 5px var(--gold),
         0 0 15px var(--gold),
-        0 0 35px rgba(255, 170, 0, 0.65);
+        0 0 35px rgba(255, 160, 0, 0.7);
 
-    animation: titlePulse 3s ease-in-out infinite;
+    animation: titleGlow 3s ease-in-out infinite;
 }
 
 .header h2 {
     margin-top: 5px;
 
-    font-size: clamp(0.65rem, 2vw, 1rem);
+    font-size: clamp(0.6rem, 2vw, 1rem);
 
     letter-spacing: 5px;
 
     color: var(--gold);
 
     text-shadow:
-        0 0 10px var(--gold);
+        0 0 8px var(--gold);
 }
 
 .header p {
     margin-top: 12px;
 
-    font-size: 0.65rem;
+    font-size: 0.62rem;
 
     letter-spacing: 4px;
 
-    color: #c9a44c;
+    color: #b99438;
 }
 
-@keyframes titlePulse {
+@keyframes titleGlow {
     0%,
     100% {
         text-shadow:
             0 0 5px var(--gold),
             0 0 15px var(--gold),
-            0 0 30px rgba(255, 170, 0, 0.5);
+            0 0 30px rgba(255, 160, 0, 0.5);
     }
 
     50% {
         text-shadow:
-            0 0 8px var(--gold),
+            0 0 8px var(--gold-bright),
             0 0 25px var(--gold),
-            0 0 55px rgba(255, 170, 0, 0.9);
+            0 0 55px rgba(255, 160, 0, 0.9);
     }
 }
 
 /* =========================================================
-   STATUS PANELS
+   STATUS GRID
    ========================================================= */
 
 .status-grid {
@@ -218,16 +245,16 @@ body::after {
     grid-template-columns: repeat(2, 1fr);
 
     gap: 12px;
-
-    margin-bottom: 5px;
 }
 
+/* =========================================================
+   STATUS CARD
+   ========================================================= */
+
 .status-card {
-    position: relative;
+    min-height: 78px;
 
-    min-height: 80px;
-
-    padding: 15px;
+    padding: 13px 15px;
 
     display: flex;
 
@@ -235,11 +262,13 @@ body::after {
 
     gap: 12px;
 
+    position: relative;
+
     background:
         linear-gradient(
             135deg,
-            rgba(255, 180, 0, 0.07),
-            rgba(0, 0, 0, 0.8)
+            rgba(255, 180, 0, 0.08),
+            rgba(0, 0, 0, 0.82)
         );
 
     border: 1px solid rgba(255, 190, 40, 0.65);
@@ -256,18 +285,18 @@ body::after {
     );
 
     box-shadow:
-        inset 0 0 20px rgba(255, 160, 0, 0.05),
+        inset 0 0 20px rgba(255, 170, 0, 0.04),
         0 0 12px rgba(255, 170, 0, 0.08);
 
     transition: 0.3s ease;
 }
 
 .status-card:hover {
-    border-color: var(--gold-light);
+    border-color: var(--gold-bright);
 
     box-shadow:
-        inset 0 0 25px rgba(255, 180, 0, 0.1),
-        0 0 20px rgba(255, 170, 0, 0.25);
+        inset 0 0 25px rgba(255, 170, 0, 0.09),
+        0 0 22px rgba(255, 170, 0, 0.25);
 }
 
 .status-icon {
@@ -277,6 +306,7 @@ body::after {
     flex-shrink: 0;
 
     display: grid;
+
     place-items: center;
 
     border: 1px solid var(--gold);
@@ -287,11 +317,11 @@ body::after {
 
     box-shadow:
         0 0 8px rgba(255, 180, 0, 0.35),
-        inset 0 0 8px rgba(255, 180, 0, 0.12);
+        inset 0 0 8px rgba(255, 180, 0, 0.1);
 }
 
 .status-card h3 {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
 
     color: var(--gold-light);
 
@@ -301,7 +331,7 @@ body::after {
 .status-card p {
     margin-top: 5px;
 
-    font-size: 0.58rem;
+    font-size: 0.55rem;
 
     color: var(--green);
 
@@ -309,53 +339,73 @@ body::after {
 }
 
 /* =========================================================
-   THE MAIN D.I.S.C.O BALL
+   MAIN CORE SECTION
    ========================================================= */
 
 .core-section {
-    position: relative;
-
     width: 100%;
 
-    min-height: 390px;
+    min-height: 400px;
+
+    position: relative;
 
     display: flex;
 
     align-items: center;
     justify-content: center;
 
-    margin: 10px 0;
+    margin: 5px 0 0;
 }
 
-/* Main glowing atmosphere */
+/* =========================================================
+   CORE ATMOSPHERE
+   ========================================================= */
 
 .core-section::before {
     content: "";
 
     position: absolute;
 
-    width: 330px;
-    height: 330px;
+    width: 350px;
+    height: 350px;
 
     border-radius: 50%;
 
-    background: radial-gradient(
-        circle,
-        rgba(255, 180, 30, 0.2),
-        rgba(255, 130, 0, 0.06) 35%,
-        transparent 70%
-    );
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 190, 40, 0.24),
+            rgba(255, 130, 0, 0.08) 38%,
+            transparent 70%
+        );
 
     filter: blur(8px);
 
-    animation: atmosphere 3s ease-in-out infinite;
+    animation: coreAtmosphere 3s ease-in-out infinite;
+
+    pointer-events: none;
 }
 
-/* CORE CONTAINER */
+@keyframes coreAtmosphere {
+    0%,
+    100% {
+        transform: scale(0.88);
+        opacity: 0.55;
+    }
+
+    50% {
+        transform: scale(1.12);
+        opacity: 1;
+    }
+}
+
+/* =========================================================
+   MAIN CORE
+   ========================================================= */
 
 .core {
-    width: 280px;
-    height: 280px;
+    width: 285px;
+    height: 285px;
 
     position: relative;
 
@@ -366,9 +416,20 @@ body::after {
 
     border-radius: 50%;
 
-    transform-style: preserve-3d;
-
     animation: coreFloat 4s ease-in-out infinite;
+
+    transform-style: preserve-3d;
+}
+
+@keyframes coreFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
 }
 
 /* =========================================================
@@ -386,13 +447,15 @@ body::after {
     pointer-events: none;
 }
 
-/* Biggest ring */
+/* =========================================================
+   RING 1
+   ========================================================= */
 
 .r1 {
-    width: 280px;
-    height: 280px;
+    width: 285px;
+    height: 285px;
 
-    border: 2px solid rgba(255, 190, 50, 0.75);
+    border: 2px solid rgba(255, 195, 55, 0.85);
 
     border-top-color: transparent;
     border-bottom-color: transparent;
@@ -405,13 +468,15 @@ body::after {
         rotateClockwise 7s linear infinite;
 }
 
-/* Second ring */
+/* =========================================================
+   RING 2
+   ========================================================= */
 
 .r2 {
-    width: 245px;
-    height: 245px;
+    width: 250px;
+    height: 250px;
 
-    border: 3px dashed rgba(255, 160, 0, 0.8);
+    border: 3px dashed rgba(255, 160, 0, 0.85);
 
     border-left-color: transparent;
 
@@ -422,13 +487,15 @@ body::after {
         rotateReverse 5s linear infinite;
 }
 
-/* Third ring */
+/* =========================================================
+   RING 3
+   ========================================================= */
 
 .r3 {
-    width: 205px;
-    height: 205px;
+    width: 210px;
+    height: 210px;
 
-    border: 1px solid rgba(255, 225, 120, 0.9);
+    border: 1px solid rgba(255, 230, 140, 0.9);
 
     border-right-color: transparent;
     border-left-color: transparent;
@@ -440,125 +507,22 @@ body::after {
         rotateClockwise 3.5s linear infinite;
 }
 
-/* Fourth ring */
+/* =========================================================
+   RING 4
+   ========================================================= */
 
 .r4 {
-    width: 165px;
-    height: 165px;
+    width: 170px;
+    height: 170px;
 
-    border: 2px dotted rgba(255, 150, 0, 0.8);
+    border: 2px dotted rgba(255, 150, 0, 0.85);
 
     animation:
         rotateReverse 2.5s linear infinite;
 }
 
 /* =========================================================
-   INNER ENERGY BALL
-   ========================================================= */
-
-.core::before {
-    content: "";
-
-    position: absolute;
-
-    width: 115px;
-    height: 115px;
-
-    border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle at 40% 35%,
-            #fff9cf 0%,
-            #ffd65c 12%,
-            #ffad00 30%,
-            #d66a00 55%,
-            #3a1700 78%,
-            #050505 100%
-        );
-
-    border: 2px solid #ffe69a;
-
-    box-shadow:
-        0 0 10px #fff0a0,
-        0 0 25px #ffc42e,
-        0 0 50px #ff9d00,
-        0 0 90px rgba(255, 145, 0, 0.7),
-        inset 0 0 25px #ff8c00;
-
-    animation:
-        energyPulse 1.8s ease-in-out infinite;
-}
-
-/* Bright central point */
-
-.core::after {
-    content: "D.I.S.C.O";
-
-    position: absolute;
-
-    z-index: 5;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    width: 115px;
-    height: 115px;
-
-    border-radius: 50%;
-
-    color: #fff4bd;
-
-    font-size: 0.85rem;
-
-    font-weight: 800;
-
-    letter-spacing: 2px;
-
-    text-shadow:
-        0 0 5px #fff,
-        0 0 15px var(--gold);
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(255, 205, 70, 0.2),
-            rgba(255, 120, 0, 0.04) 60%,
-            transparent
-        );
-}
-
-/* =========================================================
-   CORE LABEL
-   ========================================================= */
-
-.core-label {
-    position: absolute;
-
-    bottom: 10px;
-
-    z-index: 10;
-
-    padding: 8px 25px;
-
-    font-size: 0.7rem;
-
-    letter-spacing: 3px;
-
-    color: var(--gold-light);
-
-    border: 1px solid var(--gold);
-
-    background: rgba(5, 5, 2, 0.85);
-
-    box-shadow:
-        0 0 12px rgba(255, 180, 0, 0.3);
-}
-
-/* =========================================================
-   CORE ANIMATIONS
+   ROTATIONS
    ========================================================= */
 
 @keyframes rotateClockwise {
@@ -581,6 +545,47 @@ body::after {
     }
 }
 
+/* =========================================================
+   INNER ENERGY BALL
+   ========================================================= */
+
+.core::before {
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 38% 32%,
+            #fffde5 0%,
+            #fff0a0 10%,
+            #ffd34f 22%,
+            #ff9f00 42%,
+            #d76500 60%,
+            #421900 80%,
+            #050505 100%
+        );
+
+    border: 2px solid #ffe79b;
+
+    box-shadow:
+        0 0 10px #fff0a0,
+        0 0 25px #ffc42e,
+        0 0 50px #ff9d00,
+        0 0 90px rgba(255, 140, 0, 0.7),
+        inset 0 0 25px #ff8500;
+
+    animation:
+        energyPulse 1.8s ease-in-out infinite;
+
+    z-index: 2;
+}
+
 @keyframes energyPulse {
     0%,
     100% {
@@ -591,57 +596,107 @@ body::after {
             0 0 25px #ffc42e,
             0 0 50px #ff9d00,
             0 0 75px rgba(255, 145, 0, 0.55),
-            inset 0 0 20px #ff8c00;
+            inset 0 0 20px #ff8500;
     }
 
     50% {
         transform: scale(1.06);
 
         box-shadow:
-            0 0 15px #fff,
+            0 0 15px #ffffff,
             0 0 35px #ffd54f,
             0 0 70px #ff9d00,
             0 0 120px rgba(255, 145, 0, 0.8),
-            inset 0 0 30px #ff8c00;
-    }
-}
-
-@keyframes atmosphere {
-    0%,
-    100% {
-        transform: scale(0.9);
-
-        opacity: 0.55;
-    }
-
-    50% {
-        transform: scale(1.12);
-
-        opacity: 1;
-    }
-}
-
-@keyframes coreFloat {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-6px);
+            inset 0 0 30px #ff8500;
     }
 }
 
 /* =========================================================
-   SPEAKING MODE
-   JavaScript should add:
-   body.classList.add("speaking")
+   CORE TEXT
    ========================================================= */
+
+.core::after {
+    content: "D.I.S.C.O";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    z-index: 5;
+
+    color: #fff4bd;
+
+    font-size: 0.85rem;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+
+    text-shadow:
+        0 0 5px #ffffff,
+        0 0 15px var(--gold);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 205, 70, 0.18),
+            rgba(255, 120, 0, 0.03) 60%,
+            transparent
+        );
+}
+
+/* =========================================================
+   CORE ACTIVE LABEL
+   ========================================================= */
+
+.core-label {
+    position: absolute;
+
+    bottom: 15px;
+
+    z-index: 10;
+
+    padding: 8px 25px;
+
+    color: var(--gold-light);
+
+    font-size: 0.68rem;
+
+    letter-spacing: 3px;
+
+    background:
+        rgba(5, 5, 2, 0.9);
+
+    border: 1px solid var(--gold);
+
+    box-shadow:
+        0 0 12px rgba(255, 180, 0, 0.3);
+}
+
+/* =========================================================
+   SPEAKING MODE
+   ========================================================= */
+
+body.speaking .core-section::before {
+    transform: scale(1.25);
+
+    opacity: 1;
+
+    filter: blur(3px);
+}
 
 body.speaking .core::before {
     animation:
         energyPulse 0.55s ease-in-out infinite,
-        speakingCore 0.8s ease-in-out infinite alternate;
+        speakingFlash 0.7s ease-in-out infinite alternate;
 }
 
 body.speaking .r1 {
@@ -664,15 +719,14 @@ body.speaking .r4 {
         rotateReverse 0.8s linear infinite;
 }
 
-body.speaking .core-section::before {
-    opacity: 1;
-
-    filter: blur(3px);
-
-    transform: scale(1.2);
+body.speaking .core::after {
+    text-shadow:
+        0 0 8px #ffffff,
+        0 0 20px var(--gold),
+        0 0 40px var(--orange);
 }
 
-@keyframes speakingCore {
+@keyframes speakingFlash {
     from {
         filter: brightness(1);
     }
@@ -687,18 +741,18 @@ body.speaking .core-section::before {
    ========================================================= */
 
 .chat-panel {
-    position: relative;
-
     width: 100%;
 
-    border: 1px solid rgba(255, 190, 40, 0.65);
+    position: relative;
 
     background:
         linear-gradient(
             135deg,
-            rgba(255, 170, 0, 0.045),
-            rgba(0, 0, 0, 0.92)
+            rgba(255, 170, 0, 0.05),
+            rgba(0, 0, 0, 0.94)
         );
+
+    border: 1px solid rgba(255, 190, 40, 0.65);
 
     box-shadow:
         inset 0 0 30px rgba(255, 170, 0, 0.035),
@@ -716,21 +770,25 @@ body.speaking .core-section::before {
     );
 }
 
+/* =========================================================
+   CHAT HEADER
+   ========================================================= */
+
 .terminal-top {
     height: 50px;
+
+    padding: 0 20px;
 
     display: flex;
 
     align-items: center;
     justify-content: space-between;
 
-    padding: 0 20px;
-
     border-bottom: 1px solid rgba(255, 190, 40, 0.4);
 
     color: var(--gold-light);
 
-    font-size: 0.7rem;
+    font-size: 0.68rem;
 
     letter-spacing: 2px;
 }
@@ -740,13 +798,13 @@ body.speaking .core-section::before {
 
     color: var(--green);
 
-    font-size: 0.55rem;
+    font-size: 0.52rem;
 
     letter-spacing: 1px;
 }
 
 /* =========================================================
-   CHAT AREA
+   CHAT
    ========================================================= */
 
 .chat {
@@ -771,14 +829,19 @@ body.speaking .core-section::before {
     width: 4px;
 }
 
+.chat::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 .chat::-webkit-scrollbar-thumb {
     background: var(--gold);
 
-    box-shadow: 0 0 8px var(--gold);
+    box-shadow:
+        0 0 8px var(--gold);
 }
 
 /* =========================================================
-   CHAT MESSAGES
+   MESSAGES
    ========================================================= */
 
 .msg {
@@ -786,24 +849,24 @@ body.speaking .core-section::before {
 
     padding: 13px 16px;
 
-    font-family: 'Orbitron', sans-serif;
+    position: relative;
 
-    font-size: 0.7rem;
+    font-size: 0.68rem;
 
     line-height: 1.7;
 
-    position: relative;
+    color: #ffe9a4;
 
-    animation: messageIn 0.3s ease-out;
+    background:
+        rgba(255, 180, 0, 0.035);
 
     border: 1px solid rgba(255, 190, 40, 0.45);
 
-    background: rgba(255, 180, 0, 0.035);
-
-    color: #ffe9a4;
-
     box-shadow:
         inset 0 0 15px rgba(255, 170, 0, 0.025);
+
+    animation:
+        messageIn 0.3s ease-out;
 }
 
 .msg.ai,
@@ -827,9 +890,8 @@ body.speaking .core-section::before {
 
     border-right: 3px solid var(--gold-light);
 
-    text-align: left;
-
-    background: rgba(255, 150, 0, 0.08);
+    background:
+        rgba(255, 150, 0, 0.08);
 
     clip-path: polygon(
         0 0,
@@ -844,13 +906,11 @@ body.speaking .core-section::before {
 @keyframes messageIn {
     from {
         opacity: 0;
-
         transform: translateY(10px);
     }
 
     to {
         opacity: 1;
-
         transform: translateY(0);
     }
 }
@@ -870,8 +930,13 @@ body.speaking .core-section::before {
 
     border-top: 1px solid rgba(255, 190, 40, 0.35);
 
-    background: rgba(0, 0, 0, 0.5);
+    background:
+        rgba(0, 0, 0, 0.55);
 }
+
+/* =========================================================
+   MESSAGE INPUT
+   ========================================================= */
 
 #msg {
     flex: 1;
@@ -893,7 +958,7 @@ body.speaking .core-section::before {
 
     font-family: 'Orbitron', sans-serif;
 
-    font-size: 0.7rem;
+    font-size: 0.68rem;
 
     box-shadow:
         inset 0 0 12px rgba(255, 170, 0, 0.03);
@@ -910,14 +975,18 @@ body.speaking .core-section::before {
 }
 
 #msg::placeholder {
-    color: #876d31;
+    color: #80672f;
 }
 
 /* =========================================================
-   BUTTONS
+   ALL BUTTONS
    ========================================================= */
 
 button {
+    min-height: 45px;
+
+    padding: 0 16px;
+
     border: 1px solid var(--gold);
 
     background:
@@ -942,10 +1011,6 @@ button {
         box-shadow 0.2s,
         background 0.2s;
 
-    min-height: 45px;
-
-    padding: 0 16px;
-
     clip-path: polygon(
         0 9px,
         9px 0,
@@ -959,7 +1024,7 @@ button {
 }
 
 button:hover {
-    color: #fff;
+    color: #ffffff;
 
     background:
         linear-gradient(
@@ -976,7 +1041,9 @@ button:active {
     transform: scale(0.96);
 }
 
-/* SEND */
+/* =========================================================
+   SEND BUTTON
+   ========================================================= */
 
 #send {
     min-width: 110px;
@@ -984,8 +1051,8 @@ button:active {
     background:
         linear-gradient(
             135deg,
-            #ffcf4a,
-            #d98200
+            #ffd04d,
+            #d87e00
         );
 
     color: #080500;
@@ -1002,14 +1069,15 @@ button:active {
 }
 
 /* =========================================================
-   EXTRA BUTTON ROW
+   CONTROL BUTTONS
    ========================================================= */
 
 .controls {
+    width: 100%;
+
     display: grid;
 
-    grid-template-columns:
-        repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr);
 
     gap: 10px;
 
@@ -1017,9 +1085,9 @@ button:active {
 }
 
 .controls button {
-    font-size: 0.58rem;
-
     min-height: 48px;
+
+    font-size: 0.56rem;
 }
 
 /* =========================================================
@@ -1031,15 +1099,15 @@ button:active {
 
     text-align: center;
 
-    color: #6d5726;
+    color: #6c5525;
 
-    font-size: 0.5rem;
+    font-size: 0.48rem;
 
     letter-spacing: 2px;
 }
 
 /* =========================================================
-   RESPONSIVE MOBILE
+   MOBILE
    ========================================================= */
 
 @media (max-width: 600px) {
@@ -1049,7 +1117,7 @@ button:active {
     }
 
     .header {
-        padding-top: 8px;
+        padding-top: 5px;
     }
 
     .header h1 {
@@ -1059,16 +1127,12 @@ button:active {
     }
 
     .header h2 {
-        font-size: 0.55rem;
-
-        letter-spacing: 3px;
-    }
-
-    .header p {
-        font-size: 0.48rem;
+         font-size: 0.46rem;
 
         letter-spacing: 2px;
     }
+
+    /* STATUS */
 
     .status-grid {
         gap: 8px;
@@ -1086,21 +1150,21 @@ button:active {
         width: 30px;
         height: 30px;
 
-        font-size: 0.7rem;
+        font-size: 0.65rem;
     }
 
     .status-card h3 {
-        font-size: 0.5rem;
+        font-size: 0.49rem;
     }
 
     .status-card p {
-        font-size: 0.45rem;
+        font-size: 0.43rem;
     }
 
-    /* MAIN BALL */
+    /* CORE */
 
     .core-section {
-        min-height: 340px;
+        min-height: 345px;
     }
 
     .core {
@@ -1135,12 +1199,26 @@ button:active {
     }
 
     .core::after {
-        font-size: 0.7rem;
+        font-size: 0.68rem;
     }
 
     .core-section::before {
         width: 290px;
         height: 290px;
+    }
+
+    /* CHAT */
+
+    .terminal-top {
+        height: 45px;
+
+        padding: 0 14px;
+
+        font-size: 0.55rem;
+    }
+
+    .terminal-top::after {
+        font-size: 0.43rem;
     }
 
     .chat {
@@ -1152,10 +1230,12 @@ button:active {
     .msg {
         max-width: 90%;
 
-        font-size: 0.58rem;
-
         padding: 11px 12px;
+
+        font-size: 0.55rem;
     }
+
+    /* INPUT */
 
     .input-area {
         padding: 10px;
@@ -1166,7 +1246,9 @@ button:active {
     #msg {
         height: 46px;
 
-        font-size: 0.58rem;
+        font-size: 0.55rem;
+
+        padding: 0 12px;
     }
 
     #send {
@@ -1174,12 +1256,13 @@ button:active {
 
         padding: 0 10px;
 
-        font-size: 0.55rem;
+        font-size: 0.52rem;
     }
 
+    /* BUTTONS */
+
     .controls {
-        grid-template-columns:
-            repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr);
 
         gap: 7px;
 
@@ -1189,7 +1272,7 @@ button:active {
     .controls button {
         min-height: 43px;
 
-        font-size: 0.5rem;
+        font-size: 0.49rem;
     }
 }
 
@@ -1200,7 +1283,7 @@ button:active {
 @media (max-width: 380px) {
 
     .core-section {
-        min-height: 300px;
+        min-height: 305px;
     }
 
     .core {
@@ -1211,4 +1294,28 @@ button:active {
         min-height: 62px;
     }
 
-    .status-i
+    .status-icon {
+        display: none;
+    }
+
+    .chat {
+        height: 300px;
+    }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+
+        animation-iteration-count: 1 !important;
+
+        scroll-behavior: auto !important;
+    }
+}
