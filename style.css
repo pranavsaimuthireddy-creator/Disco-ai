@@ -1,6 +1,5 @@
 /* ===============================
-   D.I.S.C.O. MOBILE AI CORE
-   COMPLETE STYLE.CSS
+   D.I.S.C.O GOLD HUD
 =============================== */
 
 * {
@@ -16,16 +15,15 @@ body {
 }
 
 body {
+    margin: 0;
     background:
-        radial-gradient(circle at center, #18130a 0%, #050505 45%, #000000 100%);
-    color: #f5c542;
-    font-family: Arial, sans-serif;
+        radial-gradient(circle at 50% 40%, #30250b 0%, #0b0903 35%, #020202 70%, #000 100%);
+    color: #f6c85f;
+    font-family: Arial, Helvetica, sans-serif;
     overflow-x: hidden;
 }
 
-/* ===============================
-   BACKGROUND HUD
-=============================== */
+/* GRID */
 
 body::before {
     content: "";
@@ -33,11 +31,13 @@ body::before {
     inset: 0;
     pointer-events: none;
     background:
-        linear-gradient(rgba(245, 197, 66, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(245, 197, 66, 0.035) 1px, transparent 1px);
-    background-size: 35px 35px;
+        linear-gradient(rgba(246, 200, 95, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(246, 200, 95, 0.035) 1px, transparent 1px);
+    background-size: 36px 36px;
     z-index: -2;
 }
+
+/* SCAN LINE */
 
 body::after {
     content: "";
@@ -46,70 +46,64 @@ body::after {
     right: 0;
     top: -10%;
     height: 2px;
-    background: #f5c542;
-    box-shadow: 0 0 20px #f5c542;
+    background: #f6c85f;
+    box-shadow: 0 0 18px #f6c85f;
     opacity: 0.35;
-    animation: scan 5s linear infinite;
+    animation: scanLine 5s linear infinite;
     pointer-events: none;
-    z-index: 20;
+    z-index: 10;
 }
 
-@keyframes scan {
+@keyframes scanLine {
     from {
-        top: -5%;
+        top: -10%;
     }
 
     to {
-        top: 105%;
+        top: 110%;
     }
 }
 
-/* ===============================
-   MAIN APP
-=============================== */
+/* APP */
 
 .app {
-    width: 100%;
-    max-width: 1000px;
+    width: min(1100px, 100%);
     min-height: 100vh;
     margin: auto;
     padding: 18px;
 }
 
-/* ===============================
-   HEADER
-=============================== */
+/* HEADER */
 
 header {
     text-align: center;
-    padding: 12px 0 20px;
+    padding: 10px 0 15px;
 }
 
 header h1 {
-    font-size: clamp(28px, 7vw, 55px);
-    letter-spacing: 7px;
-    font-weight: 900;
-    color: #f5c542;
+    font-size: clamp(30px, 8vw, 58px);
+    letter-spacing: 8px;
+    color: #f6c85f;
     text-shadow:
-        0 0 8px #f5c542,
-        0 0 25px rgba(245, 197, 66, 0.7);
+        0 0 8px #f6c85f,
+        0 0 25px rgba(246, 200, 95, 0.7);
 }
 
 header p {
     margin-top: 5px;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 4px;
-    color: #b99435;
+    color: #b49342;
 }
 
 .system-status {
-    margin-top: 8px;
+    margin-top: 7px;
     font-size: 10px;
     letter-spacing: 3px;
 }
 
 /* ===============================
-   CORE AREA
+   CORE
 =============================== */
 
 .core-area {
@@ -117,57 +111,53 @@ header p {
     width: 100%;
     height: 390px;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     perspective: 1000px;
 }
 
-/* ===============================
-   DISCO CORE
-=============================== */
-
 .disco-core {
     position: relative;
-    width: 240px;
-    height: 240px;
+    width: 260px;
+    height: 260px;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     transform-style: preserve-3d;
 }
 
-/* ===============================
-   DISCO BALL
-=============================== */
+/* BALL */
 
 .ball {
     position: relative;
-    width: 145px;
-    height: 145px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
     overflow: hidden;
+
     background:
         linear-gradient(
             135deg,
-            #fff2a8 0%,
-            #f5c542 20%,
-            #8a6515 45%,
-            #ffe47b 60%,
-            #6e4d08 80%,
-            #f5c542 100%
+            #fff3b0 0%,
+            #f6c85f 20%,
+            #8d691b 45%,
+            #ffe48a 60%,
+            #6d4e0c 80%,
+            #f6c85f 100%
         );
+
     box-shadow:
-        0 0 15px #f5c542,
-        0 0 35px rgba(245, 197, 66, 0.8),
-        0 0 70px rgba(245, 197, 66, 0.35);
+        0 0 15px #f6c85f,
+        0 0 35px rgba(246, 200, 95, 0.8),
+        0 0 70px rgba(246, 200, 95, 0.35);
+
     transform-style: preserve-3d;
     animation: ballFloat 4s ease-in-out infinite;
     z-index: 5;
 }
 
 @keyframes ballFloat {
-    0%,
-    100% {
+    0%, 100% {
         transform: translateY(0) rotateY(0deg);
     }
 
@@ -179,29 +169,31 @@ header p {
 .ball-surface {
     position: absolute;
     inset: 0;
+    border-radius: 50%;
+
     background:
         repeating-linear-gradient(
             0deg,
             transparent 0 8px,
-            rgba(0, 0, 0, 0.25) 9px 11px
+            rgba(0, 0, 0, 0.22) 9px 11px
         ),
         repeating-linear-gradient(
             90deg,
             transparent 0 8px,
-            rgba(0, 0, 0, 0.25) 9px 11px
+            rgba(0, 0, 0, 0.22) 9px 11px
         );
-    border-radius: 50%;
+
     opacity: 0.8;
 }
 
 .ball-highlight {
     position: absolute;
-    width: 55px;
-    height: 35px;
-    top: 18px;
+    width: 60px;
+    height: 38px;
+    top: 17px;
     left: 25px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.6);
     filter: blur(5px);
     transform: rotate(-25deg);
 }
@@ -210,10 +202,11 @@ header p {
     position: absolute;
     inset: 0;
     border-radius: 50%;
+
     background:
         radial-gradient(
             circle at 30% 25%,
-            rgba(255,255,255,0.8),
+            rgba(255,255,255,0.85),
             transparent 15%
         ),
         radial-gradient(
@@ -227,48 +220,48 @@ header p {
     position: absolute;
     inset: 0;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+
     font-size: 38px;
     font-weight: 900;
     color: #111;
+
     text-shadow: 0 0 10px #fff;
 }
 
-/* ===============================
-   ORBITS
-=============================== */
+/* ORBITS */
 
 .orbit {
     position: absolute;
-    border: 1px solid rgba(245, 197, 66, 0.65);
+    border: 1px solid rgba(246, 200, 95, 0.65);
     border-radius: 50%;
     transform-style: preserve-3d;
     pointer-events: none;
 }
 
 .orbit1 {
-    width: 220px;
-    height: 90px;
+    width: 230px;
+    height: 95px;
     transform: rotateX(70deg);
-    animation: orbitOne 5s linear infinite;
+    animation: orbit1 5s linear infinite;
 }
 
 .orbit2 {
-    width: 230px;
-    height: 110px;
+    width: 240px;
+    height: 115px;
     transform: rotateY(70deg);
-    animation: orbitTwo 7s linear infinite;
+    animation: orbit2 7s linear infinite;
 }
 
 .orbit3 {
-    width: 260px;
-    height: 260px;
+    width: 270px;
+    height: 270px;
     border-style: dashed;
-    animation: orbitThree 12s linear infinite;
+    animation: orbit3 12s linear infinite;
 }
 
-@keyframes orbitOne {
+@keyframes orbit1 {
     from {
         transform: rotateX(70deg) rotateZ(0deg);
     }
@@ -278,7 +271,7 @@ header p {
     }
 }
 
-@keyframes orbitTwo {
+@keyframes orbit2 {
     from {
         transform: rotateY(70deg) rotateZ(0deg);
     }
@@ -288,7 +281,7 @@ header p {
     }
 }
 
-@keyframes orbitThree {
+@keyframes orbit3 {
     from {
         transform: rotateZ(0deg);
     }
@@ -307,6 +300,7 @@ body.listening .ball {
         0 0 20px red,
         0 0 45px red,
         0 0 90px rgba(255, 0, 0, 0.6);
+
     animation:
         ballFloat 4s ease-in-out infinite,
         listeningPulse 0.8s ease-in-out infinite;
@@ -317,13 +311,12 @@ body.listening .orbit {
 }
 
 @keyframes listeningPulse {
-    0%,
-    100% {
-        scale: 1;
+    0%, 100% {
+        transform: scale(1);
     }
 
     50% {
-        scale: 1.12;
+        transform: scale(1.12);
     }
 }
 
@@ -336,8 +329,8 @@ body.reasoning .ball {
         0 0 20px #ff8c00,
         0 0 50px #ff8c00,
         0 0 90px rgba(255, 140, 0, 0.5);
-    animation:
-        reasoningSpin 1.5s linear infinite;
+
+    animation: reasoningSpin 1.5s linear infinite;
 }
 
 body.reasoning .orbit {
@@ -359,8 +352,7 @@ body.reasoning .orbit {
 =============================== */
 
 body.speaking .ball {
-    animation:
-        speakingPulse 0.6s ease-in-out infinite alternate;
+    animation: speakingPulse 0.6s ease-in-out infinite alternate;
 }
 
 body.speaking .orbit {
@@ -398,8 +390,9 @@ body.speaking .orbit {
     height: 9px;
     margin-right: 7px;
     border-radius: 50%;
-    background: #f5c542;
-    box-shadow: 0 0 12px #f5c542;
+
+    background: #f6c85f;
+    box-shadow: 0 0 12px #f6c85f;
 }
 
 body.listening #stateDot {
@@ -413,24 +406,22 @@ body.reasoning #stateDot {
 }
 
 body.speaking #stateDot {
-    background: #f5c542;
-    box-shadow: 0 0 18px #f5c542;
+    background: #f6c85f;
+    box-shadow: 0 0 18px #f6c85f;
 }
 
-/* ===============================
-   ACTIVITY
-=============================== */
+/* ACTIVITY */
 
 #activity {
     text-align: center;
     margin: 10px 0 20px;
     font-size: 10px;
     letter-spacing: 3px;
-    color: #8e722d;
+    color: #8c702c;
 }
 
 /* ===============================
-   SYSTEM CARDS
+   STATUS BOXES
 =============================== */
 
 .status-grid {
@@ -438,105 +429,160 @@ body.speaking #stateDot {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin-bottom: 20px;
+    margin: 15px auto 20px;
 }
 
 .status-card {
+    min-height: 65px;
     padding: 10px;
-    border: 1px solid rgba(245, 197, 66, 0.3);
-    background: rgba(20, 15, 5, 0.65);
+
+    border: 1px solid rgba(246, 200, 95, 0.35);
+
+    background: rgba(15, 12, 5, 0.7);
+
     border-radius: 10px;
+
     text-align: center;
+
     font-size: 9px;
     letter-spacing: 1px;
 }
 
 .status-card span {
     display: block;
-    margin-top: 5px;
-    color: #f5c542;
+    margin-top: 6px;
+    color: #f6c85f;
 }
 
 /* ===============================
-   CHAT
+   CHAT BOX
 =============================== */
 
 #chat {
     width: 100%;
     max-width: 900px;
-    min-height: 120px;
+
+    height: 300px;
+
     margin: 20px auto;
-    padding: 12px;
+    padding: 16px;
+
     display: flex;
     flex-direction: column;
+
     gap: 12px;
+
     overflow-y: auto;
-    border: 1px solid rgba(245, 197, 66, 0.2);
+
+    border: 1px solid rgba(246, 200, 95, 0.3);
+
     border-radius: 16px;
-    background: rgba(0, 0, 0, 0.35);
+
+    background: rgba(0, 0, 0, 0.38);
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        #f6c85f
+        rgba(0, 0, 0, 0.4);
 }
 
-/* COMMON MESSAGE */
+/* CHAT SCROLLBAR */
+
+#chat::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+}
+
+#chat::-webkit-scrollbar-thumb {
+    background: #f6c85f;
+    border-radius: 10px;
+    box-shadow: 0 0 8px #f6c85f;
+}
+
+/* MESSAGE */
 
 .message {
     width: fit-content;
-    max-width: 78%;
+    max-width: 75%;
+
     padding: 11px 15px;
-    border-radius: 16px;
-    font-size: 14px;
+
+    border: 1px solid rgba(246, 200, 95, 0.35);
+
+    border-radius: 15px;
+
     line-height: 1.5;
+
     word-wrap: break-word;
     overflow-wrap: break-word;
+
     white-space: pre-wrap;
 }
 
-/* YOUR MESSAGE — LEFT */
+/* D.I.S.C.O. MESSAGE = LEFT */
 
-.message.user {
+.message.ai {
     align-self: flex-start;
+
     margin-right: auto;
+    margin-left: 0;
+
     text-align: left;
-    border: 1px solid rgba(245, 197, 66, 0.35);
-    background: rgba(245, 197, 66, 0.08);
-    color: #f5c542;
+
     border-bottom-left-radius: 4px;
 }
 
-/* D.I.S.C.O. MESSAGE — RIGHT */
+/* USER MESSAGE = RIGHT */
 
-.message.ai {
+.message.user {
     align-self: flex-end;
+
     margin-left: auto;
+    margin-right: 0;
+
     text-align: left;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08);
-    color: #eeeeee;
+
     border-bottom-right-radius: 4px;
 }
 
 /* ===============================
-   INPUT AREA
+   INPUT
 =============================== */
 
 .controls {
     width: 100%;
     max-width: 900px;
+
     margin: 15px auto;
+
     display: flex;
     align-items: center;
+
     gap: 8px;
 }
 
 #msg {
     flex: 1;
     min-width: 0;
+
     height: 48px;
+
     padding: 0 15px;
-    border: 1px solid rgba(245, 197, 66, 0.5);
+
+    border: 1px solid rgba(246, 200, 95, 0.5);
+
     border-radius: 24px;
+
     outline: none;
+
     background: rgba(0, 0, 0, 0.7);
+
     color: white;
+
     font-size: 14px;
 }
 
@@ -545,8 +591,10 @@ body.speaking #stateDot {
 }
 
 #msg:focus {
-    border-color: #f5c542;
-    box-shadow: 0 0 15px rgba(245, 197, 66, 0.25);
+    border-color: #f6c85f;
+
+    box-shadow:
+        0 0 15px rgba(246, 200, 95, 0.25);
 }
 
 /* ===============================
@@ -556,23 +604,36 @@ body.speaking #stateDot {
 button,
 .image-button {
     min-height: 44px;
+
     padding: 0 15px;
-    border: 1px solid #f5c542;
+
+    border: 1px solid #f6c85f;
+
     border-radius: 12px;
-    background: rgba(245, 197, 66, 0.08);
-    color: #f5c542;
+
+    background: rgba(246, 200, 95, 0.08);
+
+    color: #f6c85f;
+
     cursor: pointer;
+
     font-weight: bold;
+
     font-size: 12px;
+
     letter-spacing: 1px;
+
     transition: 0.2s ease;
 }
 
 button:hover,
 .image-button:hover {
-    background: #f5c542;
+    background: #f6c85f;
+
     color: #000;
-    box-shadow: 0 0 20px rgba(245, 197, 66, 0.5);
+
+    box-shadow:
+        0 0 20px rgba(246, 200, 95, 0.5);
 }
 
 button:active,
@@ -580,22 +641,22 @@ button:active,
     transform: scale(0.95);
 }
 
-/* MIC */
-
 #mic {
     width: 48px;
     min-width: 48px;
+
     padding: 0;
+
     border-radius: 50%;
 }
 
 body.listening #mic {
     border-color: red;
     color: red;
-    box-shadow: 0 0 18px red;
-}
 
-/* SEND */
+    box-shadow:
+        0 0 18px red;
+}
 
 #send {
     min-width: 70px;
@@ -608,10 +669,15 @@ body.listening #mic {
 .extra-controls {
     width: 100%;
     max-width: 900px;
+
     margin: 10px auto;
+
     display: flex;
+
     justify-content: center;
+
     flex-wrap: wrap;
+
     gap: 8px;
 }
 
@@ -620,10 +686,9 @@ body.listening #mic {
     font-size: 10px;
 }
 
-/* IMAGE BUTTON */
-
 .image-button {
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
 }
@@ -638,9 +703,13 @@ body.listening #mic {
 
 footer {
     text-align: center;
+
     padding: 25px 0;
+
     color: #665326;
+
     font-size: 9px;
+
     letter-spacing: 2px;
 }
 
@@ -672,9 +741,18 @@ footer {
         transform: scale(0.82);
     }
 
+    /* STATUS BOXES */
+
+    .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* CHAT */
+
     #chat {
+        height: 300px;
         min-height: 150px;
-        padding: 9px;
+        padding: 10px;
     }
 
     .message {
@@ -689,7 +767,9 @@ footer {
 
     #msg {
         height: 44px;
+
         font-size: 13px;
+
         padding: 0 12px;
     }
 
@@ -707,15 +787,9 @@ footer {
         width: 42px;
         min-width: 42px;
     }
-
-    .status-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
-/* ===============================
-   VERY SMALL PHONES
-=============================== */
+/* SMALL PHONES */
 
 @media (max-width: 380px) {
 
@@ -727,11 +801,11 @@ footer {
         transform: scale(0.7);
     }
 
-    .message {
-        max-width: 88%;
-    }
-
     #send {
         display: none;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr 1fr;
     }
    }
