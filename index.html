@@ -1,82 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>D.I.S.C.O - MOBILE EDITION</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
 
-    <!-- HUD BACKGROUND -->
-    <div class="stars"></div>
     <div class="scanlines"></div>
+    <div class="stars"></div>
 
-    <!-- ================= HEADER ================= -->
-
+    <!-- HEADER -->
     <header class="top-header">
 
-        <button class="menu-btn" type="button">
-            ☰
-        </button>
+        <button class="menu-btn" type="button">☰</button>
 
-        <div class="logo">
+        <div class="header-logo">
             D.I.S.C.O
         </div>
 
         <div class="edition">
-            <span class="phone-icon">▯</span>
-            MOBILE EDITION
+            ▯ &nbsp; MOBILE EDITION
         </div>
 
     </header>
 
 
-    <!-- ================= MAIN ================= -->
-
     <main>
 
         <!-- HERO -->
-
         <section class="hero">
 
-            <div class="hero-left">
+            <div class="hero-content">
 
-                <div class="big-logo">
+                <div class="main-logo">
                     D.I.S.C.O
                 </div>
 
-                <div class="mobile-title">
+                <div class="mobile-edition">
                     MOBILE EDITION
                 </div>
 
                 <div class="core-active">
-                    <span class="corner">⌜</span>
+                    <span>⌜</span>
                     CORE ACTIVE
-                    <span class="corner">⌟</span>
+                    <span>⌟</span>
                 </div>
 
             </div>
 
 
             <!-- CORE -->
-
             <div class="core-area">
 
-                <div class="core-ring ring-one"></div>
-                <div class="core-ring ring-two"></div>
-                <div class="core-ring ring-three"></div>
+                <div class="core-ring ring1"></div>
+                <div class="core-ring ring2"></div>
+                <div class="core-ring ring3"></div>
 
                 <div class="core-glow"></div>
 
                 <img
                     id="coreImage"
-                    src="core.png"
+                    src="./core.png"
                     alt="D.I.S.C.O Core"
                 >
 
@@ -85,122 +74,93 @@
         </section>
 
 
-        <!-- ================= SYSTEM STATUS ================= -->
+        <!-- SYSTEM STATUS -->
+        <section class="system-status">
 
-        <section class="status-panel">
-
-            <div class="panel-title">
-
-                <span class="title-icon">▣</span>
-
-                <span>SYSTEM STATUS</span>
-
+            <div class="status-heading">
+                <span class="heading-icon">▣</span>
+                SYSTEM STATUS
             </div>
 
 
-            <!-- AI CORE -->
-
             <div class="status-row">
 
-                <div class="status-name">
-
-                    <span class="status-icon">▣</span>
-
-                    <span>AI CORE</span>
-
+                <div class="status-label">
+                    <span class="status-icon cyan">▣</span>
+                    AI CORE
                 </div>
 
-                <div class="status-value online">
-                    <span class="dot"></span>
+                <div class="status-online">
+                    <span class="green-dot"></span>
                     ONLINE
                 </div>
 
             </div>
 
 
-            <!-- NETWORK -->
-
             <div class="status-row">
 
-                <div class="status-name">
-
-                    <span class="status-icon">⌁</span>
-
-                    <span>NETWORK</span>
-
+                <div class="status-label">
+                    <span class="status-icon cyan">⌁</span>
+                    NETWORK
                 </div>
 
                 <div
-                    class="status-value online"
+                    class="status-online"
                     id="networkStatus"
                 >
-                    <span class="dot"></span>
+                    <span class="green-dot"></span>
                     ONLINE
                 </div>
 
             </div>
 
 
-            <!-- VOICE -->
-
             <div class="status-row">
 
-                <div class="status-name">
-
-                    <span class="status-icon voice-icon">♩</span>
-
-                    <span>VOICE</span>
-
+                <div class="status-label">
+                    <span class="status-icon red">♩</span>
+                    VOICE
                 </div>
 
                 <div
-                    class="status-value locked"
+                    class="status-locked"
                     id="voiceStatus"
                 >
-                    <span class="lock">▣</span>
+                    <span>▣</span>
                     LOCKED
                 </div>
 
             </div>
 
 
-            <!-- MEMORY -->
-
             <div class="status-row">
 
-                <div class="status-name">
-
-                    <span class="status-icon memory-icon">▣</span>
-
-                    <span>MEMORY</span>
-
+                <div class="status-label">
+                    <span class="status-icon red">▣</span>
+                    MEMORY
                 </div>
 
                 <div
-                    class="status-value locked"
+                    class="status-locked"
                     id="memoryStatus"
                 >
-                    <span class="lock">▣</span>
+                    <span>▣</span>
                     LOCKED
                 </div>
 
             </div>
 
 
-            <!-- YOU -->
-
             <div class="status-row">
 
-                <div class="status-name">
-
-                    <span class="status-icon user-icon">♙</span>
-
-                    <span>YOU</span>
-
+                <div class="status-label">
+                    <span class="status-icon cyan">♙</span>
+                    YOU
                 </div>
 
                 <div
-                    class="status-value you-status"
+                    class="you-status"
                     id="userStatus"
                 >
                     Hi
@@ -211,8 +171,7 @@
         </section>
 
 
-        <!-- ================= CHAT ================= -->
-
+        <!-- CHAT -->
         <section class="chat-panel">
 
             <div
@@ -220,13 +179,12 @@
                 class="chat-box"
             >
 
-                <div class="message ai ai-message">
+                <div class="message ai-message">
 
                     <strong>D.I.S.C.O:</strong>
 
                     <span>
-                        Systems online.
-                        How may I assist you, Boss?
+                        Systems online. How may I assist you, Boss?
                     </span>
 
                 </div>
@@ -236,11 +194,10 @@
         </section>
 
 
-        <!-- ================= INPUT ================= -->
-
+        <!-- COMMAND -->
         <section class="command-area">
 
-            <div class="input-wrapper">
+            <div class="input-box">
 
                 <input
                     id="msg"
@@ -262,8 +219,8 @@
 
             <button
                 id="send"
-                class="send-btn"
                 type="button"
+                class="send-button"
             >
                 SEND
             </button>
@@ -271,8 +228,7 @@
         </section>
 
 
-        <!-- ================= EXTRA CONTROLS ================= -->
-
+        <!-- EXTRA BUTTONS -->
         <section class="extra-controls">
 
             <button
@@ -289,7 +245,7 @@
                 API KEY
             </button>
 
-            <label class="vision-btn">
+            <label class="vision-button">
 
                 VISION
 
@@ -304,23 +260,20 @@
         </section>
 
 
-        <!-- ================= FOOTER ================= -->
-
+        <!-- FOOTER -->
         <footer>
 
-            <div class="footer-decoration">
-
+            <div class="footer-bars">
                 <span></span>
                 <span></span>
                 <span></span>
-
             </div>
 
             <div class="footer-dots">
-                • • • • • •
+                • • • • •
             </div>
 
-            <div class="footer-text">
+            <div class="footer-title">
                 D.I.S.C.O SYSTEMS v1.0
             </div>
 
@@ -333,10 +286,7 @@
     </main>
 
 
-    <!-- YOUR EXISTING JAVASCRIPT -->
-
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 
 </body>
-
 </html>
