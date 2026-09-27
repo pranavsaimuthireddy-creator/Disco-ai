@@ -9,6 +9,7 @@ const MEMORY_NAME = "disco_memory";
 
 let timerID = null;
 let recognition = null;
+let lastURL = null;
 
 
 // ===============================
@@ -45,7 +46,8 @@ function setState(mode, text, activityText) {
     }
 
     if (stateText) {
-        stateText.textContent = text || "READY";
+        stateText.textContent =
+            text || "READY";
     }
 
     if (activity) {
@@ -61,17 +63,20 @@ function setState(mode, text, activityText) {
 
 function addMessage(text, type = "ai") {
 
-    if (!chat) return;
+    if (!chat || !text) return;
 
-    const box = document.createElement("div");
+    const box =
+        document.createElement("div");
 
-    box.className = `message ${type}`;
+    box.className =
+        `message ${type}`;
 
     box.textContent = text;
 
     chat.appendChild(box);
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop =
+        chat.scrollHeight;
 }
 
 
@@ -82,10 +87,15 @@ function addMessage(text, type = "ai") {
 function getMemory() {
 
     try {
+
         return JSON.parse(
-            localStorage.getItem(MEMORY_NAME) || "{}"
+            localStorage.getItem(
+                MEMORY_NAME
+            ) || "{}"
         );
+
     } catch {
+
         return {};
     }
 }
@@ -102,17 +112,15 @@ function saveMemory(memory) {
 
 function remember(text) {
 
-    const memory = getMemory();
+    const memory =
+        getMemory();
 
-    const lower = text.toLowerCase();
-
-
-    // NAME
 
     const nameMatch =
         text.match(
             /(?:my name is|remember that my name is)\s+(.+)/i
         );
+
 
     if (nameMatch) {
 
@@ -120,16 +128,14 @@ function remember(text) {
             nameMatch[1]
                 .trim()
                 .replace(/[.!?]+$/, "");
-
     }
 
-
-    // FAVOURITE COLOUR
 
     const colourMatch =
         text.match(
             /(?:my favourite colour is|my favorite color is)\s+(.+)/i
         );
+
 
     if (colourMatch) {
 
@@ -147,7 +153,7 @@ function remember(text) {
 
 
 // ===============================
-// CURRENT TIME
+// TIME
 // ===============================
 
 function currentTime() {
@@ -166,7 +172,7 @@ function currentTime() {
 
 
 // ===============================
-// CURRENT DATE
+// DATE
 // ===============================
 
 function currentDate() {
@@ -185,12 +191,15 @@ function currentDate() {
 
 
 // ===============================
-// VOICE OUTPUT
+// VOICE
 // ===============================
 
 function speak(text) {
 
-    if (!("speechSynthesis" in window)) {
+    if (
+        !("speechSynthesis" in window) ||
+        !text
+    ) {
         return;
     }
 
@@ -205,8 +214,11 @@ function speak(text) {
 
     utterance.pitch = 0.78;
 
+
     const voices =
-        window.speechSynthesis.getVoices();
+        window.speechSynthesis
+            .getVoices();
+
 
     const preferredVoice =
         voices.find(v =>
@@ -219,12 +231,17 @@ function speak(text) {
         ) ||
         voices.find(v =>
             v.lang &&
-            v.lang.toLowerCase().startsWith("en")
+            v.lang.toLowerCase()
+                .startsWith("en")
         );
 
+
     if (preferredVoice) {
-        utterance.voice = preferredVoice;
+
+        utterance.voice =
+            preferredVoice;
     }
+
 
     utterance.onstart = () => {
 
@@ -233,8 +250,8 @@ function speak(text) {
             "SPEAKING",
             "D.I.S.C.O. SPEAKING"
         );
-
     };
+
 
     utterance.onend = () => {
 
@@ -243,14 +260,13 @@ function speak(text) {
             "READY",
             "SYSTEM READY"
         );
-
     };
 
-    window.speechSynthesis.speak(utterance);
+
+    window.speechSynthesis
+        .speak(utterance);
 }
 
-
-// Load voices when browser provides them
 
 if ("speechSynthesis" in window) {
 
@@ -267,28 +283,38 @@ if ("speechSynthesis" in window) {
 
 function getAPIKey() {
 
-    return localStorage.getItem(KEY_NAME);
+    return localStorage.getItem(
+        KEY_NAME
+    );
 }
 
 
 function changeAPIKey() {
 
     const key =
-        prompt("Enter your Gemini API key:");
+        prompt(
+            "Enter your Gemini API key:"
+        );
+
 
     if (!key) return;
+
 
     localStorage.setItem(
         KEY_NAME,
         key.trim()
     );
 
+
     addMessage(
         "API key updated successfully.",
         "ai"
     );
 
-    speak("API key updated successfully.");
+
+    speak(
+        "API key updated successfully."
+    );
 }
 
 
@@ -298,12 +324,16 @@ function changeAPIKey() {
 
 function clearMemory() {
 
-    localStorage.removeItem(MEMORY_NAME);
+    localStorage.removeItem(
+        MEMORY_NAME
+    );
+
 
     addMessage(
         "Memory cleared successfully.",
         "ai"
     );
+
 
     speak(
         "Memory cleared successfully."
@@ -330,7 +360,11 @@ function calculate(text) {
             .trim();
 
 
-    if (!/^[0-9+\-*/().%\s]+$/.test(expression)) {
+    if (
+        !/^[0-9+\-*/().%\s]+$/
+            .test(expression)
+    ) {
+
         return null;
     }
 
@@ -342,8 +376,11 @@ function calculate(text) {
                 `"use strict"; return (${expression})`
             )();
 
-        if (typeof result === "number" &&
-            Number.isFinite(result)) {
+
+        if (
+            typeof result === "number" &&
+            Number.isFinite(result)
+        ) {
 
             return `The answer is ${result}.`;
         }
@@ -352,6 +389,7 @@ function calculate(text) {
 
         return null;
     }
+
 
     return null;
 }
@@ -365,31 +403,35 @@ async function batteryInfo() {
 
     if (!navigator.getBattery) {
 
-        return "Battery information is not available in this browser.";
-
+        return
+            "Battery information is not available in this browser.";
     }
+
 
     try {
 
         const battery =
             await navigator.getBattery();
 
+
         const percentage =
             Math.round(
                 battery.level * 100
             );
+
 
         const charging =
             battery.charging
                 ? "and it is charging"
                 : "and it is not charging";
 
+
         return `Your battery is at ${percentage}% ${charging}.`;
 
     } catch {
 
-        return "I could not access the battery information.";
-
+        return
+            "I could not access the battery information.";
     }
 }
 
@@ -407,6 +449,162 @@ function networkInfo() {
 
 
 // ===============================
+// LOCATION
+// ===============================
+
+async function locationInfo() {
+
+    if (!navigator.geolocation) {
+
+        return
+            "Location services are not supported by this browser.";
+    }
+
+
+    return new Promise(resolve => {
+
+        setState(
+            "reasoning",
+            "LOCATING",
+            "ACCESSING LOCATION"
+        );
+
+
+        navigator.geolocation
+            .getCurrentPosition(
+
+                async position => {
+
+                    try {
+
+                        const lat =
+                            position.coords.latitude;
+
+                        const lon =
+                            position.coords.longitude;
+
+
+                        const url =
+                            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+
+
+                        const response =
+                            await fetch(url);
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "Location lookup failed"
+                            );
+                        }
+
+
+                        const data =
+                            await response.json();
+
+
+                        const city =
+                            data.city ||
+                            data.locality ||
+                            data.principalSubdivision ||
+                            "Unknown location";
+
+
+                        const state =
+                            data.principalSubdivision ||
+                            "";
+
+
+                        const country =
+                            data.countryName ||
+                            "";
+
+
+                        let result =
+                            `Boss, you are currently in ${city}`;
+
+
+                        if (
+                            state &&
+                            state.toLowerCase() !==
+                            city.toLowerCase()
+                        ) {
+
+                            result +=
+                                `, ${state}`;
+                        }
+
+
+                        if (country) {
+
+                            result +=
+                                `, ${country}`;
+                        }
+
+
+                        result += ".";
+
+
+                        resolve(result);
+
+                    } catch {
+
+                        resolve(
+                            "I detected your location, but I could not determine the city name."
+                        );
+                    }
+
+
+                    setState(
+                        "",
+                        "READY",
+                        "SYSTEM READY"
+                    );
+                },
+
+
+                error => {
+
+                    setState(
+                        "",
+                        "READY",
+                        "SYSTEM READY"
+                    );
+
+
+                    if (error.code === 1) {
+
+                        resolve(
+                            "Boss, location permission was denied. Please allow location access for D.I.S.C.O. in your browser settings."
+                        );
+
+                    } else if (error.code === 2) {
+
+                        resolve(
+                            "Boss, your device could not determine your location."
+                        );
+
+                    } else {
+
+                        resolve(
+                            "Boss, the location request timed out."
+                        );
+                    }
+                },
+
+
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+    });
+}
+
+
+// ===============================
 // WEATHER
 // ===============================
 
@@ -414,66 +612,63 @@ async function weatherInfo() {
 
     if (!navigator.geolocation) {
 
-        return "Location access is not supported by this browser.";
-
+        return
+            "Location access is not supported by this browser.";
     }
 
 
     return new Promise(resolve => {
 
-        navigator.geolocation.getCurrentPosition(
+        navigator.geolocation
+            .getCurrentPosition(
 
-            async position => {
+                async position => {
 
-                try {
+                    try {
 
-                    const lat =
-                        position.coords.latitude;
+                        const lat =
+                            position.coords.latitude;
 
-                    const lon =
-                        position.coords.longitude;
-
-
-                    const url =
-                        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`;
+                        const lon =
+                            position.coords.longitude;
 
 
-                    const response =
-                        await fetch(url);
+                        const url =
+                            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`;
 
 
-                    const data =
-                        await response.json();
+                        const response =
+                            await fetch(url);
 
 
-                    const current =
-                        data.current;
+                        const data =
+                            await response.json();
 
+
+                        const current =
+                            data.current;
+
+
+                        resolve(
+                            `The current temperature is ${current.temperature_2m} degrees Celsius, with ${current.relative_humidity_2m}% humidity and wind speed of ${current.wind_speed_10m} kilometres per hour.`
+                        );
+
+                    } catch {
+
+                        resolve(
+                            "I could not get the weather information."
+                        );
+                    }
+                },
+
+
+                () => {
 
                     resolve(
-                        `The current temperature is ${current.temperature_2m} degrees Celsius, with ${current.relative_humidity_2m}% humidity and wind speed of ${current.wind_speed_10m} kilometres per hour.`
+                        "Location permission was not provided, so I cannot get your local weather."
                     );
-
-                } catch {
-
-                    resolve(
-                        "I could not get the weather information."
-                    );
-
                 }
-
-            },
-
-            () => {
-
-                resolve(
-                    "Location permission was not provided, so I cannot get your local weather."
-                );
-
-            }
-
-        );
-
+            );
     });
 }
 
@@ -486,6 +681,7 @@ function startTimer(seconds) {
 
     clearTimeout(timerID);
 
+
     timerID =
         setTimeout(() => {
 
@@ -494,12 +690,16 @@ function startTimer(seconds) {
                 "ai"
             );
 
-            speak("Timer finished.");
+
+            speak(
+                "Timer finished."
+            );
 
         }, seconds * 1000);
 
 
-    return `Timer set for ${seconds} seconds.`;
+    return
+        `Timer set for ${seconds} seconds.`;
 }
 
 
@@ -512,10 +712,11 @@ function stopTimer() {
         timerID = null;
 
         return "Timer stopped.";
-
     }
 
-    return "There is no active timer.";
+
+    return
+        "There is no active timer.";
 }
 
 
@@ -528,37 +729,47 @@ function youtubeSearch(query) {
     const url =
         `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 
-    window.open(url, "_blank");
 
-    return `Opening YouTube search for ${query}.`;
+    lastURL = url;
+
+
+    window.open(
+        url,
+        "_blank"
+    );
+
+
+    return
+        `Opening YouTube search for ${query}.`;
 }
 
 
 // ===============================
-// OPEN LAST ACTION
+// OPEN LAST
 // ===============================
-
-let lastURL = null;
 
 function openLastAction() {
 
     if (!lastURL) {
 
-        return "There is no previous page to open.";
-
+        return
+            "There is no previous page to open.";
     }
+
 
     window.open(
         lastURL,
         "_blank"
     );
 
-    return "Opening the previous page.";
+
+    return
+        "Opening the previous page.";
 }
 
 
 // ===============================
-// DIRECT COMMANDS
+// COMMAND PROCESSOR
 // ===============================
 
 async function processCommand(text) {
@@ -567,45 +778,54 @@ async function processCommand(text) {
         text.toLowerCase().trim();
 
 
-    // ===========================
+    // LOCATION
+
+    if (
+        lower === "where am i" ||
+        lower === "where am i?" ||
+        lower === "my location" ||
+        lower === "what is my location" ||
+        lower === "what's my location" ||
+        lower === "tell me my location" ||
+        lower === "find my location"
+    ) {
+
+        return await locationInfo();
+    }
+
+
     // TIME
-    // ===========================
 
     if (
         lower === "time" ||
         lower.includes("what time") ||
         lower.includes("current time") ||
         lower.includes("tell me the time") ||
-        lower.includes("tell me current time") ||
         lower.includes("time now") ||
         lower.includes("what's the time") ||
-        lower.includes("what is the time") ||
-        lower.includes("time please")
+        lower.includes("what is the time")
     ) {
 
-        return `The current time is ${currentTime()}.`;
+        return
+            `The current time is ${currentTime()}.`;
     }
 
 
-    // ===========================
     // DATE
-    // ===========================
 
     if (
         lower.includes("today's date") ||
         lower.includes("todays date") ||
         lower.includes("what date") ||
-        lower === "date" ||
-        lower.includes("today date")
+        lower === "date"
     ) {
 
-        return `Today is ${currentDate()}.`;
+        return
+            `Today is ${currentDate()}.`;
     }
 
 
-    // ===========================
-    // MEMORY
-    // ===========================
+    // SAVE MEMORY
 
     if (
         lower.includes("remember that") ||
@@ -617,35 +837,43 @@ async function processCommand(text) {
         const memory =
             remember(text);
 
-        if (memory.name &&
-            memory.favouriteColour) {
 
-            return `Got it. I will remember that your name is ${memory.name} and your favourite colour is ${memory.favouriteColour}.`;
+        if (
+            memory.name &&
+            memory.favouriteColour
+        ) {
 
+            return
+                `Got it. I will remember that your name is ${memory.name} and your favourite colour is ${memory.favouriteColour}.`;
         }
+
 
         if (memory.name) {
 
-            return `Got it. I will remember that your name is ${memory.name}.`;
-
+            return
+                `Got it. I will remember that your name is ${memory.name}.`;
         }
+
 
         if (memory.favouriteColour) {
 
-            return `Got it. I will remember that your favourite colour is ${memory.favouriteColour}.`;
+            return
+                `Got it. I will remember that your favourite colour is ${memory.favouriteColour}.`;
         }
 
-        return "I have saved that in memory.";
+
+        return
+            "I have saved that in memory.";
     }
 
 
-    // ===========================
-    // COMBINED MEMORY QUESTION
-    // ===========================
+    // READ MEMORY
 
     const memory =
         getMemory();
 
+
+    // NAME + COLOUR
 
     if (
         lower.includes("my name") &&
@@ -660,16 +888,17 @@ async function processCommand(text) {
             memory.favouriteColour
         ) {
 
-            return `Your name is ${memory.name} and your favourite colour is ${memory.favouriteColour}.`;
+            return
+                `Your name is ${memory.name} and your favourite colour is ${memory.favouriteColour}.`;
         }
 
-        return "I do not have both pieces of information saved yet.";
+
+        return
+            "I do not have both pieces of information saved yet.";
     }
 
 
-    // ===========================
     // NAME
-    // ===========================
 
     if (
         lower.includes("what is my name") ||
@@ -679,17 +908,17 @@ async function processCommand(text) {
 
         if (memory.name) {
 
-            return `Your name is ${memory.name}.`;
-
+            return
+                `Your name is ${memory.name}.`;
         }
 
-        return "You have not told me your name yet.";
+
+        return
+            "You have not told me your name yet.";
     }
 
 
-    // ===========================
-    // FAVOURITE COLOUR
-    // ===========================
+    // COLOUR
 
     if (
         lower.includes("what is my favourite colour") ||
@@ -700,17 +929,17 @@ async function processCommand(text) {
 
         if (memory.favouriteColour) {
 
-            return `Your favourite colour is ${memory.favouriteColour}.`;
-
+            return
+                `Your favourite colour is ${memory.favouriteColour}.`;
         }
 
-        return "You have not told me your favourite colour yet.";
+
+        return
+            "You have not told me your favourite colour yet.";
     }
 
 
-    // ===========================
     // CLEAR MEMORY
-    // ===========================
 
     if (
         lower === "clear memory" ||
@@ -724,27 +953,22 @@ async function processCommand(text) {
     }
 
 
-    // ===========================
     // BATTERY
-    // ===========================
 
     if (
-        lower.includes("battery") ||
-        lower.includes("battery percentage")
+        lower.includes("battery")
     ) {
 
         return await batteryInfo();
     }
 
 
-    // ===========================
     // NETWORK
-    // ===========================
 
     if (
         lower === "network" ||
-        lower.includes("internet status") ||
         lower.includes("network status") ||
+        lower.includes("internet status") ||
         lower.includes("am i online")
     ) {
 
@@ -752,9 +976,7 @@ async function processCommand(text) {
     }
 
 
-    // ===========================
     // WEATHER
-    // ===========================
 
     if (
         lower.includes("weather") ||
@@ -765,9 +987,7 @@ async function processCommand(text) {
     }
 
 
-    // ===========================
     // TIMER
-    // ===========================
 
     const timerMatch =
         lower.match(
@@ -780,12 +1000,16 @@ async function processCommand(text) {
         let value =
             Number(timerMatch[1]);
 
+
         const unit =
-            timerMatch[2].toLowerCase();
+            timerMatch[2]
+                .toLowerCase();
 
 
-        if (unit.startsWith("minute") ||
-            unit.startsWith("min")) {
+        if (
+            unit.startsWith("minute") ||
+            unit.startsWith("min")
+        ) {
 
             value *= 60;
         }
@@ -804,9 +1028,7 @@ async function processCommand(text) {
     }
 
 
-    // ===========================
     // YOUTUBE
-    // ===========================
 
     if (
         lower.startsWith("youtube ")
@@ -815,16 +1037,19 @@ async function processCommand(text) {
         const query =
             text.substring(8).trim();
 
+
         if (query) {
 
-            return youtubeSearch(query);
-
+            return
+                youtubeSearch(query);
         }
     }
 
 
     if (
-        lower.startsWith("search youtube for ")
+        lower.startsWith(
+            "search youtube for "
+        )
     ) {
 
         const query =
@@ -838,15 +1063,13 @@ async function processCommand(text) {
 
         if (query) {
 
-            return youtubeSearch(query);
-
+            return
+                youtubeSearch(query);
         }
     }
 
 
-    // ===========================
     // OPEN LAST
-    // ===========================
 
     if (
         lower === "open last" ||
@@ -857,9 +1080,7 @@ async function processCommand(text) {
     }
 
 
-    // ===========================
     // CALCULATOR
-    // ===========================
 
     if (
         lower.startsWith("calculate ") ||
@@ -869,6 +1090,7 @@ async function processCommand(text) {
         const result =
             calculate(text);
 
+
         if (result) {
 
             return result;
@@ -876,9 +1098,7 @@ async function processCommand(text) {
     }
 
 
-    // ===========================
-    // GREETINGS
-    // ===========================
+    // GREETING
 
     if (
         lower === "hi" ||
@@ -886,7 +1106,8 @@ async function processCommand(text) {
         lower === "hey"
     ) {
 
-        return "Hello Boss. D.I.S.C.O. is ready.";
+        return
+            "Hello Boss. D.I.S.C.O. is ready.";
     }
 
 
@@ -894,13 +1115,12 @@ async function processCommand(text) {
         lower.includes("how are you")
     ) {
 
-        return "All systems are operating normally, Boss.";
+        return
+            "All systems are operating normally, Boss.";
     }
 
 
-    // ===========================
     // FEATURES
-    // ===========================
 
     if (
         lower.includes("what can you do") ||
@@ -908,14 +1128,12 @@ async function processCommand(text) {
     ) {
 
         return `
-I can tell you the time and date, remember information, check battery and network status, get weather information, set timers, search YouTube, calculate expressions, understand your voice, analyse images, and answer questions using Gemini.
+I can tell you the time and date, remember information, find your city when you grant location permission, check battery and network status, get weather information, set timers, search YouTube, calculate expressions, understand your voice, and answer questions using Gemini.
         `.trim();
     }
 
 
-    // ===========================
     // GEMINI
-    // ===========================
 
     return await askGemini(text);
 }
@@ -933,7 +1151,8 @@ async function askGemini(text) {
 
     if (!apiKey) {
 
-        return "Gemini API key is not set. Press the API KEY button and add your key.";
+        return
+            "Gemini API key is not set. Press the API KEY button and add your key.";
     }
 
 
@@ -970,11 +1189,13 @@ Favourite colour: ${memory.favouriteColour || "Not saved"}
         contents: [
 
             {
+
                 role: "user",
 
                 parts: [
 
                     {
+
                         text:
                             `${systemPrompt}
 
@@ -986,7 +1207,6 @@ ${text}`
             }
 
         ]
-
     };
 
 
@@ -1003,11 +1223,15 @@ ${text}`
 
             const response =
                 await fetch(
+
                     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
+
                     {
+
                         method: "POST",
 
                         headers: {
+
                             "Content-Type":
                                 "application/json"
                         },
@@ -1049,9 +1273,15 @@ ${text}`
 
                 break;
             }
-           const answer =
-                data?.candidates?.[0]?.content?.parts
-                    ?.map(part => part.text || "")
+
+
+            const answer =
+                data?.candidates?.[0]
+                    ?.content?.parts
+                    ?.map(
+                        part =>
+                            part.text || ""
+                    )
                     .join("")
                     .trim();
 
@@ -1062,13 +1292,15 @@ ${text}`
             }
 
 
-            return "I received an empty response from Gemini.";
+            return
+                "I received an empty response from Gemini.";
 
 
         } catch (error) {
 
             lastError =
-                error.message;
+                error.message ||
+                "Network error.";
 
 
             await new Promise(
@@ -1080,19 +1312,29 @@ ${text}`
                     )
             );
         }
-
     }
 
 
-    return `Gemini could not respond right now. ${lastError || ""}`;
+    setState(
+        "",
+        "READY",
+        "SYSTEM READY"
+    );
+
+
+    return
+        `Gemini error: ${lastError || "Unknown error."}`;
 }
 
 
 // ===============================
-// SEND MESSAGE
+// SEND
 // ===============================
 
-async function sendMessage() {
+async function handleSend() {
+
+    if (!msg) return;
+
 
     const text =
         msg.value.trim();
@@ -1112,47 +1354,28 @@ async function sendMessage() {
 
     setState(
         "reasoning",
-        "REASONING",
-        "PROCESSING REQUEST"
+        "PROCESSING",
+        "D.I.S.C.O. PROCESSING"
     );
 
 
     try {
 
-        const response =
+        const reply =
             await processCommand(text);
 
 
-        if (response) {
+        if (reply) {
 
             addMessage(
-                response,
+                reply,
                 "ai"
             );
 
-            speak(response);
 
-        }
+            speak(reply);
 
-    } catch (error) {
-
-        const errorMessage =
-            "Something went wrong while processing your request.";
-
-        addMessage(
-            errorMessage,
-            "ai"
-        );
-
-        speak(errorMessage);
-
-        console.error(error);
-
-    } finally {
-
-        if (
-            !window.speechSynthesis?.speaking
-        ) {
+        } else {
 
             setState(
                 "",
@@ -1161,31 +1384,24 @@ async function sendMessage() {
             );
         }
 
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        const errorMessage =
+            "Sorry Boss, something went wrong while processing that command.";
+
+
+        addMessage(
+            errorMessage,
+            "ai"
+        );
+
+
+        speak(errorMessage);
     }
-}
-
-
-// ===============================
-// ENTER KEY
-// ===============================
-
-if (msg) {
-
-    msg.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                event.preventDefault();
-
-                sendMessage();
-            }
-
-        }
-    );
 }
 
 
@@ -1197,33 +1413,31 @@ if (send) {
 
     send.addEventListener(
         "click",
-        sendMessage
+        handleSend
     );
 }
 
 
 // ===============================
-// API KEY BUTTON
+// ENTER
 // ===============================
 
-if (keyBtn) {
+if (msg) {
 
-    keyBtn.addEventListener(
-        "click",
-        changeAPIKey
-    );
-}
+    msg.addEventListener(
+        "keydown",
+        event => {
 
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
 
-// ===============================
-// CLEAR MEMORY BUTTON
-// ===============================
+                event.preventDefault();
 
-if (clearBtn) {
-
-    clearBtn.addEventListener(
-        "click",
-        clearMemory
+                handleSend();
+            }
+        }
     );
 }
 
@@ -1232,7 +1446,7 @@ if (clearBtn) {
 // MICROPHONE
 // ===============================
 
-function setupSpeechRecognition() {
+function setupRecognition() {
 
     const SpeechRecognition =
         window.SpeechRecognition ||
@@ -1248,13 +1462,11 @@ function setupSpeechRecognition() {
                 () => {
 
                     addMessage(
-                        "Voice recognition is not supported in this browser.",
+                        "Voice recognition is not supported by this browser.",
                         "ai"
                     );
-
                 }
             );
-
         }
 
         return;
@@ -1275,31 +1487,33 @@ function setupSpeechRecognition() {
         false;
 
 
-    recognition.onstart =
-        () => {
+    recognition.onstart = () => {
 
-            setState(
-                "listening",
-                "LISTENING",
-                "LISTENING FOR COMMAND"
-            );
-
-        };
+        setState(
+            "listening",
+            "LISTENING",
+            "D.I.S.C.O. LISTENING"
+        );
+    };
 
 
     recognition.onresult =
         event => {
 
             const transcript =
-                event.results[0][0].transcript;
+                event
+                    .results[0][0]
+                    .transcript;
 
 
-            msg.value =
-                transcript;
+            if (msg) {
+
+                msg.value =
+                    transcript;
+            }
 
 
-            sendMessage();
-
+            handleSend();
         };
 
 
@@ -1317,7 +1531,6 @@ function setupSpeechRecognition() {
                 "READY",
                 "SYSTEM READY"
             );
-
         };
 
 
@@ -1325,12 +1538,13 @@ function setupSpeechRecognition() {
         () => {
 
             if (
-                !document.body.classList.contains(
-                    "reasoning"
-                ) &&
-                !document.body.classList.contains(
-                    "speaking"
-                )
+                !document.body
+                    .classList
+                    .contains("speaking") &&
+
+                !document.body
+                    .classList
+                    .contains("reasoning")
             ) {
 
                 setState(
@@ -1338,9 +1552,7 @@ function setupSpeechRecognition() {
                     "READY",
                     "SYSTEM READY"
                 );
-
             }
-
         };
 
 
@@ -1354,228 +1566,43 @@ function setupSpeechRecognition() {
 
                     recognition.start();
 
-                } catch (error) {
+                } catch {
 
                     console.log(
                         "Recognition already running."
                     );
-
                 }
-
             }
         );
-
     }
 }
 
 
-setupSpeechRecognition();
+setupRecognition();
 
 
 // ===============================
-// IMAGE ANALYSIS
+// CLEAR BUTTON
 // ===============================
 
-if (imgInput) {
-
-    imgInput.addEventListener(
-        "change",
-        async event => {
-
-            const file =
-                event.target.files[0];
-
-
-            if (!file) return;
-
-
-            const apiKey =
-                getAPIKey();
-
-
-            if (!apiKey) {
-
-                addMessage(
-                    "Please add your Gemini API key first.",
-                    "ai"
-                );
-
-                return;
-            }
-
-
-            addMessage(
-                "Image selected. Analysing...",
-                "ai"
-            );
-
-
-            setState(
-                "reasoning",
-                "REASONING",
-                "ANALYSING IMAGE"
-            );
-
-
-            try {
-
-                const base64 =
-                    await fileToBase64(file);
-
-
-                const body = {
-
-                    contents: [
-
-                        {
-
-                            role: "user",
-
-                            parts: [
-
-                                {
-                                    text:
-                                        "Analyse this image and describe what you see clearly and simply."
-                                },
-
-                                {
-
-                                    inline_data: {
-
-                                        mime_type:
-                                            file.type,
-
-                                        data:
-                                            base64
-
-                                    }
-
-                                }
-
-                            ]
-
-                        }
-
-                    ]
-
-                };
-
-
-                const response =
-                    await fetch(
-                        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
-                        {
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify(body)
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        data?.error?.message ||
-                        "Image analysis failed."
-                    );
-
-                }
-
-
-                const answer =
-                    data?.candidates?.[0]?.content?.parts
-                        ?.map(part => part.text || "")
-                        .join("")
-                        .trim();
-
-
-                const finalAnswer =
-                    answer ||
-                    "I could not understand the image.";
-
-
-                addMessage(
-                    finalAnswer,
-                    "ai"
-                );
-
-
-                speak(
-                    finalAnswer
-                );
-
-
-            } catch (error) {
-
-                console.error(error);
-
-
-                const message =
-                    `Image analysis failed: ${error.message}`;
-
-
-                addMessage(
-                    message,
-                    "ai"
-                );
-
-
-                speak(message);
-
-            } finally {
-
-                imgInput.value = "";
-
-            }
-
-        }
+if (clearBtn) {
+
+    clearBtn.addEventListener(
+        "click",
+        clearMemory
     );
 }
 
 
 // ===============================
-// FILE TO BASE64
+// API KEY BUTTON
 // ===============================
 
-function fileToBase64(file) {
+if (keyBtn) {
 
-    return new Promise(
-        (resolve, reject) => {
-
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                () => {
-
-                    const result =
-                        reader.result;
-
-                    const base64 =
-                        result.split(",")[1];
-
-                    resolve(base64);
-                };
-
-
-            reader.onerror =
-                reject;
-
-
-            reader.readAsDataURL(file);
-
-        }
+    keyBtn.addEventListener(
+        "click",
+        changeAPIKey
     );
 }
 
@@ -1601,18 +1628,41 @@ window.addEventListener(
     updateNetworkStatus
 );
 
-
 window.addEventListener(
     "offline",
     updateNetworkStatus
 );
 
-
 updateNetworkStatus();
 
 
 // ===============================
-// STARTUP
+// IMAGE
+// ===============================
+
+if (imgInput) {
+
+    imgInput.addEventListener(
+        "change",
+        () => {
+
+            if (
+                imgInput.files &&
+                imgInput.files.length > 0
+            ) {
+
+                addMessage(
+                    "Image selected. Vision processing can be connected to the Gemini image API.",
+                    "ai"
+                );
+            }
+        }
+    );
+}
+
+
+// ===============================
+// INITIAL STATE
 // ===============================
 
 setState(
@@ -1620,10 +1670,3 @@ setState(
     "READY",
     "SYSTEM READY"
 );
-
-console.log(
-    "D.I.S.C.O. system loaded successfully."
-);
-
-
-           
