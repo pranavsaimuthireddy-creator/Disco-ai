@@ -4,249 +4,412 @@
     padding: 0;
 }
 
-body {
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at center, #241700 0%, #080604 45%, #020202 100%);
-    color: #e7b84b;
-    font-family: Arial, sans-serif;
-    overflow-x: hidden;
+html {
+    scroll-behavior: smooth;
 }
 
-/* SCANLINES */
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+
+    background:
+        radial-gradient(
+            circle at 50% 35%,
+            #30240c 0%,
+            #100d06 35%,
+            #050403 70%,
+            #010101 100%
+        );
+
+    color: #e7b84b;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+
+/* ======================================================
+   BACKGROUND
+   ====================================================== */
+
+.background-grid {
+    position: fixed;
+    inset: 0;
+
+    pointer-events: none;
+
+    background-image:
+        linear-gradient(
+            rgba(231, 184, 75, 0.035) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(231, 184, 75, 0.035) 1px,
+            transparent 1px
+        );
+
+    background-size: 35px 35px;
+
+    mask-image:
+        radial-gradient(
+            circle,
+            black 20%,
+            transparent 85%
+        );
+}
+
 
 .scanlines {
     position: fixed;
     inset: 0;
-    pointer-events: none;
-    z-index: 50;
 
-    background: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 3px,
-        rgba(255, 190, 50, 0.025) 4px
-    );
+    pointer-events: none;
+
+    z-index: 100;
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0px,
+            transparent 4px,
+            rgba(255, 200, 70, 0.025) 5px
+        );
 }
 
 
-/* TOP BAR */
+/* ======================================================
+   HEADER
+   ====================================================== */
 
 .top-bar {
+    position: relative;
+
     width: 100%;
-    padding: 18px 22px;
+
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
-    border-bottom: 1px solid rgba(231, 184, 75, 0.35);
+    padding: 17px 22px;
 
-    background: rgba(5, 4, 2, 0.8);
-    backdrop-filter: blur(10px);
+    background:
+        rgba(5, 4, 2, 0.88);
+
+    border-bottom:
+        1px solid
+        rgba(231, 184, 75, 0.32);
+
+    backdrop-filter: blur(12px);
+
+    z-index: 10;
 }
 
-.top-bar h1 {
+
+.brand h1 {
+    color: #ffd86b;
+
     font-size: 27px;
+
     letter-spacing: 6px;
-    color: #ffd56a;
-    text-shadow: 0 0 15px rgba(255, 193, 55, 0.7);
+
+    text-shadow:
+        0 0 8px rgba(255, 204, 80, 0.65),
+        0 0 25px rgba(255, 180, 30, 0.35);
 }
 
-.top-bar span {
-    font-size: 9px;
+
+.brand span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #8e753d;
+
+    font-size: 8px;
+
     letter-spacing: 3px;
-    color: #947735;
 }
+
 
 .system-status {
-    font-size: 9px;
+    display: flex;
+    align-items: center;
+
+    color: #b99b50;
+
+    font-size: 8px;
+
     letter-spacing: 2px;
-    color: #c8a34b;
 }
+
 
 .status-dot {
-    display: inline-block;
     width: 7px;
     height: 7px;
+
     margin-right: 7px;
+
     border-radius: 50%;
-    background: #e8b638;
-    box-shadow: 0 0 12px #e8b638;
+
+    background: #dcae3e;
+
+    box-shadow:
+        0 0 8px #dcae3e,
+        0 0 18px rgba(220, 174, 62, 0.7);
+
+    animation:
+        statusPulse 1.8s infinite;
 }
 
 
-/* MAIN */
+@keyframes statusPulse {
 
-main {
-    width: min(900px, 94%);
-    margin: auto;
-}
-
-
-/* CORE */
-
-.core-section {
-    height: 410px;
-    position: relative;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.core-container {
-    position: relative;
-    width: 230px;
-    height: 230px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    z-index: 5;
-}
-
-#coreImage {
-    width: 185px;
-    height: 185px;
-
-    object-fit: contain;
-
-    filter:
-        drop-shadow(0 0 12px #d99f28)
-        drop-shadow(0 0 35px rgba(255, 190, 45, 0.65));
-
-    animation: coreFloat 4s ease-in-out infinite;
-}
-
-@keyframes coreFloat {
-
-    0%, 100% {
-        transform: translateY(0) rotate(0deg);
+    0%,
+    100% {
+        opacity: 0.5;
     }
 
     50% {
-        transform: translateY(-7px) rotate(2deg);
-    }
-}
-
-
-/* HUD RINGS */
-
-.hud-ring {
-    position: absolute;
-    border: 1px solid rgba(231, 184, 75, 0.45);
-    border-radius: 50%;
-}
-
-.ring-one {
-    width: 270px;
-    height: 270px;
-    animation: rotateRing 12s linear infinite;
-}
-
-.ring-two {
-    width: 330px;
-    height: 330px;
-    border-style: dashed;
-    animation: rotateRingReverse 18s linear infinite;
-}
-
-.ring-three {
-    width: 390px;
-    height: 390px;
-    border-color: rgba(231, 184, 75, 0.15);
-    animation: pulseRing 3s ease-in-out infinite;
-}
-
-@keyframes rotateRing {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes rotateRingReverse {
-    from {
-        transform: rotate(360deg);
-    }
-
-    to {
-        transform: rotate(0deg);
-    }
-}
-
-@keyframes pulseRing {
-
-    0%, 100% {
-        transform: scale(0.98);
-        opacity: 0.45;
-    }
-
-    50% {
-        transform: scale(1.04);
         opacity: 1;
     }
 }
 
 
-/* CORE LABEL */
+/* ======================================================
+   MAIN
+   ====================================================== */
 
-.core-label {
-    position: absolute;
-    bottom: -15px;
+main {
+    position: relative;
 
-    padding: 7px 18px;
+    width: min(900px, 94%);
 
-    border: 1px solid rgba(231, 184, 75, 0.45);
-    background: rgba(12, 9, 3, 0.9);
-
-    font-size: 9px;
-    letter-spacing: 3px;
-
-    box-shadow: 0 0 15px rgba(231, 184, 75, 0.15);
+    margin: auto;
 }
 
 
-/* CORE SIDE LINES */
+/* ======================================================
+   CORE
+   ====================================================== */
 
-.core-lines {
-    position: absolute;
-    width: 100%;
+.core-section {
+    position: relative;
+
+    height: 410px;
+
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+
+.core-container {
+    position: relative;
+
+    width: 230px;
+    height: 230px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 5;
+}
+
+
+#coreImage {
+    width: 180px;
+    height: 180px;
+
+    object-fit: contain;
+
+    user-select: none;
+
+    filter:
+        drop-shadow(
+            0 0 12px
+            rgba(225, 171, 47, 0.9)
+        )
+        drop-shadow(
+            0 0 35px
+            rgba(225, 171, 47, 0.45)
+        );
+
+    animation:
+        coreFloat 4s ease-in-out infinite;
+}
+
+
+@keyframes coreFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+    50% {
+        transform:
+            translateY(-7px)
+            scale(1.025);
+    }
+}
+
+
+/* ======================================================
+   HUD RINGS
+   ====================================================== */
+
+.hud-ring {
+    position: absolute;
+
+    border-radius: 50%;
+
     pointer-events: none;
 }
 
-.core-lines span {
-    width: 100px;
-    height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        #cda343,
-        transparent
-    );
+
+.ring-1 {
+    width: 270px;
+    height: 270px;
+
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.5);
+
+    box-shadow:
+        0 0 15px
+        rgba(231, 184, 75, 0.08);
+
+    animation:
+        ringRotate 12s linear infinite;
 }
 
 
-/* SYSTEM GRID */
+.ring-2 {
+    width: 330px;
+    height: 330px;
+
+    border:
+        1px dashed
+        rgba(231, 184, 75, 0.35);
+
+    animation:
+        ringReverse 18s linear infinite;
+}
+
+
+.ring-3 {
+    width: 390px;
+    height: 390px;
+
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.13);
+
+    animation:
+        ringPulse 3s ease-in-out infinite;
+}
+
+
+@keyframes ringRotate {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+@keyframes ringReverse {
+
+    from {
+        transform: rotate(360deg);
+    }
+
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+
+@keyframes ringPulse {
+
+    0%,
+    100% {
+        transform: scale(0.98);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: scale(1.04);
+        opacity: 0.9;
+    }
+}
+
+
+/* ======================================================
+   CORE STATUS
+   ====================================================== */
+
+.core-status {
+    position: absolute;
+
+    bottom: -17px;
+
+    padding:
+        7px 18px;
+
+    background:
+        rgba(10, 8, 3, 0.92);
+
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.4);
+
+    box-shadow:
+        0 0 15px
+        rgba(231, 184, 75, 0.12);
+
+    font-size: 8px;
+
+    letter-spacing: 3px;
+
+    white-space: nowrap;
+}
+
+
+/* ======================================================
+   SYSTEM CARDS
+   ====================================================== */
 
 .system-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
     gap: 10px;
+
     margin-bottom: 18px;
 }
+
 
 .system-card {
     min-height: 70px;
 
     display: flex;
     align-items: center;
+
     gap: 12px;
 
     padding: 12px;
@@ -254,127 +417,245 @@ main {
     background:
         linear-gradient(
             135deg,
-            rgba(35, 26, 8, 0.95),
-            rgba(10, 8, 4, 0.95)
+            rgba(38, 29, 9, 0.92),
+            rgba(8, 7, 4, 0.95)
         );
 
-    border: 1px solid rgba(231, 184, 75, 0.3);
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.27);
 
-    transition: 0.25s;
+    box-shadow:
+        inset 0 0 20px
+        rgba(231, 184, 75, 0.025);
+
+    transition:
+        transform 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s;
 }
+
 
 .system-card:hover {
-    border-color: #e7b84b;
-    box-shadow: 0 0 18px rgba(231, 184, 75, 0.18);
     transform: translateY(-2px);
+
+    border-color:
+        rgba(231, 184, 75, 0.75);
+
+    box-shadow:
+        0 0 18px
+        rgba(231, 184, 75, 0.13);
 }
 
+
 .card-icon {
+    color: #e8b94d;
+
     font-size: 19px;
-    color: #f0bd45;
+
+    text-shadow:
+        0 0 10px
+        rgba(231, 184, 75, 0.55);
 }
+
 
 .system-card b {
     display: block;
-    font-size: 10px;
+
+    color: #d7b052;
+
+    font-size: 9px;
+
     letter-spacing: 2px;
 }
+
 
 .system-card small {
     display: block;
+
     margin-top: 5px;
-    font-size: 8px;
+
+    color: #7e6d43;
+
+    font-size: 7px;
+
     letter-spacing: 2px;
-    color: #83724b;
 }
 
 
-/* COMMUNICATION */
+/* ======================================================
+   COMMUNICATION
+   ====================================================== */
 
 .communication {
-    border: 1px solid rgba(231, 184, 75, 0.32);
-    background: rgba(5, 4, 2, 0.8);
-    padding: 15px;
     margin-bottom: 30px;
+
+    padding: 15px;
+
+    background:
+        rgba(5, 4, 2, 0.86);
+
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.3);
+
+    box-shadow:
+        0 0 30px
+        rgba(0, 0, 0, 0.25);
 }
+
 
 .communication-title {
     display: flex;
     align-items: center;
+
     gap: 10px;
 
-    font-size: 10px;
-    letter-spacing: 3px;
-
     margin-bottom: 12px;
-    color: #d7ad4e;
+
+    color: #d5ae50;
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
 }
+
 
 .communication-title span {
     flex: 1;
+
     height: 1px;
-    background: rgba(231, 184, 75, 0.2);
+
+    background:
+        rgba(231, 184, 75, 0.2);
 }
 
 
-/* CHAT */
+/* ======================================================
+   CHAT
+   ====================================================== */
 
 .chat-box {
     height: 260px;
+
     overflow-y: auto;
 
     padding: 14px;
 
-    background: rgba(0, 0, 0, 0.4);
+    background:
+        rgba(0, 0, 0, 0.38);
 
-    border: 1px solid rgba(231, 184, 75, 0.15);
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.13);
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        #8c6d29
+        transparent;
 }
+
+
+.chat-box::-webkit-scrollbar {
+    width: 4px;
+}
+
+
+.chat-box::-webkit-scrollbar-thumb {
+    background: #8c6d29;
+}
+
+
+/* ======================================================
+   CHAT BUBBLES
+   ====================================================== */
 
 .message {
     width: fit-content;
+
     max-width: 80%;
 
-    padding: 10px 13px;
     margin: 7px 0;
 
-    font-size: 13px;
-    line-height: 1.45;
+    padding: 10px 13px;
 
     border-radius: 12px;
+
+    font-size: 13px;
+
+    line-height: 1.45;
+
+    word-wrap: break-word;
+
+    animation:
+        messageIn 0.2s ease-out;
 }
 
+
+@keyframes messageIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* AI LEFT */
+
+.ai-message,
 .message.ai {
     margin-right: auto;
 
-    color: #f1d17b;
+    color: #f0d37e;
 
-    background: rgba(75, 55, 15, 0.55);
+    background:
+        rgba(67, 49, 13, 0.6);
 
-    border: 1px solid rgba(231, 184, 75, 0.25);
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.25);
 
     border-bottom-left-radius: 3px;
 }
 
+
+/* USER RIGHT */
+
+.user-message,
 .message.user {
     margin-left: auto;
 
-    color: #fff1c7;
+    color: #fff0c5;
 
-    background: rgba(121, 84, 17, 0.7);
+    background:
+        rgba(115, 79, 15, 0.72);
 
-    border: 1px solid rgba(231, 184, 75, 0.4);
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.4);
 
     border-bottom-right-radius: 3px;
 }
 
 
-/* INPUT */
+/* ======================================================
+   INPUT
+   ====================================================== */
 
 .input-area {
     display: flex;
+
     gap: 8px;
+
     margin-top: 10px;
 }
+
 
 #msg {
     flex: 1;
@@ -383,203 +664,411 @@ main {
 
     padding: 13px;
 
-    color: #ffe6a0;
-
-    background: #090806;
-
-    border: 1px solid rgba(231, 184, 75, 0.35);
-
     outline: none;
+
+    color: #ffe7a3;
+
+    background:
+        #090806;
+
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.34);
+
+    font-size: 13px;
 }
+
+
+#msg::placeholder {
+    color: #665633;
+}
+
 
 #msg:focus {
     border-color: #e7b84b;
-    box-shadow: 0 0 12px rgba(231, 184, 75, 0.15);
+
+    box-shadow:
+        0 0 12px
+        rgba(231, 184, 75, 0.12);
 }
+
+
+/* ======================================================
+   BUTTONS
+   ====================================================== */
 
 button,
 .image-button {
-    border: 1px solid rgba(231, 184, 75, 0.4);
+    border:
+        1px solid
+        rgba(231, 184, 75, 0.4);
 
-    background: #151006;
+    background:
+        #151006;
 
-    color: #dcb65b;
+    color:
+        #dcb65b;
 
-    padding: 11px 14px;
+    padding:
+        11px 14px;
 
     cursor: pointer;
 
     font-size: 9px;
+
     letter-spacing: 1px;
 
-    transition: 0.2s;
+    transition:
+        0.2s;
 }
+
 
 button:hover,
 .image-button:hover {
-    color: #fff0bd;
-    border-color: #e7b84b;
-    box-shadow: 0 0 14px rgba(231, 184, 75, 0.2);
+    color: #fff1c5;
+
+    border-color:
+        #e7b84b;
+
+    box-shadow:
+        0 0 14px
+        rgba(231, 184, 75, 0.18);
 }
+
+
+button:active {
+    transform: scale(0.97);
+}
+
 
 #mic {
+    padding:
+        8px 12px;
+
     font-size: 15px;
-    padding: 8px 12px;
 }
 
 
-/* SECONDARY */
+/* ======================================================
+   SECONDARY CONTROLS
+   ====================================================== */
 
 .secondary-controls {
     display: flex;
+
     gap: 8px;
+
     margin-top: 9px;
 }
 
+
 .image-button {
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
 }
+
 
 #imgInput {
     display: none;
 }
 
 
-/* STATES */
+/* ======================================================
+   LISTENING
+   ====================================================== */
 
-/* LISTENING */
 body.listening #coreImage {
     filter:
-        drop-shadow(0 0 20px red)
-        drop-shadow(0 0 45px rgba(255, 0, 0, 0.8));
+        drop-shadow(
+            0 0 20px
+            rgba(255, 30, 30, 1)
+        )
+        drop-shadow(
+            0 0 48px
+            rgba(255, 0, 0, 0.8)
+        );
 
-    animation: listeningCore 0.7s ease-in-out infinite alternate;
+    animation:
+        listeningPulse 0.55s
+        ease-in-out infinite alternate;
 }
 
-@keyframes listeningCore {
+
+body.listening .ring-1 {
+    border-color:
+        rgba(255, 40, 40, 0.85);
+}
+
+
+@keyframes listeningPulse {
 
     from {
-        transform: scale(1);
+        transform:
+            scale(1);
     }
 
     to {
-        transform: scale(1.08);
+        transform:
+            scale(1.1);
     }
 }
 
 
-/* REASONING */
+/* ======================================================
+   REASONING
+   ====================================================== */
+
 body.reasoning #coreImage {
     filter:
-        drop-shadow(0 0 20px #ff9d00)
-        drop-shadow(0 0 50px rgba(255, 145, 0, 0.8));
+        drop-shadow(
+            0 0 20px
+            rgba(255, 150, 20, 1)
+        )
+        drop-shadow(
+            0 0 50px
+            rgba(255, 130, 0, 0.75)
+        );
 
-    animation: reasoningCore 0.45s linear infinite;
+    animation:
+        reasoningSpin
+        0.8s linear infinite;
 }
 
-@keyframes reasoningCore {
+
+body.reasoning .ring-2 {
+    border-color:
+        rgba(255, 145, 30, 0.75);
+}
+
+
+@keyframes reasoningSpin {
 
     from {
-        transform: rotate(0deg) scale(1);
+        transform:
+            rotate(0deg)
+            scale(1);
     }
 
     to {
-        transform: rotate(360deg) scale(1.05);
+        transform:
+            rotate(360deg)
+            scale(1.06);
     }
 }
 
 
-/* SPEAKING */
+/* ======================================================
+   SPEAKING
+   ====================================================== */
+
 body.speaking #coreImage {
     filter:
-        drop-shadow(0 0 22px #ffd15c)
-        drop-shadow(0 0 55px rgba(255, 196, 55, 0.9));
+        drop-shadow(
+            0 0 23px
+            rgba(255, 214, 90, 1)
+        )
+        drop-shadow(
+            0 0 60px
+            rgba(255, 185, 40, 0.85)
+        );
 
-    animation: speakingCore 0.4s ease-in-out infinite alternate;
+    animation:
+        speakingPulse
+        0.38s ease-in-out infinite alternate;
 }
 
-@keyframes speakingCore {
+
+body.speaking .ring-3 {
+    border-color:
+        rgba(255, 210, 90, 0.6);
+}
+
+
+@keyframes speakingPulse {
 
     from {
-        transform: scale(1);
+        transform:
+            scale(1);
     }
 
     to {
-        transform: scale(1.13);
+        transform:
+            scale(1.14);
     }
 }
 
 
-/* MOBILE */
+/* ======================================================
+   MOBILE
+   ====================================================== */
 
 @media (max-width: 600px) {
 
     .top-bar {
-        padding: 14px;
+        padding:
+            14px;
     }
 
-    .top-bar h1 {
+
+    .brand h1 {
         font-size: 21px;
+
         letter-spacing: 4px;
     }
+
+
+    .brand span {
+        font-size: 7px;
+    }
+
 
     .system-status {
         font-size: 7px;
     }
 
+
     .core-section {
         height: 350px;
     }
 
-    .ring-one {
+
+    .ring-1 {
         width: 220px;
         height: 220px;
     }
 
-    .ring-two {
-        width: 270px;
-        height: 270px;
+
+    .ring-2 {
+        width: 275px;
+        height: 275px;
     }
 
-    .ring-three {
-        width: 320px;
-        height: 320px;
+
+    .ring-3 {
+        width: 325px;
+        height: 325px;
     }
+
 
     #coreImage {
         width: 150px;
         height: 150px;
     }
 
+
     .system-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 8px;
     }
+
 
     .system-card {
         min-height: 62px;
+
+        padding: 10px;
     }
+
+
+    .card-icon {
+        font-size: 16px;
+    }
+
+
+    .system-card b {
+        font-size: 8px;
+    }
+
+
+    .system-card small {
+        font-size: 6px;
+    }
+
 
     .chat-box {
         height: 230px;
+
+        padding: 10px;
     }
 
+
     .message {
-        max-width: 86%;
+        max-width: 87%;
+
         font-size: 12px;
     }
+
 
     .input-area {
         flex-wrap: wrap;
     }
 
+
     #msg {
         width: 100%;
+
         flex-basis: 100%;
     }
 
+
     .secondary-controls {
         flex-wrap: wrap;
+    }
+
+
+    .secondary-controls button,
+    .image-button {
+        flex: 1;
+    }
+
+}
+
+
+/* ======================================================
+   VERY SMALL PHONES
+   ====================================================== */
+
+@media (max-width: 380px) {
+
+    .brand h1 {
+        font-size: 18px;
+    }
+
+
+    .system-status {
+        display: none;
+    }
+
+
+    .core-section {
+        height: 320px;
+    }
+
+
+    .ring-1 {
+        width: 200px;
+        height: 200px;
+    }
+
+
+    .ring-2 {
+        width: 250px;
+        height: 250px;
+    }
+
+
+    .ring-3 {
+        width: 295px;
+        height: 295px;
+    }
+
+
+    #coreImage {
+        width: 135px;
+        height: 135px;
     }
 }
