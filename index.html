@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
 
-    <title>D.I.S.C.O. MOBILE AI</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>D.I.S.C.O. Mobile AI Core</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,157 +18,191 @@
 
 <div class="app">
 
-    <!-- HEADER -->
-    <header>
-        <div class="brand">D.I.S.C.O</div>
-        <div class="subtitle">MOBILE AI CORE</div>
-        <div class="online-title">SYSTEM ONLINE</div>
+    <!-- ================= HEADER ================= -->
+
+    <header class="top">
+
+        <div class="brand-area">
+            <div class="brand">D.I.S.C.O</div>
+            <div class="subtitle">MOBILE AI CORE</div>
+        </div>
+
+        <div class="system-online">
+            <span class="online-dot"></span>
+            SYSTEM ONLINE
+        </div>
+
     </header>
 
 
-    <!-- CORE -->
-    <section class="core-section">
+    <!-- ================= CORE ================= -->
 
-        <div class="core-label left-label">
-            D.I.S.C.O
+    <section class="core-area">
+
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="orbit orbit-three"></div>
+
+        <div class="core">
+
+            <!-- Upload your generated image as core.png -->
+            <img
+                id="coreImage"
+                src="core.png"
+                alt="D.I.S.C.O. AI Core"
+            >
+
         </div>
 
-        <div class="core-label right-label">
-            D.I.S.C.O.
+        <div id="stateText" class="state-text">
+            ◈ READY
+        </div>
+
+    </section>
+
+
+    <!-- ================= STATUS ================= -->
+
+    <section class="status-grid">
+
+        <div class="status-card">
+            <div class="icon">◈</div>
+
+            <div>
+                <b>MEMORY</b>
+                <small id="memoryStatus">ONLINE</small>
+            </div>
         </div>
 
 
-        <div class="disco-core">
+        <div class="status-card">
+            <div class="icon">◉</div>
 
-            <div class="orbit orbit-a"></div>
-            <div class="orbit orbit-b"></div>
-            <div class="orbit orbit-c"></div>
+            <div>
+                <b>VOICE</b>
+                <small id="voiceStatus">READY</small>
+            </div>
+        </div>
 
-            <div class="ball">
 
-                <div class="ball-grid"></div>
+        <div class="status-card">
+            <div class="icon">◇</div>
 
-                <div class="ball-shine"></div>
+            <div>
+                <b>VISION</b>
+                <small>READY</small>
+            </div>
+        </div>
 
-                <div class="ball-letter">
-                    D
-                </div>
 
+        <div class="status-card">
+            <div class="icon">⌁</div>
+
+            <div>
+                <b>NETWORK</b>
+                <small id="networkStatus">ONLINE</small>
+            </div>
+        </div>
+
+
+        <div class="status-card">
+            <div class="icon">✦</div>
+
+            <div>
+                <b>AI CORE</b>
+                <small>ACTIVE</small>
+            </div>
+        </div>
+
+
+        <div class="status-card">
+            <div class="icon">▣</div>
+
+            <div>
+                <b>SYSTEM</b>
+                <small>SYSTEM READY</small>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- ================= COMMUNICATION ================= -->
+
+    <section class="communication">
+
+        <div class="communication-title">
+            D.I.S.C.O / COMMUNICATION
+        </div>
+
+
+        <div
+            id="chat"
+            class="chat"
+        >
+
+            <div class="message ai-message">
+                Systems online. How may I assist you, Boss?
             </div>
 
         </div>
 
-
-        <div id="state">
-            <span id="stateDot"></span>
-            <span id="stateText">READY</span>
-        </div>
-
-        <div id="activity">
-            SYSTEM READY
-        </div>
-
     </section>
 
 
-    <!-- STATUS BOXES -->
-    <section class="status-grid">
+    <!-- ================= INPUT ================= -->
 
-        <div class="status-card memory-card">
-            <div class="card-icon">◈</div>
-            <h3>MEMORY</h3>
-            <span id="memoryStatus">ONLINE</span>
-        </div>
-
-        <div class="status-card voice-card">
-            <div class="card-icon">◉</div>
-            <h3>VOICE</h3>
-            <span id="voiceStatus">READY</span>
-        </div>
-
-        <div class="status-card vision-card">
-            <div class="card-icon">◇</div>
-            <h3>VISION</h3>
-            <span id="visionStatus">READY</span>
-        </div>
-
-        <div class="status-card network-card">
-            <div class="card-icon">⌁</div>
-            <h3>NETWORK</h3>
-            <span id="networkStatus">ONLINE</span>
-        </div>
-
-        <div class="status-card core-card">
-            <div class="card-icon">✦</div>
-            <h3>AI CORE</h3>
-            <span>ACTIVE</span>
-        </div>
-
-        <div class="status-card system-card">
-            <div class="card-icon">▣</div>
-            <h3>SYSTEM</h3>
-            <span>ONLINE</span>
-        </div>
-
-    </section>
-
-
-    <!-- CHAT TITLE -->
-    <section class="communication-title">
-        D.I.S.C.O / COMMUNICATION
-    </section>
-
-
-    <!-- CHAT -->
-    <section id="chat">
-
-        <div class="message ai">
-            Systems online. How may I assist you, Boss?
-        </div>
-
-    </section>
-
-
-    <!-- INPUT -->
     <section class="controls">
 
-        <input
-            id="msg"
-            type="text"
-            placeholder="Talk to D.I.S.C.O..."
-            autocomplete="off"
-        >
+        <div class="input-row">
 
-        <button id="mic" type="button">
-            🎤
-        </button>
-
-        <button id="send" type="button">
-            SEND
-        </button>
-
-    </section>
-
-
-    <!-- EXTRA BUTTONS -->
-    <section class="extra-controls">
-
-        <button id="clear-btn" type="button">
-            CLEAR MEMORY
-        </button>
-
-        <button id="key-btn" type="button">
-            API KEY
-        </button>
-
-        <label class="image-button">
-            🖼️ VISION
             <input
-                id="img-input"
-                type="file"
-                accept="image/*"
+                id="msg"
+                type="text"
+                placeholder="Talk to D.I.S.C.O..."
+                autocomplete="off"
             >
-        </label>
+
+            <button
+                id="mic"
+                class="mic-button"
+                title="Voice input"
+            >
+                🎤
+            </button>
+
+            <button
+                id="send"
+                class="send-button"
+            >
+                SEND
+            </button>
+
+        </div>
+
+
+        <div class="button-row">
+
+            <button id="clearBtn">
+                🗑 CLEAR MEMORY
+            </button>
+
+            <button id="keyBtn">
+                🔑 API KEY
+            </button>
+
+            <label class="vision-button">
+                🖼 VISION
+
+                <input
+                    id="imgInput"
+                    type="file"
+                    accept="image/*"
+                    hidden
+                >
+            </label>
+
+        </div>
 
     </section>
 
