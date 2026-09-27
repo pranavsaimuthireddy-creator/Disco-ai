@@ -16,7 +16,7 @@
     <!-- HEADER -->
     <header class="top">
 
-        <div>
+        <div class="brand-area">
             <div class="brand">D.I.S.C.O</div>
             <div class="subtitle">MOBILE AI CORE</div>
         </div>
@@ -29,14 +29,16 @@
     </header>
 
 
-    <!-- CORE -->
+    <!-- AI CORE -->
     <section class="core-area">
 
-        <div class="orbit orbit-one"></div>
-        <div class="orbit orbit-two"></div>
-        <div class="orbit orbit-three"></div>
+        <div class="hud-ring ring-1"></div>
+        <div class="hud-ring ring-2"></div>
+        <div class="hud-ring ring-3"></div>
 
-        <div class="core">
+        <div class="core-container">
+
+            <div class="core-glow"></div>
 
             <img
                 id="coreImage"
@@ -53,53 +55,64 @@
     </section>
 
 
-    <!-- STATUS -->
+    <!-- STATUS PANELS -->
     <section class="status-grid">
 
         <div class="status-card">
-            <div class="icon">◈</div>
+            <span class="status-icon">◈</span>
+
             <div>
-                <b>MEMORY</b>
+                <strong>MEMORY</strong>
                 <small id="memoryStatus">ONLINE</small>
             </div>
         </div>
 
+
         <div class="status-card">
-            <div class="icon">◉</div>
+            <span class="status-icon">◉</span>
+
             <div>
-                <b>VOICE</b>
+                <strong>VOICE</strong>
                 <small id="voiceStatus">READY</small>
             </div>
         </div>
 
+
         <div class="status-card">
-            <div class="icon">◇</div>
+            <span class="status-icon">◇</span>
+
             <div>
-                <b>VISION</b>
+                <strong>VISION</strong>
                 <small>READY</small>
             </div>
         </div>
 
+
         <div class="status-card">
-            <div class="icon">⌁</div>
+            <span class="status-icon">⌁</span>
+
             <div>
-                <b>NETWORK</b>
+                <strong>NETWORK</strong>
                 <small id="networkStatus">ONLINE</small>
             </div>
         </div>
 
+
         <div class="status-card">
-            <div class="icon">✦</div>
+            <span class="status-icon">✦</span>
+
             <div>
-                <b>AI CORE</b>
+                <strong>AI CORE</strong>
                 <small>ACTIVE</small>
             </div>
         </div>
 
+
         <div class="status-card">
-            <div class="icon">▣</div>
+            <span class="status-icon">▣</span>
+
             <div>
-                <b>SYSTEM</b>
+                <strong>SYSTEM</strong>
                 <small>SYSTEM READY</small>
             </div>
         </div>
@@ -110,9 +123,12 @@
     <!-- COMMUNICATION -->
     <section class="communication">
 
-        <div class="communication-title">
-            D.I.S.C.O / COMMUNICATION
+        <div class="communication-header">
+            <span>D.I.S.C.O</span>
+            <span>/</span>
+            <span>COMMUNICATION</span>
         </div>
+
 
         <div id="chat" class="chat">
 
@@ -125,7 +141,7 @@
     </section>
 
 
-    <!-- CONTROLS -->
+    <!-- INPUT -->
     <section class="controls">
 
         <div class="input-row">
@@ -137,11 +153,19 @@
                 autocomplete="off"
             >
 
-            <button id="mic" class="mic-button">
+            <button
+                id="mic"
+                class="mic-button"
+                type="button"
+            >
                 🎤
             </button>
 
-            <button id="send" class="send-button">
+            <button
+                id="send"
+                class="send-button"
+                type="button"
+            >
                 SEND
             </button>
 
@@ -150,16 +174,25 @@
 
         <div class="button-row">
 
-            <button id="clearBtn">
+            <button
+                id="clearBtn"
+                type="button"
+            >
                 CLEAR MEMORY
             </button>
 
-            <button id="keyBtn">
+
+            <button
+                id="keyBtn"
+                type="button"
+            >
                 API KEY
             </button>
 
+
             <label class="vision-button">
-                🖼 VISION
+
+                🖼️ VISION
 
                 <input
                     id="imgInput"
@@ -167,6 +200,7 @@
                     accept="image/*"
                     hidden
                 >
+
             </label>
 
         </div>
@@ -174,6 +208,7 @@
     </section>
 
 
+    <!-- FOOTER -->
     <footer>
         D.I.S.C.O. MOBILE AI CORE
     </footer>
@@ -181,6 +216,7 @@
 </div>
 
 
+<!-- YOUR EXISTING JAVASCRIPT -->
 <script src="script.js"></script>
 
 </body>
