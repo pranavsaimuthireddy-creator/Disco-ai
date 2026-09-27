@@ -1,112 +1,33 @@
-/* =========================================
-   D.I.S.C.O. ADVANCED GOLD HUD
-========================================= */
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-html {
+html,
+body {
     width: 100%;
     min-height: 100%;
 }
 
 body {
-    width: 100%;
-    min-height: 100vh;
-
     background:
         radial-gradient(
-            circle at 50% 30%,
-            #392900 0%,
-            #120e03 28%,
-            #050403 60%,
+            circle at 50% 20%,
+            #061a35 0%,
+            #020814 30%,
+            #010307 70%,
             #000000 100%
         );
 
-    color: #f4c85b;
+    color: #dff6ff;
 
     font-family:
-        Georgia,
-        "Times New Roman",
-        serif;
+        Arial,
+        Helvetica,
+        sans-serif;
 
     overflow-x: hidden;
-}
-
-
-/* =========================================
-   BACKGROUND GRID
-========================================= */
-
-body::before {
-    content: "";
-
-    position: fixed;
-    inset: 0;
-
-    background:
-        linear-gradient(
-            rgba(246,200,95,0.035) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(246,200,95,0.035) 1px,
-            transparent 1px
-        );
-
-    background-size: 38px 38px;
-
-    pointer-events: none;
-
-    z-index: -2;
-}
-
-
-/* =========================================
-   SCAN LINE
-========================================= */
-
-body::after {
-    content: "";
-
-    position: fixed;
-
-    left: 0;
-    right: 0;
-
-    top: -10px;
-
-    height: 2px;
-
-    background: #f6c85f;
-
-    box-shadow:
-        0 0 10px #f6c85f,
-        0 0 25px #f6c85f;
-
-    opacity: 0.35;
-
-    animation:
-        scan 5s linear infinite;
-
-    pointer-events: none;
-
-    z-index: 20;
-}
-
-@keyframes scan {
-
-    0% {
-        top: -5%;
-    }
-
-    100% {
-        top: 105%;
-    }
 }
 
 
@@ -115,16 +36,12 @@ body::after {
 ========================================= */
 
 .app {
-    width: min(1100px, 100%);
-
-    min-height: 100vh;
+    width: 100%;
+    max-width: 1000px;
 
     margin: auto;
 
-    padding:
-        18px
-        14px
-        30px;
+    padding: 16px;
 }
 
 
@@ -132,697 +49,342 @@ body::after {
    HEADER
 ========================================= */
 
-header {
-    text-align: center;
+.top {
+    display: flex;
 
-    padding:
-        5px
-        0
-        12px;
+    justify-content: space-between;
+    align-items: center;
+
+    padding-bottom: 15px;
+
+    border-bottom:
+        1px solid rgba(0, 157, 255, 0.35);
 }
 
 .brand {
-    font-size:
-        clamp(30px, 8vw, 55px);
+    color: #ffffff;
+
+    font-size: 30px;
 
     font-weight: 900;
 
-    letter-spacing: 8px;
-
-    color: #ffd86b;
+    letter-spacing: 5px;
 
     text-shadow:
-        0 0 8px #f6c85f,
-        0 0 20px #d59d21,
-        0 0 45px rgba(246,200,95,.6);
+        0 0 10px #009dff,
+        0 0 25px #006eff;
 }
 
 .subtitle {
     margin-top: 4px;
 
-    font-size: 14px;
+    color: #168ed8;
 
-    letter-spacing: 5px;
-
-    font-weight: bold;
-}
-
-.online-title {
-    margin-top: 4px;
-
-    font-size: 12px;
+    font-size: 10px;
 
     letter-spacing: 4px;
-
-    color: #d9ad43;
 }
 
+.system-online {
+    color: #8cecff;
 
-/* =========================================
-   CORE SECTION
-========================================= */
+    font-size: 10px;
 
-.core-section {
-
-    position: relative;
-
-    height: 420px;
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    overflow: hidden;
+    letter-spacing: 2px;
 }
 
+.online-dot {
+    display: inline-block;
 
-/* =========================================
-   CORE LABELS
-========================================= */
+    width: 8px;
+    height: 8px;
 
-.core-label {
-
-    position: absolute;
-
-    top: 50%;
-
-    transform:
-        translateY(-50%);
-
-    font-size: 18px;
-
-    letter-spacing: 5px;
-
-    font-weight: bold;
-
-    color: #f7d16c;
-
-    text-shadow:
-        0 0 10px #f6c85f;
-}
-
-.left-label {
-    left: -5px;
-}
-
-.right-label {
-    right: -5px;
-}
-
-
-/* =========================================
-   DISCO CORE
-========================================= */
-
-.disco-core {
-
-    position: relative;
-
-    width: 310px;
-    height: 310px;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    transform-style: preserve-3d;
-
-    margin-left: 50px;
-}
-
-
-/* =========================================
-   DISCO BALL
-========================================= */
-
-.ball {
-
-    position: relative;
-
-    width: 175px;
-    height: 175px;
+    margin-right: 5px;
 
     border-radius: 50%;
 
-    overflow: hidden;
-
-    background:
-        radial-gradient(
-            circle at 28% 25%,
-            #fff7c9 0%,
-            #ffe58a 8%,
-            #e8b94b 25%,
-            #8b6418 50%,
-            #f1c65b 68%,
-            #5b410b 100%
-        );
+    background: #38ff91;
 
     box-shadow:
-        0 0 15px #f6c85f,
-        0 0 35px #e8ae31,
-        0 0 80px rgba(246,200,95,.65);
-
-    transform-style: preserve-3d;
-
-    animation:
-        floatingBall 4s ease-in-out infinite;
-
-    z-index: 5;
+        0 0 10px #38ff91,
+        0 0 20px #38ff91;
 }
 
 
 /* =========================================
-   BALL GRID
+   CORE
 ========================================= */
 
-.ball-grid {
+.core-area {
+    position: relative;
 
-    position: absolute;
-
-    inset: 0;
-
-    border-radius: 50%;
-
-    background:
-        repeating-linear-gradient(
-            0deg,
-            transparent 0px,
-            transparent 9px,
-            rgba(30,20,5,.28) 10px,
-            rgba(30,20,5,.28) 12px
-        ),
-        repeating-linear-gradient(
-            90deg,
-            transparent 0px,
-            transparent 9px,
-            rgba(30,20,5,.28) 10px,
-            rgba(30,20,5,.28) 12px
-        );
-
-    opacity: .85;
-}
-
-
-/* =========================================
-   BALL SHINE
-========================================= */
-
-.ball-shine {
-
-    position: absolute;
-
-    width: 65px;
-    height: 45px;
-
-    top: 20px;
-    left: 30px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(255,255,255,.8);
-
-    filter: blur(7px);
-
-    transform:
-        rotate(-25deg);
-}
-
-
-/* =========================================
-   BALL LETTER
-========================================= */
-
-.ball-letter {
-
-    position: absolute;
-
-    inset: 0;
+    height: 390px;
 
     display: flex;
 
-    align-items: center;
     justify-content: center;
+    align-items: center;
 
-    font-family:
-        Georgia,
-        serif;
-
-    font-size: 50px;
-
-    font-weight: 900;
-
-    color: #080704;
-
-    text-shadow:
-        0 0 5px white;
+    overflow: hidden;
 }
 
 
-/* =========================================
-   ORBITS
-========================================= */
+/* ORBITS */
 
 .orbit {
-
     position: absolute;
 
-    border:
-        1px solid
-        rgba(246,200,95,.6);
+    border: 1px solid rgba(0, 157, 255, 0.45);
 
     border-radius: 50%;
 
     pointer-events: none;
-
-    transform-style: preserve-3d;
 }
 
-.orbit-a {
-
-    width: 290px;
-    height: 110px;
-
-    transform:
-        rotateX(70deg);
+.orbit-one {
+    width: 270px;
+    height: 270px;
 
     animation:
-        orbitA 5s linear infinite;
+        rotate 12s linear infinite;
 }
 
-.orbit-b {
+.orbit-two {
+    width: 330px;
+    height: 160px;
 
-    width: 300px;
-    height: 130px;
-
-    transform:
-        rotateY(70deg);
+    transform: rotate(-25deg);
 
     animation:
-        orbitB 7s linear infinite;
+        rotate-reverse 9s linear infinite;
 }
 
-.orbit-c {
+.orbit-three {
+    width: 370px;
+    height: 210px;
 
-    width: 320px;
-    height: 320px;
+    transform: rotate(55deg);
 
     border-style: dashed;
 
     animation:
-        orbitC 14s linear infinite;
-}
-
-@keyframes orbitA {
-
-    from {
-        transform:
-            rotateX(70deg)
-            rotateZ(0deg);
-    }
-
-    to {
-        transform:
-            rotateX(70deg)
-            rotateZ(360deg);
-    }
-}
-
-@keyframes orbitB {
-
-    from {
-        transform:
-            rotateY(70deg)
-            rotateZ(0deg);
-    }
-
-    to {
-        transform:
-            rotateY(70deg)
-            rotateZ(-360deg);
-    }
-}
-
-@keyframes orbitC {
-
-    from {
-        transform:
-            rotateZ(0deg);
-    }
-
-    to {
-        transform:
-            rotateZ(360deg);
-    }
-}
-
-@keyframes floatingBall {
-
-    0%, 100% {
-        transform:
-            translateY(0)
-            rotateY(0deg);
-    }
-
-    50% {
-        transform:
-            translateY(-10px)
-            rotateY(180deg);
-    }
+        rotate 15s linear infinite;
 }
 
 
-/* =========================================
-   STATE
-========================================= */
+/* CORE IMAGE */
 
-#state {
+.core {
+    position: relative;
 
-    position: absolute;
+    width: 220px;
+    height: 220px;
 
-    bottom: 32px;
+    display: flex;
 
-    left: 50%;
+    justify-content: center;
+    align-items: center;
 
-    transform:
-        translateX(-50%);
-
-    font-size: 14px;
-
-    letter-spacing: 4px;
-
-    font-weight: bold;
-
-    white-space: nowrap;
-}
-
-#stateDot {
-
-    display: inline-block;
-
-    width: 9px;
-    height: 9px;
+    z-index: 5;
 
     border-radius: 50%;
 
-    margin-right: 8px;
+    overflow: hidden;
 
-    background: #f6c85f;
+    background: #020812;
 
     box-shadow:
-        0 0 12px #f6c85f;
+        0 0 25px #008cff,
+        0 0 60px rgba(0, 140, 255, 0.65),
+        0 0 120px rgba(0, 90, 255, 0.3);
+
+    animation:
+        coreFloat 4s ease-in-out infinite;
 }
 
-#activity {
+.core img {
+    width: 100%;
+    height: 100%;
 
+    object-fit: cover;
+
+    display: block;
+
+    border-radius: 50%;
+}
+
+
+/* STATE */
+
+.state-text {
     position: absolute;
 
-    bottom: 8px;
+    bottom: 25px;
 
-    left: 50%;
+    padding: 10px 25px;
 
-    transform:
-        translateX(-50%);
+    color: #7ddcff;
 
-    font-size: 9px;
+    border:
+        1px solid rgba(0, 157, 255, 0.6);
+
+    background:
+        rgba(1, 8, 20, 0.85);
+
+    box-shadow:
+        0 0 20px rgba(0, 140, 255, 0.2);
+
+    font-size: 12px;
 
     letter-spacing: 3px;
 
-    color: #98792d;
-
-    white-space: nowrap;
+    z-index: 10;
 }
 
 
 /* =========================================
-   LISTENING
+   CORE STATES
 ========================================= */
 
-body.listening .ball {
+body.listening .core {
+    animation:
+        coreFloat 1s ease-in-out infinite,
+        listeningPulse .6s infinite;
 
     box-shadow:
-        0 0 20px red,
-        0 0 45px red,
-        0 0 100px rgba(255,0,0,.7);
+        0 0 25px #ff1b1b,
+        0 0 60px #ff0000,
+        0 0 120px rgba(255, 0, 0, 0.6);
+}
+
+body.listening .state-text {
+    color: #ff4d4d;
+
+    border-color: #ff3333;
+
+    box-shadow:
+        0 0 25px rgba(255, 0, 0, 0.5);
+}
+
+
+body.reasoning .core {
+    animation:
+        coreFloat 1.2s ease-in-out infinite,
+        reasoningPulse .8s infinite;
+
+    box-shadow:
+        0 0 30px #008cff,
+        0 0 80px #0066ff,
+        0 0 140px rgba(0, 110, 255, 0.6);
+}
+
+body.reasoning .state-text {
+    color: #55caff;
 
     animation:
-        listenBall .65s ease-in-out infinite alternate;
+        stateBlink .7s infinite;
 }
 
-body.listening .orbit {
 
-    border-color: red;
-}
-
-body.listening #stateDot {
-
-    background: red;
+body.speaking .core {
+    animation:
+        coreFloat .6s ease-in-out infinite,
+        speakingPulse .4s infinite;
 
     box-shadow:
-        0 0 20px red;
+        0 0 30px #00c8ff,
+        0 0 80px #008cff,
+        0 0 150px rgba(0, 190, 255, 0.7);
 }
 
-@keyframes listenBall {
+body.speaking .state-text {
+    color: #ffffff;
 
-    from {
-        transform:
-            scale(1);
-    }
-
-    to {
-        transform:
-            scale(1.15);
-    }
+    box-shadow:
+        0 0 30px rgba(0, 180, 255, 0.7);
 }
 
 
 /* =========================================
-   REASONING
-========================================= */
-
-body.reasoning .ball {
-
-    box-shadow:
-        0 0 20px #ff8c00,
-        0 0 50px #ff8c00,
-        0 0 110px rgba(255,140,0,.65);
-
-    animation:
-        thinkingBall .8s linear infinite;
-}
-
-body.reasoning .orbit {
-
-    border-color:
-        #ff8c00;
-}
-
-body.reasoning #stateDot {
-
-    background:
-        #ff8c00;
-
-    box-shadow:
-        0 0 18px #ff8c00;
-}
-
-@keyframes thinkingBall {
-
-    0% {
-        transform:
-            scale(1)
-            rotateY(0deg);
-    }
-
-    50% {
-        transform:
-            scale(1.1)
-            rotateY(180deg);
-    }
-
-    100% {
-        transform:
-            scale(1)
-            rotateY(360deg);
-    }
-}
-
-
-/* =========================================
-   SPEAKING
-========================================= */
-
-body.speaking .ball {
-
-    box-shadow:
-        0 0 20px #ffe18b,
-        0 0 50px #f6c85f,
-        0 0 120px rgba(246,200,95,.8);
-
-    animation:
-        speakingBall .5s ease-in-out infinite alternate;
-}
-
-body.speaking #stateDot {
-
-    background:
-        #fff0a5;
-
-    box-shadow:
-        0 0 20px #fff0a5;
-}
-
-@keyframes speakingBall {
-
-    from {
-        transform:
-            scale(1);
-    }
-
-    to {
-        transform:
-            scale(1.18);
-    }
-}
-
-
-/* =========================================
-   STATUS BOXES
+   STATUS CARDS
 ========================================= */
 
 .status-grid {
-
     display: grid;
 
     grid-template-columns:
         repeat(3, 1fr);
 
-    gap: 12px;
-
-    margin:
-        10px
-        auto
-        35px;
-
-    max-width: 1000px;
+    gap: 10px;
 }
 
 .status-card {
+    min-height: 75px;
 
-    position: relative;
+    display: flex;
 
-    min-height: 115px;
+    align-items: center;
 
-    padding:
-        14px;
+    gap: 12px;
+
+    padding: 12px;
 
     border:
-        1px solid
-        rgba(246,200,95,.55);
-
-    border-radius: 18px;
+        1px solid rgba(0, 157, 255, 0.5);
 
     background:
         linear-gradient(
-            145deg,
-            rgba(50,38,8,.75),
-            rgba(8,7,3,.82)
+            120deg,
+            rgba(2, 16, 35, 0.9),
+            rgba(1, 7, 18, 0.85)
         );
 
     box-shadow:
-        inset 0 0 20px rgba(246,200,95,.06),
-        0 0 15px rgba(246,200,95,.08);
-
-    text-align: center;
-
-    overflow: hidden;
+        inset 0 0 20px rgba(0, 130, 255, 0.08),
+        0 0 12px rgba(0, 100, 255, 0.08);
 
     transition:
-        .3s ease;
-}
-
-.status-card::before {
-
-    content: "";
-
-    position: absolute;
-
-    top: 0;
-    left: 15%;
-
-    width: 70%;
-    height: 2px;
-
-    background:
-        #f6c85f;
-
-    box-shadow:
-        0 0 12px #f6c85f;
-}
-
-.status-card::after {
-
-    content: "";
-
-    position: absolute;
-
-    right: 10px;
-    bottom: 10px;
-
-    width: 9px;
-    height: 9px;
-
-    border-right:
-        1px solid #f6c85f;
-
-    border-bottom:
-        1px solid #f6c85f;
+        .25s ease;
 }
 
 .status-card:hover {
+    transform: translateY(-2px);
 
-    transform:
-        translateY(-4px);
+    border-color: #00aaff;
 
     box-shadow:
-        0 0 25px rgba(246,200,95,.2);
+        0 0 20px rgba(0, 150, 255, 0.3);
 }
 
-.card-icon {
+.icon {
+    color: #22baff;
 
-    font-size: 18px;
-
-    margin-bottom: 5px;
+    font-size: 24px;
 
     text-shadow:
-        0 0 10px #f6c85f;
+        0 0 12px #008cff;
 }
 
-.status-card h3 {
-
-    font-size: 13px;
-
-    letter-spacing: 4px;
-
-    color:
-        #f8d579;
-}
-
-.status-card span {
-
+.status-card b {
     display: block;
 
-    margin-top: 10px;
+    color: #dff8ff;
 
     font-size: 10px;
 
-    letter-spacing: 3px;
+    letter-spacing: 2px;
+}
 
-    color:
-        #9f8135;
+.status-card small {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #43ff9a;
+
+    font-size: 9px;
+
+    letter-spacing: 1px;
 }
 
 
@@ -830,162 +392,122 @@ body.speaking #stateDot {
    COMMUNICATION
 ========================================= */
 
-.communication-title {
+.communication {
+    margin-top: 18px;
 
-    margin:
-        10px
-        0
-        12px;
+    border:
+        1px solid rgba(0, 157, 255, 0.5);
 
-    font-size: 20px;
+    background:
+        rgba(1, 7, 17, 0.9);
 
-    letter-spacing: 3px;
-
-    font-weight: bold;
-
-    color:
-        #f6d47b;
-
-    text-shadow:
-        0 0 10px rgba(246,200,95,.5);
+    box-shadow:
+        0 0 25px rgba(0, 100, 255, 0.08);
 }
 
+.communication-title {
+    padding: 14px;
 
-/* =========================================
-   CHAT
-========================================= */
+    color: #28baff;
 
-#chat {
+    border-bottom:
+        1px solid rgba(0, 157, 255, 0.3);
 
-    width: 100%;
+    font-size: 12px;
 
+    letter-spacing: 3px;
+}
+
+.chat {
     height: 340px;
 
-    padding: 18px;
+    overflow-y: auto;
+
+    padding: 15px;
 
     display: flex;
 
     flex-direction: column;
 
-    gap: 13px;
+    gap: 12px;
 
-    overflow-y: auto;
+    scrollbar-width: thin;
+}
 
-    border:
-        1px solid
-        rgba(246,200,95,.35);
+.chat::-webkit-scrollbar {
+    width: 5px;
+}
 
-    border-radius: 20px;
-
-    background:
-        rgba(0,0,0,.55);
-
-    box-shadow:
-        inset 0 0 30px rgba(246,200,95,.04);
+.chat::-webkit-scrollbar-thumb {
+    background: #006dff;
 }
 
 
 /* =========================================
-   MESSAGE
+   CHAT BUBBLES
 ========================================= */
 
 .message {
-
-    width: fit-content;
-
     max-width: 78%;
 
-    padding:
-        12px
-        15px;
+    padding: 12px 15px;
 
-    border-radius: 16px;
+    border-radius: 13px;
 
     line-height: 1.5;
 
     font-size: 14px;
 
-    white-space: pre-wrap;
-
-    overflow-wrap: anywhere;
-
     animation:
-        messageIn .35s ease;
+        messageIn .25s ease;
 }
 
 
 /* AI LEFT */
 
-.message.ai {
+.ai-message {
+    align-self: flex-start;
 
-    align-self:
-        flex-start;
-
-    margin-right:
-        auto;
+    color: #dff7ff;
 
     background:
         linear-gradient(
-            135deg,
-            rgba(246,200,95,.13),
-            rgba(20,15,5,.85)
+            120deg,
+            rgba(3, 20, 40, .95),
+            rgba(2, 10, 22, .95)
         );
 
     border:
-        1px solid
-        rgba(246,200,95,.35);
+        1px solid rgba(0, 157, 255, .45);
 
-    border-bottom-left-radius:
-        4px;
+    border-top-left-radius: 3px;
 
-    color:
-        #f5d889;
+    box-shadow:
+        0 0 15px rgba(0, 100, 255, .08);
 }
 
 
 /* USER RIGHT */
 
-.message.user {
+.user-message {
+    align-self: flex-end;
 
-    align-self:
-        flex-end;
-
-    margin-left:
-        auto;
+    color: white;
 
     background:
         linear-gradient(
-            135deg,
-            rgba(246,200,95,.3),
-            rgba(70,48,5,.55)
+            120deg,
+            #005cff,
+            #008dff
         );
 
     border:
-        1px solid
-        rgba(246,200,95,.6);
+        1px solid #36c7ff;
 
-    border-bottom-right-radius:
-        4px;
+    border-top-right-radius: 3px;
 
-    color:
-        #fff1b6;
-}
-
-@keyframes messageIn {
-
-    from {
-        opacity: 0;
-        transform:
-            translateY(8px)
-            scale(.97);
-    }
-
-    to {
-        opacity: 1;
-        transform:
-            translateY(0)
-            scale(1);
-    }
+    box-shadow:
+        0 0 15px rgba(0, 120, 255, .2);
 }
 
 
@@ -994,191 +516,109 @@ body.speaking #stateDot {
 ========================================= */
 
 .controls {
+    margin-top: 15px;
+}
 
+.input-row {
     display: flex;
 
-    width: 100%;
-
     gap: 8px;
-
-    margin:
-        15px
-        auto
-        10px;
 }
 
 #msg {
-
     flex: 1;
 
     min-width: 0;
 
-    height: 50px;
-
-    padding:
-        0
-        16px;
+    padding: 14px;
 
     border:
-        1px solid
-        rgba(246,200,95,.5);
+        1px solid rgba(0, 157, 255, .5);
 
-    border-radius:
-        25px;
-
-    background:
-        rgba(0,0,0,.75);
-
-    color:
-        white;
+    border-radius: 8px;
 
     outline: none;
+
+    color: white;
+
+    background:
+        rgba(1, 8, 18, .95);
 
     font-size: 14px;
 }
 
 #msg:focus {
-
-    border-color:
-        #f6c85f;
+    border-color: #00aaff;
 
     box-shadow:
-        0 0 18px
-        rgba(246,200,95,.25);
+        0 0 18px rgba(0, 150, 255, .25);
 }
-
-#msg::placeholder {
-
-    color:
-        #806d38;
-}
-
-
-/* =========================================
-   BUTTONS
-========================================= */
 
 button,
-.image-button {
+.vision-button {
+    padding: 12px 14px;
 
     border:
-        1px solid
-        #f6c85f;
+        1px solid rgba(0, 157, 255, .55);
+
+    border-radius: 7px;
+
+    color: #75dfff;
 
     background:
-        rgba(246,200,95,.07);
+        rgba(2, 14, 30, .95);
 
-    color:
-        #f6c85f;
+    cursor: pointer;
 
-    border-radius:
-        12px;
+    font-size: 10px;
 
-    min-height:
-        44px;
+    letter-spacing: 1px;
 
-    padding:
-        0
-        15px;
-
-    font-weight:
-        bold;
-
-    cursor:
-        pointer;
-
-    font-size:
-        11px;
-
-    letter-spacing:
-        1px;
-
-    transition:
-        .2s ease;
+    transition: .2s ease;
 }
 
 button:hover,
-.image-button:hover {
-
-    background:
-        #f6c85f;
-
-    color:
-        #000;
+.vision-button:hover {
+    border-color: #00c8ff;
 
     box-shadow:
-        0 0 20px
-        rgba(246,200,95,.5);
+        0 0 18px rgba(0, 150, 255, .3);
+
+    transform: translateY(-1px);
 }
 
-button:active,
-.image-button:active {
+.send-button {
+    color: white;
 
-    transform:
-        scale(.95);
+    background:
+        linear-gradient(
+            135deg,
+            #005cff,
+            #008dff
+        );
+
+    font-weight: bold;
 }
 
-#mic {
+.mic-button {
+    width: 50px;
 
-    width:
-        48px;
-
-    min-width:
-        48px;
-
-    padding:
-        0;
-
-    border-radius:
-        50%;
+    font-size: 18px;
 }
 
-#send {
+.button-row {
+    display: flex;
 
-    min-width:
-        72px;
+    gap: 8px;
+
+    margin-top: 8px;
 }
 
+.button-row button,
+.vision-button {
+    flex: 1;
 
-/* =========================================
-   EXTRA CONTROLS
-========================================= */
-
-.extra-controls {
-
-    display:
-        flex;
-
-    justify-content:
-        center;
-
-    flex-wrap:
-        wrap;
-
-    gap:
-        8px;
-
-    margin:
-        10px
-        auto;
-}
-
-.image-button {
-
-    display:
-        inline-flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-}
-
-#img-input {
-
-    display:
-        none;
+    text-align: center;
 }
 
 
@@ -1187,21 +627,99 @@ button:active,
 ========================================= */
 
 footer {
+    margin-top: 20px;
 
-    text-align:
-        center;
+    text-align: center;
 
-    margin-top:
-        25px;
+    color: #1678ae;
 
-    font-size:
-        9px;
+    font-size: 9px;
 
-    letter-spacing:
-        3px;
+    letter-spacing: 3px;
+}
 
-    color:
-        #685426;
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+
+@keyframes rotate {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate-reverse {
+
+    from {
+        transform: rotate(360deg);
+    }
+
+    to {
+        transform: rotate(0deg);
+    }
+}
+
+@keyframes coreFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-9px);
+    }
+}
+
+@keyframes listeningPulse {
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+@keyframes reasoningPulse {
+
+    50% {
+        transform: scale(1.06) rotate(2deg);
+    }
+}
+
+@keyframes speakingPulse {
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes stateBlink {
+
+    50% {
+        opacity: .45;
+    }
+}
+
+@keyframes messageIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
 }
 
 
@@ -1209,171 +727,106 @@ footer {
    MOBILE
 ========================================= */
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
 
     .app {
-        padding:
-            12px
-            9px
-            25px;
+        padding: 11px;
+    }
+
+    .top {
+        align-items: flex-start;
     }
 
     .brand {
-        font-size:
-            32px;
+        font-size: 22px;
 
-        letter-spacing:
-            5px;
+        letter-spacing: 4px;
     }
 
     .subtitle {
-        font-size:
-            11px;
-
-        letter-spacing:
-            3px;
+        font-size: 8px;
     }
 
-    .online-title {
-        font-size:
-            10px;
+    .system-online {
+        font-size: 7px;
+
+        margin-top: 5px;
     }
 
-    .core-section {
-
-        height:
-            365px;
+    .core-area {
+        height: 330px;
     }
 
-    .disco-core {
+    .core {
+        width: 185px;
+        height: 185px;
 
+        /* slightly right */
         transform:
-            scale(.78);
-
-        margin-left:
-            35px;
+            translateX(15px);
     }
 
-    .core-label {
-
-        font-size:
-            11px;
-
-        letter-spacing:
-            2px;
+    .orbit-one {
+        width: 230px;
+        height: 230px;
     }
 
-    .left-label {
-        left:
-            -15px;
+    .orbit-two {
+        width: 280px;
     }
 
-    .right-label {
-        right:
-            -15px;
+    .orbit-three {
+        width: 310px;
     }
 
     .status-grid {
-
         grid-template-columns:
             repeat(2, 1fr);
-
-        gap:
-            9px;
     }
 
     .status-card {
+        min-height: 67px;
 
-        min-height:
-            105px;
+        padding: 9px;
     }
 
-    .status-card h3 {
-
-        font-size:
-            10px;
-
-        letter-spacing:
-            2px;
+    .status-card b {
+        font-size: 9px;
     }
 
-    .communication-title {
-
-        font-size:
-            16px;
+    .status-card small {
+        font-size: 8px;
     }
 
-    #chat {
+    .icon {
+        font-size: 20px;
+    }
 
-        height:
-            330px;
-
-        padding:
-            12px;
+    .chat {
+        height: 310px;
     }
 
     .message {
+        max-width: 86%;
 
-        max-width:
-            85%;
+        font-size: 13px;
+    }
 
-        font-size:
-            13px;
+    .input-row {
+        flex-wrap: wrap;
     }
 
     #msg {
+        flex-basis: 100%;
 
-        height:
-            46px;
-
-        font-size:
-            13px;
+        width: 100%;
     }
 
-    #send {
-
-        min-width:
-            60px;
-    }
-}
-
-
-/* =========================================
-   SMALL PHONE
-========================================= */
-
-@media (max-width: 390px) {
-
-    .core-section {
-
-        height:
-            330px;
+    .send-button {
+        flex: 1;
     }
 
-    .disco-core {
-
-        transform:
-            scale(.68);
-    }
-
-    .status-card {
-
-        min-height:
-            95px;
-
-        padding:
-            9px;
-    }
-
-    #send {
-
-        display:
-            none;
-    }
-
-    #chat {
-
-        height:
-            300px;
+    .button-row {
+        flex-wrap: wrap;
     }
 }
