@@ -1,6 +1,6 @@
-/* =====================================
-   D.I.S.C.O GOLD MOBILE AI HUD
-===================================== */
+/* =========================================
+   D.I.S.C.O. ADVANCED GOLD HUD
+========================================= */
 
 * {
     box-sizing: border-box;
@@ -8,24 +8,25 @@
     padding: 0;
 }
 
-html,
-body {
+html {
     width: 100%;
     min-height: 100%;
 }
 
 body {
+    width: 100%;
+    min-height: 100vh;
 
     background:
         radial-gradient(
-            circle at 50% 35%,
-            #30250b 0%,
-            #0b0903 35%,
-            #020202 70%,
-            #000 100%
+            circle at 50% 30%,
+            #392900 0%,
+            #120e03 28%,
+            #050403 60%,
+            #000000 100%
         );
 
-    color: #f6c85f;
+    color: #f4c85b;
 
     font-family:
         Georgia,
@@ -36,19 +37,15 @@ body {
 }
 
 
-/* =====================================
+/* =========================================
    BACKGROUND GRID
-===================================== */
+========================================= */
 
 body::before {
-
     content: "";
 
     position: fixed;
-
     inset: 0;
-
-    pointer-events: none;
 
     background:
         linear-gradient(
@@ -61,18 +58,19 @@ body::before {
             transparent 1px
         );
 
-    background-size: 36px 36px;
+    background-size: 38px 38px;
+
+    pointer-events: none;
 
     z-index: -2;
 }
 
 
-/* =====================================
+/* =========================================
    SCAN LINE
-===================================== */
+========================================= */
 
 body::after {
-
     content: "";
 
     position: fixed;
@@ -80,218 +78,227 @@ body::after {
     left: 0;
     right: 0;
 
-    top: -10%;
+    top: -10px;
 
     height: 2px;
 
     background: #f6c85f;
 
     box-shadow:
-        0 0 18px #f6c85f;
+        0 0 10px #f6c85f,
+        0 0 25px #f6c85f;
 
     opacity: 0.35;
 
     animation:
-        scanLine 5s linear infinite;
+        scan 5s linear infinite;
 
     pointer-events: none;
 
-    z-index: 10;
+    z-index: 20;
 }
 
-@keyframes scanLine {
+@keyframes scan {
 
-    from {
-        top: -10%;
+    0% {
+        top: -5%;
     }
 
-    to {
-        top: 110%;
+    100% {
+        top: 105%;
     }
 }
 
 
-/* =====================================
+/* =========================================
    APP
-===================================== */
+========================================= */
 
 .app {
-
     width: min(1100px, 100%);
 
     min-height: 100vh;
 
     margin: auto;
 
-    padding: 18px;
+    padding:
+        18px
+        14px
+        30px;
 }
 
 
-/* =====================================
+/* =========================================
    HEADER
-===================================== */
+========================================= */
 
 header {
-
     text-align: center;
 
     padding:
-        10px
+        5px
         0
-        15px;
+        12px;
 }
 
-header h1 {
-
+.brand {
     font-size:
-        clamp(30px, 8vw, 58px);
+        clamp(30px, 8vw, 55px);
+
+    font-weight: 900;
 
     letter-spacing: 8px;
 
-    color: #f6c85f;
+    color: #ffd86b;
 
     text-shadow:
         0 0 8px #f6c85f,
-        0 0 25px
-        rgba(246,200,95,0.7);
+        0 0 20px #d59d21,
+        0 0 45px rgba(246,200,95,.6);
 }
 
-header p {
+.subtitle {
+    margin-top: 4px;
 
-    margin-top: 5px;
+    font-size: 14px;
 
-    font-size: 11px;
+    letter-spacing: 5px;
+
+    font-weight: bold;
+}
+
+.online-title {
+    margin-top: 4px;
+
+    font-size: 12px;
 
     letter-spacing: 4px;
 
-    color: #b49342;
-}
-
-.system-status {
-
-    margin-top: 7px;
-
-    font-size: 10px;
-
-    letter-spacing: 3px;
+    color: #d9ad43;
 }
 
 
-/* =====================================
-   CORE AREA
-===================================== */
+/* =========================================
+   CORE SECTION
+========================================= */
 
-.core-area {
+.core-section {
 
     position: relative;
 
-    width: 100%;
-
-    height: 390px;
+    height: 420px;
 
     display: flex;
 
-    align-items: center;
-
     justify-content: center;
 
-    perspective: 1000px;
+    align-items: center;
+
+    overflow: hidden;
 }
 
 
-/* =====================================
-   DISCO CORE
+/* =========================================
+   CORE LABELS
+========================================= */
 
-   MOVED SLIGHTLY RIGHT
-===================================== */
+.core-label {
+
+    position: absolute;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    font-size: 18px;
+
+    letter-spacing: 5px;
+
+    font-weight: bold;
+
+    color: #f7d16c;
+
+    text-shadow:
+        0 0 10px #f6c85f;
+}
+
+.left-label {
+    left: -5px;
+}
+
+.right-label {
+    right: -5px;
+}
+
+
+/* =========================================
+   DISCO CORE
+========================================= */
 
 .disco-core {
 
     position: relative;
 
-    width: 260px;
-
-    height: 260px;
+    width: 310px;
+    height: 310px;
 
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     transform-style: preserve-3d;
 
-    transform:
-        translateX(35px);
+    margin-left: 50px;
 }
 
 
-/* =====================================
-   BALL
-===================================== */
+/* =========================================
+   DISCO BALL
+========================================= */
 
 .ball {
 
     position: relative;
 
-    width: 150px;
-
-    height: 150px;
+    width: 175px;
+    height: 175px;
 
     border-radius: 50%;
 
     overflow: hidden;
 
     background:
-        linear-gradient(
-            135deg,
-            #fff3b0 0%,
-            #f6c85f 20%,
-            #8d691b 45%,
-            #ffe48a 60%,
-            #6d4e0c 80%,
-            #f6c85f 100%
+        radial-gradient(
+            circle at 28% 25%,
+            #fff7c9 0%,
+            #ffe58a 8%,
+            #e8b94b 25%,
+            #8b6418 50%,
+            #f1c65b 68%,
+            #5b410b 100%
         );
 
     box-shadow:
         0 0 15px #f6c85f,
-        0 0 35px
-        rgba(246,200,95,0.8),
-        0 0 70px
-        rgba(246,200,95,0.35);
+        0 0 35px #e8ae31,
+        0 0 80px rgba(246,200,95,.65);
 
     transform-style: preserve-3d;
 
     animation:
-        ballFloat 4s ease-in-out infinite;
+        floatingBall 4s ease-in-out infinite;
 
     z-index: 5;
 }
 
-@keyframes ballFloat {
 
-    0%,
-    100% {
-
-        transform:
-            translateY(0)
-            rotateY(0deg);
-    }
-
-    50% {
-
-        transform:
-            translateY(-8px)
-            rotateY(180deg);
-    }
-}
-
-
-/* =====================================
+/* =========================================
    BALL GRID
-===================================== */
+========================================= */
 
-.ball-surface {
+.ball-grid {
 
     position: absolute;
 
@@ -302,77 +309,52 @@ header p {
     background:
         repeating-linear-gradient(
             0deg,
-            transparent 0 8px,
-            rgba(0,0,0,0.22) 9px 11px
+            transparent 0px,
+            transparent 9px,
+            rgba(30,20,5,.28) 10px,
+            rgba(30,20,5,.28) 12px
         ),
         repeating-linear-gradient(
             90deg,
-            transparent 0 8px,
-            rgba(0,0,0,0.22) 9px 11px
+            transparent 0px,
+            transparent 9px,
+            rgba(30,20,5,.28) 10px,
+            rgba(30,20,5,.28) 12px
         );
 
-    opacity: 0.8;
+    opacity: .85;
 }
 
 
-/* =====================================
-   BALL HIGHLIGHT
-===================================== */
+/* =========================================
+   BALL SHINE
+========================================= */
 
-.ball-highlight {
+.ball-shine {
 
     position: absolute;
 
-    width: 60px;
+    width: 65px;
+    height: 45px;
 
-    height: 38px;
-
-    top: 17px;
-
-    left: 25px;
+    top: 20px;
+    left: 30px;
 
     border-radius: 50%;
 
     background:
-        rgba(255,255,255,0.6);
+        rgba(255,255,255,.8);
 
-    filter: blur(5px);
+    filter: blur(7px);
 
-    transform: rotate(-25deg);
+    transform:
+        rotate(-25deg);
 }
 
 
-/* =====================================
-   BALL LIGHT
-===================================== */
-
-.ball-light {
-
-    position: absolute;
-
-    inset: 0;
-
-    border-radius: 50%;
-
-    background:
-
-        radial-gradient(
-            circle at 30% 25%,
-            rgba(255,255,255,0.85),
-            transparent 15%
-        ),
-
-        radial-gradient(
-            circle at 70% 70%,
-            transparent 35%,
-            rgba(0,0,0,0.45)
-        );
-}
-
-
-/* =====================================
-   D
-===================================== */
+/* =========================================
+   BALL LETTER
+========================================= */
 
 .ball-letter {
 
@@ -383,23 +365,26 @@ header p {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
-    font-size: 38px;
+    font-family:
+        Georgia,
+        serif;
+
+    font-size: 50px;
 
     font-weight: 900;
 
-    color: #111;
+    color: #080704;
 
     text-shadow:
-        0 0 10px white;
+        0 0 5px white;
 }
 
 
-/* =====================================
+/* =========================================
    ORBITS
-===================================== */
+========================================= */
 
 .orbit {
 
@@ -407,230 +392,131 @@ header p {
 
     border:
         1px solid
-        rgba(246,200,95,0.65);
+        rgba(246,200,95,.6);
 
     border-radius: 50%;
 
-    transform-style: preserve-3d;
-
     pointer-events: none;
+
+    transform-style: preserve-3d;
 }
 
-.orbit1 {
+.orbit-a {
 
-    width: 230px;
-
-    height: 95px;
+    width: 290px;
+    height: 110px;
 
     transform:
         rotateX(70deg);
 
     animation:
-        orbit1 5s linear infinite;
+        orbitA 5s linear infinite;
 }
 
-.orbit2 {
+.orbit-b {
 
-    width: 240px;
-
-    height: 115px;
+    width: 300px;
+    height: 130px;
 
     transform:
         rotateY(70deg);
 
     animation:
-        orbit2 7s linear infinite;
+        orbitB 7s linear infinite;
 }
 
-.orbit3 {
+.orbit-c {
 
-    width: 270px;
-
-    height: 270px;
+    width: 320px;
+    height: 320px;
 
     border-style: dashed;
 
     animation:
-        orbit3 12s linear infinite;
+        orbitC 14s linear infinite;
 }
 
-@keyframes orbit1 {
+@keyframes orbitA {
 
     from {
-
         transform:
             rotateX(70deg)
             rotateZ(0deg);
     }
 
     to {
-
         transform:
             rotateX(70deg)
             rotateZ(360deg);
     }
 }
 
-@keyframes orbit2 {
+@keyframes orbitB {
 
     from {
-
         transform:
             rotateY(70deg)
             rotateZ(0deg);
     }
 
     to {
-
         transform:
             rotateY(70deg)
             rotateZ(-360deg);
     }
 }
 
-@keyframes orbit3 {
+@keyframes orbitC {
 
     from {
-
         transform:
             rotateZ(0deg);
     }
 
     to {
-
         transform:
             rotateZ(360deg);
     }
 }
 
+@keyframes floatingBall {
 
-/* =====================================
-   LISTENING
-===================================== */
-
-body.listening .ball {
-
-    box-shadow:
-        0 0 20px red,
-        0 0 45px red,
-        0 0 90px
-        rgba(255,0,0,0.6);
-
-    animation:
-        ballFloat 4s ease-in-out infinite,
-        listeningPulse 0.8s ease-in-out infinite;
-}
-
-body.listening .orbit {
-
-    border-color: red;
-}
-
-@keyframes listeningPulse {
-
-    0%,
-    100% {
-
-        transform: scale(1);
+    0%, 100% {
+        transform:
+            translateY(0)
+            rotateY(0deg);
     }
 
     50% {
-
-        transform: scale(1.12);
-    }
-}
-
-
-/* =====================================
-   REASONING
-===================================== */
-
-body.reasoning .ball {
-
-    box-shadow:
-        0 0 20px #ff8c00,
-        0 0 50px #ff8c00,
-        0 0 90px
-        rgba(255,140,0,0.5);
-
-    animation:
-        reasoningSpin 1.5s linear infinite;
-}
-
-body.reasoning .orbit {
-
-    border-color: #ff8c00;
-}
-
-@keyframes reasoningSpin {
-
-    from {
-
         transform:
-            rotateY(0deg)
-            rotateX(0deg);
-    }
-
-    to {
-
-        transform:
-            rotateY(360deg)
-            rotateX(360deg);
+            translateY(-10px)
+            rotateY(180deg);
     }
 }
 
 
-/* =====================================
-   SPEAKING
-===================================== */
-
-body.speaking .ball {
-
-    animation:
-        speakingPulse
-        0.6s
-        ease-in-out
-        infinite
-        alternate;
-}
-
-body.speaking .orbit {
-
-    animation-duration: 2s;
-}
-
-@keyframes speakingPulse {
-
-    from {
-
-        transform: scale(1);
-    }
-
-    to {
-
-        transform: scale(1.16);
-    }
-}
-
-
-/* =====================================
+/* =========================================
    STATE
-===================================== */
+========================================= */
 
 #state {
 
-    text-align: center;
+    position: absolute;
 
-    margin-top: -20px;
-}
+    bottom: 32px;
 
-#stateText {
+    left: 50%;
 
-    font-size: 13px;
+    transform:
+        translateX(-50%);
+
+    font-size: 14px;
+
+    letter-spacing: 4px;
 
     font-weight: bold;
 
-    letter-spacing: 4px;
+    white-space: nowrap;
 }
 
 #stateDot {
@@ -638,12 +524,11 @@ body.speaking .orbit {
     display: inline-block;
 
     width: 9px;
-
     height: 9px;
 
-    margin-right: 7px;
-
     border-radius: 50%;
+
+    margin-right: 8px;
 
     background: #f6c85f;
 
@@ -651,59 +536,164 @@ body.speaking .orbit {
         0 0 12px #f6c85f;
 }
 
+#activity {
+
+    position: absolute;
+
+    bottom: 8px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
+
+    color: #98792d;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   LISTENING
+========================================= */
+
+body.listening .ball {
+
+    box-shadow:
+        0 0 20px red,
+        0 0 45px red,
+        0 0 100px rgba(255,0,0,.7);
+
+    animation:
+        listenBall .65s ease-in-out infinite alternate;
+}
+
+body.listening .orbit {
+
+    border-color: red;
+}
+
 body.listening #stateDot {
 
     background: red;
 
     box-shadow:
-        0 0 15px red;
+        0 0 20px red;
+}
+
+@keyframes listenBall {
+
+    from {
+        transform:
+            scale(1);
+    }
+
+    to {
+        transform:
+            scale(1.15);
+    }
+}
+
+
+/* =========================================
+   REASONING
+========================================= */
+
+body.reasoning .ball {
+
+    box-shadow:
+        0 0 20px #ff8c00,
+        0 0 50px #ff8c00,
+        0 0 110px rgba(255,140,0,.65);
+
+    animation:
+        thinkingBall .8s linear infinite;
+}
+
+body.reasoning .orbit {
+
+    border-color:
+        #ff8c00;
 }
 
 body.reasoning #stateDot {
 
-    background: #ff8c00;
+    background:
+        #ff8c00;
 
     box-shadow:
-        0 0 15px #ff8c00;
+        0 0 18px #ff8c00;
+}
+
+@keyframes thinkingBall {
+
+    0% {
+        transform:
+            scale(1)
+            rotateY(0deg);
+    }
+
+    50% {
+        transform:
+            scale(1.1)
+            rotateY(180deg);
+    }
+
+    100% {
+        transform:
+            scale(1)
+            rotateY(360deg);
+    }
+}
+
+
+/* =========================================
+   SPEAKING
+========================================= */
+
+body.speaking .ball {
+
+    box-shadow:
+        0 0 20px #ffe18b,
+        0 0 50px #f6c85f,
+        0 0 120px rgba(246,200,95,.8);
+
+    animation:
+        speakingBall .5s ease-in-out infinite alternate;
 }
 
 body.speaking #stateDot {
 
-    background: #f6c85f;
+    background:
+        #fff0a5;
 
     box-shadow:
-        0 0 18px #f6c85f;
+        0 0 20px #fff0a5;
+}
+
+@keyframes speakingBall {
+
+    from {
+        transform:
+            scale(1);
+    }
+
+    to {
+        transform:
+            scale(1.18);
+    }
 }
 
 
-/* =====================================
-   ACTIVITY
-===================================== */
-
-#activity {
-
-    text-align: center;
-
-    margin:
-        10px
-        0
-        20px;
-
-    font-size: 10px;
-
-    letter-spacing: 3px;
-
-    color: #8c702c;
-}
-
-
-/* =====================================
+/* =========================================
    STATUS BOXES
-===================================== */
+========================================= */
 
 .status-grid {
-
-    width: 100%;
 
     display: grid;
 
@@ -713,47 +703,45 @@ body.speaking #stateDot {
     gap: 12px;
 
     margin:
-        15px auto
-        25px;
+        10px
+        auto
+        35px;
+
+    max-width: 1000px;
 }
 
 .status-card {
 
     position: relative;
 
-    min-height: 82px;
+    min-height: 115px;
 
-    padding: 15px 10px;
+    padding:
+        14px;
 
     border:
         1px solid
-        rgba(246,200,95,0.55);
+        rgba(246,200,95,.55);
 
-    border-radius: 12px;
+    border-radius: 18px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(246,200,95,0.10),
-            rgba(0,0,0,0.72)
+            rgba(50,38,8,.75),
+            rgba(8,7,3,.82)
         );
+
+    box-shadow:
+        inset 0 0 20px rgba(246,200,95,.06),
+        0 0 15px rgba(246,200,95,.08);
 
     text-align: center;
 
-    font-size: 10px;
-
-    letter-spacing: 2px;
-
-    box-shadow:
-        inset 0 0 18px
-        rgba(246,200,95,0.04),
-
-        0 0 12px
-        rgba(246,200,95,0.08);
-
-    transition: 0.25s ease;
-
     overflow: hidden;
+
+    transition:
+        .3s ease;
 }
 
 .status-card::before {
@@ -763,17 +751,16 @@ body.speaking #stateDot {
     position: absolute;
 
     top: 0;
-
     left: 15%;
 
     width: 70%;
+    height: 2px;
 
-    height: 1px;
-
-    background: #f6c85f;
+    background:
+        #f6c85f;
 
     box-shadow:
-        0 0 10px #f6c85f;
+        0 0 12px #f6c85f;
 }
 
 .status-card::after {
@@ -782,13 +769,11 @@ body.speaking #stateDot {
 
     position: absolute;
 
-    right: 7px;
+    right: 10px;
+    bottom: 10px;
 
-    bottom: 7px;
-
-    width: 7px;
-
-    height: 7px;
+    width: 9px;
+    height: 9px;
 
     border-right:
         1px solid #f6c85f;
@@ -799,213 +784,227 @@ body.speaking #stateDot {
 
 .status-card:hover {
 
-    transform: translateY(-3px);
-
-    border-color: #f6c85f;
+    transform:
+        translateY(-4px);
 
     box-shadow:
-        0 0 20px
-        rgba(246,200,95,0.25);
+        0 0 25px rgba(246,200,95,.2);
 }
 
-.status-card strong {
+.card-icon {
 
-    display: block;
+    font-size: 18px;
 
-    color: #f6c85f;
-
-    font-size: 12px;
-
-    letter-spacing: 2px;
-
-    margin-bottom: 8px;
+    margin-bottom: 5px;
 
     text-shadow:
-        0 0 8px
-        rgba(246,200,95,0.6);
+        0 0 10px #f6c85f;
+}
+
+.status-card h3 {
+
+    font-size: 13px;
+
+    letter-spacing: 4px;
+
+    color:
+        #f8d579;
 }
 
 .status-card span {
 
     display: block;
 
-    color: #b49342;
+    margin-top: 10px;
 
-    font-size: 9px;
+    font-size: 10px;
 
-    letter-spacing: 1px;
+    letter-spacing: 3px;
+
+    color:
+        #9f8135;
 }
 
 
-/* =====================================
+/* =========================================
    COMMUNICATION
-===================================== */
+========================================= */
 
-.communication {
+.communication-title {
 
-    width: 100%;
-
-    max-width: 900px;
-
-    margin: auto;
-}
-
-.communication h2 {
+    margin:
+        10px
+        0
+        12px;
 
     font-size: 20px;
 
-    letter-spacing: 2px;
+    letter-spacing: 3px;
 
-    font-style: italic;
+    font-weight: bold;
 
-    margin:
-        20px
-        0
-        15px;
+    color:
+        #f6d47b;
 
-    color: #f6c85f;
+    text-shadow:
+        0 0 10px rgba(246,200,95,.5);
 }
 
 
-/* =====================================
+/* =========================================
    CHAT
-===================================== */
+========================================= */
 
 #chat {
 
     width: 100%;
 
-    height: 300px;
+    height: 340px;
 
-    padding: 16px;
+    padding: 18px;
 
     display: flex;
 
     flex-direction: column;
 
-    gap: 12px;
+    gap: 13px;
 
     overflow-y: auto;
 
     border:
         1px solid
-        rgba(246,200,95,0.3);
+        rgba(246,200,95,.35);
 
-    border-radius: 16px;
-
-    background:
-        rgba(0,0,0,0.38);
-
-    scrollbar-width: thin;
-
-    scrollbar-color:
-        #f6c85f
-        rgba(0,0,0,0.4);
-}
-
-#chat::-webkit-scrollbar {
-
-    width: 6px;
-}
-
-#chat::-webkit-scrollbar-track {
+    border-radius: 20px;
 
     background:
-        rgba(0,0,0,0.4);
-}
-
-#chat::-webkit-scrollbar-thumb {
-
-    background: #f6c85f;
-
-    border-radius: 10px;
+        rgba(0,0,0,.55);
 
     box-shadow:
-        0 0 8px #f6c85f;
+        inset 0 0 30px rgba(246,200,95,.04);
 }
 
 
-/* =====================================
-   CHAT MESSAGE
-===================================== */
+/* =========================================
+   MESSAGE
+========================================= */
 
 .message {
 
     width: fit-content;
 
-    max-width: 75%;
+    max-width: 78%;
 
     padding:
-        11px
+        12px
         15px;
 
-    border:
-        1px solid
-        rgba(246,200,95,0.35);
-
-    border-radius: 15px;
+    border-radius: 16px;
 
     line-height: 1.5;
 
-    word-wrap: break-word;
-
-    overflow-wrap: break-word;
+    font-size: 14px;
 
     white-space: pre-wrap;
 
-    background:
-        rgba(246,200,95,0.04);
+    overflow-wrap: anywhere;
+
+    animation:
+        messageIn .35s ease;
 }
 
 
-/* AI = LEFT */
+/* AI LEFT */
 
 .message.ai {
 
-    align-self: flex-start;
+    align-self:
+        flex-start;
 
-    margin-right: auto;
+    margin-right:
+        auto;
 
-    margin-left: 0;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(246,200,95,.13),
+            rgba(20,15,5,.85)
+        );
 
-    text-align: left;
+    border:
+        1px solid
+        rgba(246,200,95,.35);
 
-    border-bottom-left-radius: 4px;
+    border-bottom-left-radius:
+        4px;
+
+    color:
+        #f5d889;
 }
 
 
-/* USER = RIGHT */
+/* USER RIGHT */
 
 .message.user {
 
-    align-self: flex-end;
+    align-self:
+        flex-end;
 
-    margin-left: auto;
+    margin-left:
+        auto;
 
-    margin-right: 0;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(246,200,95,.3),
+            rgba(70,48,5,.55)
+        );
 
-    text-align: left;
+    border:
+        1px solid
+        rgba(246,200,95,.6);
 
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius:
+        4px;
+
+    color:
+        #fff1b6;
+}
+
+@keyframes messageIn {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(8px)
+            scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+    }
 }
 
 
-/* =====================================
-   CONTROLS
-===================================== */
+/* =========================================
+   INPUT
+========================================= */
 
 .controls {
 
-    width: 100%;
-
-    margin:
-        15px auto;
-
     display: flex;
 
-    align-items: center;
+    width: 100%;
 
     gap: 8px;
+
+    margin:
+        15px
+        auto
+        10px;
 }
 
 #msg {
@@ -1014,339 +1013,367 @@ body.speaking #stateDot {
 
     min-width: 0;
 
-    height: 48px;
+    height: 50px;
 
     padding:
         0
-        15px;
+        16px;
 
     border:
         1px solid
-        rgba(246,200,95,0.5);
+        rgba(246,200,95,.5);
 
-    border-radius: 24px;
-
-    outline: none;
+    border-radius:
+        25px;
 
     background:
-        rgba(0,0,0,0.7);
+        rgba(0,0,0,.75);
 
-    color: white;
+    color:
+        white;
+
+    outline: none;
 
     font-size: 14px;
 }
 
-#msg::placeholder {
-
-    color: #806d38;
-}
-
 #msg:focus {
 
-    border-color: #f6c85f;
+    border-color:
+        #f6c85f;
 
     box-shadow:
-        0 0 15px
-        rgba(246,200,95,0.25);
+        0 0 18px
+        rgba(246,200,95,.25);
+}
+
+#msg::placeholder {
+
+    color:
+        #806d38;
 }
 
 
-/* =====================================
+/* =========================================
    BUTTONS
-===================================== */
+========================================= */
 
 button,
 .image-button {
 
-    min-height: 44px;
+    border:
+        1px solid
+        #f6c85f;
+
+    background:
+        rgba(246,200,95,.07);
+
+    color:
+        #f6c85f;
+
+    border-radius:
+        12px;
+
+    min-height:
+        44px;
 
     padding:
         0
         15px;
 
-    border:
-        1px solid #f6c85f;
+    font-weight:
+        bold;
 
-    border-radius: 12px;
+    cursor:
+        pointer;
 
-    background:
-        rgba(246,200,95,0.08);
+    font-size:
+        11px;
 
-    color: #f6c85f;
+    letter-spacing:
+        1px;
 
-    cursor: pointer;
-
-    font-weight: bold;
-
-    font-size: 11px;
-
-    letter-spacing: 1px;
-
-    transition: 0.2s ease;
+    transition:
+        .2s ease;
 }
 
 button:hover,
 .image-button:hover {
 
-    background: #f6c85f;
+    background:
+        #f6c85f;
 
-    color: #000;
+    color:
+        #000;
 
     box-shadow:
         0 0 20px
-        rgba(246,200,95,0.5);
+        rgba(246,200,95,.5);
 }
 
 button:active,
 .image-button:active {
 
-    transform: scale(0.95);
+    transform:
+        scale(.95);
 }
-
-
-/* MIC */
 
 #mic {
 
-    width: 48px;
+    width:
+        48px;
 
-    min-width: 48px;
+    min-width:
+        48px;
 
-    padding: 0;
+    padding:
+        0;
 
-    border-radius: 50%;
+    border-radius:
+        50%;
 }
-
-body.listening #mic {
-
-    border-color: red;
-
-    color: red;
-
-    box-shadow:
-        0 0 18px red;
-}
-
-
-/* SEND */
 
 #send {
 
-    min-width: 70px;
+    min-width:
+        72px;
 }
 
 
-/* =====================================
+/* =========================================
    EXTRA CONTROLS
-===================================== */
+========================================= */
 
 .extra-controls {
 
-    width: 100%;
+    display:
+        flex;
+
+    justify-content:
+        center;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        8px;
 
     margin:
-        10px auto;
-
-    display: flex;
-
-    justify-content: center;
-
-    flex-wrap: wrap;
-
-    gap: 8px;
-}
-
-#clear-btn,
-#key-btn {
-
-    font-size: 10px;
+        10px
+        auto;
 }
 
 .image-button {
 
-    display: inline-flex;
+    display:
+        inline-flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: center;
+    justify-content:
+        center;
 }
 
 #img-input {
 
-    display: none;
+    display:
+        none;
 }
 
 
-/* =====================================
+/* =========================================
    FOOTER
-===================================== */
+========================================= */
 
 footer {
 
-    text-align: center;
+    text-align:
+        center;
 
-    padding: 25px 0;
+    margin-top:
+        25px;
 
-    color: #665326;
+    font-size:
+        9px;
 
-    font-size: 9px;
+    letter-spacing:
+        3px;
 
-    letter-spacing: 2px;
+    color:
+        #685426;
 }
 
 
-/* =====================================
+/* =========================================
    MOBILE
-===================================== */
+========================================= */
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 
     .app {
-
-        padding: 10px;
+        padding:
+            12px
+            9px
+            25px;
     }
 
-    header h1 {
+    .brand {
+        font-size:
+            32px;
 
-        font-size: 30px;
-
-        letter-spacing: 5px;
+        letter-spacing:
+            5px;
     }
 
-    header p {
+    .subtitle {
+        font-size:
+            11px;
 
-        font-size: 9px;
-
-        letter-spacing: 3px;
+        letter-spacing:
+            3px;
     }
 
-    .core-area {
-
-        height: 320px;
+    .online-title {
+        font-size:
+            10px;
     }
 
+    .core-section {
 
-    /* BALL MOVED RIGHT */
+        height:
+            365px;
+    }
 
     .disco-core {
 
         transform:
-            translateX(35px)
-            scale(0.82);
+            scale(.78);
+
+        margin-left:
+            35px;
     }
 
+    .core-label {
+
+        font-size:
+            11px;
+
+        letter-spacing:
+            2px;
+    }
+
+    .left-label {
+        left:
+            -15px;
+    }
+
+    .right-label {
+        right:
+            -15px;
+    }
 
     .status-grid {
 
         grid-template-columns:
             repeat(2, 1fr);
 
-        gap: 9px;
+        gap:
+            9px;
     }
 
     .status-card {
 
-        min-height: 75px;
-
-        padding:
-            12px
-            7px;
+        min-height:
+            105px;
     }
 
-    .status-card strong {
+    .status-card h3 {
 
-        font-size: 10px;
+        font-size:
+            10px;
+
+        letter-spacing:
+            2px;
     }
 
-    .status-card span {
+    .communication-title {
 
-        font-size: 8px;
+        font-size:
+            16px;
     }
 
     #chat {
 
-        height: 300px;
+        height:
+            330px;
 
-        padding: 10px;
+        padding:
+            12px;
     }
 
     .message {
 
-        max-width: 82%;
+        max-width:
+            85%;
 
-        font-size: 13px;
-
-        padding:
-            10px
+        font-size:
             13px;
-    }
-
-    .controls {
-
-        gap: 6px;
     }
 
     #msg {
 
-        height: 44px;
+        height:
+            46px;
 
-        font-size: 13px;
-
-        padding:
-            0
-            12px;
-    }
-
-    button,
-    .image-button {
-
-        min-height: 42px;
+        font-size:
+            13px;
     }
 
     #send {
 
-        min-width: 58px;
-
-        padding:
-            0
-            10px;
-    }
-
-    #mic {
-
-        width: 42px;
-
-        min-width: 42px;
-    }
-
-    .communication h2 {
-
-        font-size: 17px;
+        min-width:
+            60px;
     }
 }
 
 
-/* =====================================
-   SMALL PHONES
-===================================== */
+/* =========================================
+   SMALL PHONE
+========================================= */
 
-@media (max-width: 380px) {
+@media (max-width: 390px) {
 
-    .core-area {
+    .core-section {
 
-        height: 285px;
+        height:
+            330px;
     }
-
 
     .disco-core {
 
         transform:
-            translateX(28px)
-            scale(0.70);
+            scale(.68);
+    }
+
+    .status-card {
+
+        min-height:
+            95px;
+
+        padding:
+            9px;
     }
 
     #send {
 
-        display: none;
+        display:
+            none;
+    }
+
+    #chat {
+
+        height:
+            300px;
     }
 }
