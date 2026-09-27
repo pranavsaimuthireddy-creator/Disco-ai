@@ -13,14 +13,14 @@ body {
 body {
     background:
         radial-gradient(
-            circle at 50% 20%,
-            #061a35 0%,
-            #020814 30%,
-            #010307 70%,
-            #000000 100%
+            circle at 50% 35%,
+            #062c52 0%,
+            #031525 25%,
+            #010912 55%,
+            #000 100%
         );
 
-    color: #dff6ff;
+    color: #e8faff;
 
     font-family:
         Arial,
@@ -31,9 +31,9 @@ body {
 }
 
 
-/* =========================================
+/* ==============================
    APP
-========================================= */
+============================== */
 
 .app {
     width: 100%;
@@ -41,13 +41,13 @@ body {
 
     margin: auto;
 
-    padding: 16px;
+    padding: 15px;
 }
 
 
-/* =========================================
+/* ==============================
    HEADER
-========================================= */
+============================== */
 
 .top {
     display: flex;
@@ -55,259 +55,273 @@ body {
     justify-content: space-between;
     align-items: center;
 
-    padding-bottom: 15px;
+    padding-bottom: 16px;
 
     border-bottom:
-        1px solid rgba(0, 157, 255, 0.35);
+        1px solid rgba(0, 170, 255, .35);
 }
 
 .brand {
-    color: #ffffff;
+    color: white;
 
-    font-size: 30px;
+    font-size: 29px;
 
     font-weight: 900;
 
-    letter-spacing: 5px;
+    letter-spacing: 6px;
 
     text-shadow:
-        0 0 10px #009dff,
-        0 0 25px #006eff;
+        0 0 8px #00aaff,
+        0 0 20px #008cff,
+        0 0 40px #0066ff;
 }
 
 .subtitle {
     margin-top: 4px;
 
-    color: #168ed8;
+    color: #22aaff;
 
-    font-size: 10px;
+    font-size: 9px;
 
-    letter-spacing: 4px;
+    letter-spacing: 5px;
 }
 
 .system-online {
-    color: #8cecff;
+    color: #9deeff;
 
-    font-size: 10px;
+    font-size: 9px;
 
-    letter-spacing: 2px;
+    letter-spacing: 3px;
 }
 
 .online-dot {
     display: inline-block;
 
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 
     margin-right: 5px;
 
     border-radius: 50%;
 
-    background: #38ff91;
+    background: #28ff91;
 
     box-shadow:
-        0 0 10px #38ff91,
-        0 0 20px #38ff91;
+        0 0 8px #28ff91,
+        0 0 20px #28ff91;
 }
 
 
-/* =========================================
-   CORE
-========================================= */
+/* ==============================
+   CORE AREA
+============================== */
 
 .core-area {
     position: relative;
 
-    height: 390px;
+    height: 420px;
 
     display: flex;
 
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     overflow: hidden;
 }
 
 
-/* ORBITS */
+/* OUTER HUD RINGS */
 
 .orbit {
     position: absolute;
 
-    border: 1px solid rgba(0, 157, 255, 0.45);
-
     border-radius: 50%;
+
+    border:
+        1px solid rgba(0, 174, 255, .35);
 
     pointer-events: none;
 }
 
 .orbit-one {
-    width: 270px;
-    height: 270px;
+    width: 300px;
+    height: 300px;
 
     animation:
         rotate 12s linear infinite;
 }
 
 .orbit-two {
-    width: 330px;
-    height: 160px;
+    width: 365px;
+    height: 175px;
 
     transform: rotate(-25deg);
 
     animation:
-        rotate-reverse 9s linear infinite;
+        reverseRotate 9s linear infinite;
 }
 
 .orbit-three {
-    width: 370px;
-    height: 210px;
+    width: 395px;
+    height: 230px;
 
     transform: rotate(55deg);
 
     border-style: dashed;
 
     animation:
-        rotate 15s linear infinite;
+        rotate 16s linear infinite;
 }
 
 
-/* CORE IMAGE */
+/* ==============================
+   CORE IMAGE
+============================== */
 
 .core {
     position: relative;
 
-    width: 220px;
-    height: 220px;
-
-    display: flex;
-
-    justify-content: center;
-    align-items: center;
-
-    z-index: 5;
+    width: 245px;
+    height: 245px;
 
     border-radius: 50%;
 
     overflow: hidden;
 
-    background: #020812;
+    z-index: 5;
+
+    background: #000913;
+
+    border:
+        2px solid rgba(0, 183, 255, .75);
 
     box-shadow:
-        0 0 25px #008cff,
-        0 0 60px rgba(0, 140, 255, 0.65),
-        0 0 120px rgba(0, 90, 255, 0.3);
+        0 0 20px #008cff,
+        0 0 50px #006eff,
+        0 0 100px rgba(0, 110, 255, .6);
 
     animation:
-        coreFloat 4s ease-in-out infinite;
+        floatCore 4s ease-in-out infinite;
 }
 
-.core img {
+
+/* IMAGE */
+
+#coreImage {
     width: 100%;
     height: 100%;
 
-    object-fit: cover;
-
     display: block;
+
+    object-fit: cover;
 
     border-radius: 50%;
 }
 
 
-/* STATE */
+/* ==============================
+   READY STATE
+============================== */
 
 .state-text {
     position: absolute;
 
-    bottom: 25px;
+    bottom: 18px;
 
-    padding: 10px 25px;
+    z-index: 20;
 
-    color: #7ddcff;
+    padding: 11px 28px;
 
-    border:
-        1px solid rgba(0, 157, 255, 0.6);
+    color: #74dfff;
 
     background:
-        rgba(1, 8, 20, 0.85);
+        rgba(1, 9, 20, .9);
+
+    border:
+        1px solid #008cff;
+
+    font-size: 11px;
+
+    letter-spacing: 4px;
 
     box-shadow:
-        0 0 20px rgba(0, 140, 255, 0.2);
-
-    font-size: 12px;
-
-    letter-spacing: 3px;
-
-    z-index: 10;
+        0 0 20px rgba(0, 145, 255, .25);
 }
 
 
-/* =========================================
-   CORE STATES
-========================================= */
+/* ==============================
+   LISTENING
+============================== */
 
 body.listening .core {
     animation:
-        coreFloat 1s ease-in-out infinite,
-        listeningPulse .6s infinite;
-
-    box-shadow:
-        0 0 25px #ff1b1b,
-        0 0 60px #ff0000,
-        0 0 120px rgba(255, 0, 0, 0.6);
-}
-
-body.listening .state-text {
-    color: #ff4d4d;
+        listeningPulse .55s infinite;
 
     border-color: #ff3333;
 
     box-shadow:
-        0 0 25px rgba(255, 0, 0, 0.5);
+        0 0 25px #ff2222,
+        0 0 65px #ff0000,
+        0 0 120px rgba(255, 0, 0, .65);
 }
 
+body.listening .state-text {
+    color: #ff5555;
+
+    border-color: #ff3333;
+
+    box-shadow:
+        0 0 25px rgba(255, 0, 0, .5);
+}
+
+
+/* ==============================
+   REASONING
+============================== */
 
 body.reasoning .core {
     animation:
-        coreFloat 1.2s ease-in-out infinite,
-        reasoningPulse .8s infinite;
+        thinkingPulse .7s infinite;
 
     box-shadow:
         0 0 30px #008cff,
-        0 0 80px #0066ff,
-        0 0 140px rgba(0, 110, 255, 0.6);
+        0 0 75px #006eff,
+        0 0 140px rgba(0, 110, 255, .65);
 }
 
 body.reasoning .state-text {
-    color: #55caff;
-
     animation:
-        stateBlink .7s infinite;
+        blink .7s infinite;
+
+    color: #45caff;
 }
 
+
+/* ==============================
+   SPEAKING
+============================== */
 
 body.speaking .core {
     animation:
-        coreFloat .6s ease-in-out infinite,
         speakingPulse .4s infinite;
 
     box-shadow:
-        0 0 30px #00c8ff,
-        0 0 80px #008cff,
-        0 0 150px rgba(0, 190, 255, 0.7);
+        0 0 35px #00c8ff,
+        0 0 90px #008cff,
+        0 0 160px rgba(0, 190, 255, .7);
 }
 
 body.speaking .state-text {
-    color: #ffffff;
+    color: white;
 
     box-shadow:
-        0 0 30px rgba(0, 180, 255, 0.7);
+        0 0 30px #008cff;
 }
 
 
-/* =========================================
-   STATUS CARDS
-========================================= */
+/* ==============================
+   STATUS GRID
+============================== */
 
 .status-grid {
     display: grid;
@@ -319,7 +333,7 @@ body.speaking .state-text {
 }
 
 .status-card {
-    min-height: 75px;
+    min-height: 78px;
 
     display: flex;
 
@@ -329,50 +343,46 @@ body.speaking .state-text {
 
     padding: 12px;
 
-    border:
-        1px solid rgba(0, 157, 255, 0.5);
-
     background:
         linear-gradient(
-            120deg,
-            rgba(2, 16, 35, 0.9),
-            rgba(1, 7, 18, 0.85)
+            135deg,
+            rgba(2, 20, 38, .95),
+            rgba(1, 8, 18, .95)
         );
 
-    box-shadow:
-        inset 0 0 20px rgba(0, 130, 255, 0.08),
-        0 0 12px rgba(0, 100, 255, 0.08);
+    border:
+        1px solid rgba(0, 157, 255, .45);
 
-    transition:
-        .25s ease;
+    box-shadow:
+        inset 0 0 25px rgba(0, 120, 255, .06);
+
+    transition: .25s;
 }
 
 .status-card:hover {
-    transform: translateY(-2px);
-
-    border-color: #00aaff;
+    border-color: #00baff;
 
     box-shadow:
-        0 0 20px rgba(0, 150, 255, 0.3);
+        0 0 20px rgba(0, 150, 255, .25);
 }
 
 .icon {
-    color: #22baff;
+    color: #17b9ff;
 
-    font-size: 24px;
+    font-size: 23px;
 
     text-shadow:
-        0 0 12px #008cff;
+        0 0 15px #008cff;
 }
 
 .status-card b {
     display: block;
 
-    color: #dff8ff;
+    color: #d9f6ff;
 
     font-size: 10px;
 
-    letter-spacing: 2px;
+    letter-spacing: 3px;
 }
 
 .status-card small {
@@ -380,7 +390,7 @@ body.speaking .state-text {
 
     margin-top: 5px;
 
-    color: #43ff9a;
+    color: #42ff9a;
 
     font-size: 9px;
 
@@ -388,42 +398,45 @@ body.speaking .state-text {
 }
 
 
-/* =========================================
+/* ==============================
    COMMUNICATION
-========================================= */
+============================== */
 
 .communication {
     margin-top: 18px;
 
     border:
-        1px solid rgba(0, 157, 255, 0.5);
+        1px solid rgba(0, 157, 255, .45);
 
     background:
-        rgba(1, 7, 17, 0.9);
+        rgba(1, 7, 17, .94);
 
     box-shadow:
-        0 0 25px rgba(0, 100, 255, 0.08);
+        0 0 25px rgba(0, 100, 255, .08);
 }
 
 .communication-title {
     padding: 14px;
 
-    color: #28baff;
+    color: #27b9ff;
 
     border-bottom:
-        1px solid rgba(0, 157, 255, 0.3);
+        1px solid rgba(0, 157, 255, .3);
 
     font-size: 12px;
 
-    letter-spacing: 3px;
+    letter-spacing: 4px;
 }
+
+
+/* ==============================
+   CHAT
+============================== */
 
 .chat {
     height: 340px;
 
-    overflow-y: auto;
-
-    padding: 15px;
+    padding: 16px;
 
     display: flex;
 
@@ -431,32 +444,30 @@ body.speaking .state-text {
 
     gap: 12px;
 
-    scrollbar-width: thin;
+    overflow-y: auto;
 }
 
 .chat::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
 }
 
 .chat::-webkit-scrollbar-thumb {
-    background: #006dff;
+    background: #008cff;
 }
 
 
-/* =========================================
-   CHAT BUBBLES
-========================================= */
+/* BOTH BUBBLES */
 
 .message {
     max-width: 78%;
 
-    padding: 12px 15px;
+    padding: 13px 16px;
 
-    border-radius: 13px;
+    font-size: 14px;
 
     line-height: 1.5;
 
-    font-size: 14px;
+    border-radius: 14px;
 
     animation:
         messageIn .25s ease;
@@ -468,13 +479,13 @@ body.speaking .state-text {
 .ai-message {
     align-self: flex-start;
 
-    color: #dff7ff;
+    color: #e4f8ff;
 
     background:
         linear-gradient(
-            120deg,
-            rgba(3, 20, 40, .95),
-            rgba(2, 10, 22, .95)
+            135deg,
+            rgba(3, 27, 52, .96),
+            rgba(1, 10, 22, .96)
         );
 
     border:
@@ -483,7 +494,7 @@ body.speaking .state-text {
     border-top-left-radius: 3px;
 
     box-shadow:
-        0 0 15px rgba(0, 100, 255, .08);
+        0 0 15px rgba(0, 120, 255, .08);
 }
 
 
@@ -496,27 +507,27 @@ body.speaking .state-text {
 
     background:
         linear-gradient(
-            120deg,
-            #005cff,
+            135deg,
+            #005eff,
             #008dff
         );
 
     border:
-        1px solid #36c7ff;
+        1px solid #39c9ff;
 
     border-top-right-radius: 3px;
 
     box-shadow:
-        0 0 15px rgba(0, 120, 255, .2);
+        0 0 18px rgba(0, 120, 255, .25);
 }
 
 
-/* =========================================
-   INPUT
-========================================= */
+/* ==============================
+   CONTROLS
+============================== */
 
 .controls {
-    margin-top: 15px;
+    margin-top: 14px;
 }
 
 .input-row {
@@ -532,6 +543,11 @@ body.speaking .state-text {
 
     padding: 14px;
 
+    color: white;
+
+    background:
+        rgba(1, 9, 20, .96);
+
     border:
         1px solid rgba(0, 157, 255, .5);
 
@@ -539,20 +555,18 @@ body.speaking .state-text {
 
     outline: none;
 
-    color: white;
-
-    background:
-        rgba(1, 8, 18, .95);
-
     font-size: 14px;
 }
 
 #msg:focus {
-    border-color: #00aaff;
+    border-color: #00baff;
 
     box-shadow:
-        0 0 18px rgba(0, 150, 255, .25);
+        0 0 18px rgba(0, 160, 255, .25);
 }
+
+
+/* BUTTONS */
 
 button,
 .vision-button {
@@ -563,10 +577,10 @@ button,
 
     border-radius: 7px;
 
-    color: #75dfff;
+    color: #8be7ff;
 
     background:
-        rgba(2, 14, 30, .95);
+        rgba(2, 15, 31, .96);
 
     cursor: pointer;
 
@@ -574,7 +588,7 @@ button,
 
     letter-spacing: 1px;
 
-    transition: .2s ease;
+    transition: .2s;
 }
 
 button:hover,
@@ -583,8 +597,6 @@ button:hover,
 
     box-shadow:
         0 0 18px rgba(0, 150, 255, .3);
-
-    transform: translateY(-1px);
 }
 
 .send-button {
@@ -601,9 +613,9 @@ button:hover,
 }
 
 .mic-button {
-    width: 50px;
+    width: 52px;
 
-    font-size: 18px;
+    font-size: 17px;
 }
 
 .button-row {
@@ -622,16 +634,16 @@ button:hover,
 }
 
 
-/* =========================================
+/* ==============================
    FOOTER
-========================================= */
+============================== */
 
 footer {
-    margin-top: 20px;
+    padding: 20px 0;
 
     text-align: center;
 
-    color: #1678ae;
+    color: #1478aa;
 
     font-size: 9px;
 
@@ -639,9 +651,9 @@ footer {
 }
 
 
-/* =========================================
+/* ==============================
    ANIMATIONS
-========================================= */
+============================== */
 
 @keyframes rotate {
 
@@ -654,7 +666,7 @@ footer {
     }
 }
 
-@keyframes rotate-reverse {
+@keyframes reverseRotate {
 
     from {
         transform: rotate(360deg);
@@ -665,7 +677,7 @@ footer {
     }
 }
 
-@keyframes coreFloat {
+@keyframes floatCore {
 
     0%,
     100% {
@@ -673,7 +685,7 @@ footer {
     }
 
     50% {
-        transform: translateY(-9px);
+        transform: translateY(-8px);
     }
 }
 
@@ -684,10 +696,12 @@ footer {
     }
 }
 
-@keyframes reasoningPulse {
+@keyframes thinkingPulse {
 
     50% {
-        transform: scale(1.06) rotate(2deg);
+        transform:
+            scale(1.055)
+            rotate(1deg);
     }
 }
 
@@ -698,10 +712,10 @@ footer {
     }
 }
 
-@keyframes stateBlink {
+@keyframes blink {
 
     50% {
-        opacity: .45;
+        opacity: .4;
     }
 }
 
@@ -709,23 +723,19 @@ footer {
 
     from {
         opacity: 0;
-
-        transform:
-            translateY(8px);
+        transform: translateY(8px);
     }
 
     to {
         opacity: 1;
-
-        transform:
-            translateY(0);
+        transform: translateY(0);
     }
 }
 
 
-/* =========================================
+/* ==============================
    MOBILE
-========================================= */
+============================== */
 
 @media (max-width: 600px) {
 
@@ -733,50 +743,47 @@ footer {
         padding: 11px;
     }
 
-    .top {
-        align-items: flex-start;
-    }
-
     .brand {
         font-size: 22px;
 
-        letter-spacing: 4px;
+        letter-spacing: 5px;
     }
 
     .subtitle {
-        font-size: 8px;
+        font-size: 7px;
+
+        letter-spacing: 4px;
     }
 
     .system-online {
         font-size: 7px;
 
-        margin-top: 5px;
+        letter-spacing: 2px;
     }
 
     .core-area {
-        height: 330px;
+        height: 350px;
     }
 
     .core {
-        width: 185px;
-        height: 185px;
+        width: 205px;
+        height: 205px;
 
-        /* slightly right */
-        transform:
-            translateX(15px);
+        /* moves the core slightly right */
+        transform: translateX(12px);
     }
 
     .orbit-one {
-        width: 230px;
-        height: 230px;
+        width: 260px;
+        height: 260px;
     }
 
     .orbit-two {
-        width: 280px;
+        width: 315px;
     }
 
     .orbit-three {
-        width: 310px;
+        width: 340px;
     }
 
     .status-grid {
@@ -785,7 +792,7 @@ footer {
     }
 
     .status-card {
-        min-height: 67px;
+        min-height: 70px;
 
         padding: 9px;
     }
@@ -799,11 +806,11 @@ footer {
     }
 
     .icon {
-        font-size: 20px;
+        font-size: 19px;
     }
 
     .chat {
-        height: 310px;
+        height: 320px;
     }
 
     .message {
@@ -817,16 +824,16 @@ footer {
     }
 
     #msg {
-        flex-basis: 100%;
-
         width: 100%;
+
+        flex-basis: 100%;
+    }
+
+    .mic-button {
+        width: 52px;
     }
 
     .send-button {
         flex: 1;
     }
-
-    .button-row {
-        flex-wrap: wrap;
     }
-}
