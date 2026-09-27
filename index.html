@@ -3,154 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D.I.S.C.O - Mobile AI Core</title>
+
+    <title>D.I.S.C.O - MOBILE AI CORE</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="scanlines"></div>
+    <!-- Background HUD -->
+    <div class="scanlines"></div>
+    <div class="background-grid"></div>
 
-<header class="top-bar">
-    <div>
-        <h1>D.I.S.C.O</h1>
-        <span>MOBILE AI CORE</span>
-    </div>
+    <!-- HEADER -->
+    <header class="top-bar">
 
-    <div class="system-status">
-        <span class="status-dot"></span>
-        SYSTEM ONLINE
-    </div>
-</header>
+        <div class="brand">
+            <h1>D.I.S.C.O</h1>
+            <span>MOBILE AI CORE</span>
+        </div>
 
-<main>
+        <div class="system-status">
+            <span class="status-dot"></span>
+            SYSTEM ONLINE
+        </div>
 
-    <!-- CORE -->
-    <section class="core-section">
+    </header>
 
-        <div class="hud-ring ring-one"></div>
-        <div class="hud-ring ring-two"></div>
-        <div class="hud-ring ring-three"></div>
 
-        <div class="core-container">
-            <img id="coreImage" src="core.png" alt="D.I.S.C.O Core">
+    <main>
 
-            <div class="core-label">
-                <span id="stateText">SYSTEM READY</span>
+        <!-- CORE AREA -->
+        <section class="core-section">
+
+            <div class="hud-ring ring-1"></div>
+            <div class="hud-ring ring-2"></div>
+            <div class="hud-ring ring-3"></div>
+
+            <div class="core-container">
+
+                <!-- KEEP core.png beside index.html -->
+                <img
+                    id="coreImage"
+                    src="core.png"
+                    alt="D.I.S.C.O Core"
+                >
+
+                <div class="core-status">
+                    <span id="stateText">SYSTEM READY</span>
+                </div>
+
             </div>
-        </div>
 
-        <div class="core-lines">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- SYSTEM PANELS -->
-    <section class="system-grid">
+        <!-- SYSTEM STATUS -->
+        <section class="system-grid">
 
-        <div class="system-card">
-            <div class="card-icon">◈</div>
-            <div>
-                <b>MEMORY</b>
-                <small id="memoryStatus">ONLINE</small>
+            <div class="system-card">
+                <div class="card-icon">◈</div>
+                <div>
+                    <b>MEMORY</b>
+                    <small id="memoryStatus">ONLINE</small>
+                </div>
             </div>
-        </div>
 
-        <div class="system-card">
-            <div class="card-icon">◉</div>
-            <div>
-                <b>VOICE</b>
-                <small id="voiceStatus">READY</small>
+
+            <div class="system-card">
+                <div class="card-icon">◉</div>
+                <div>
+                    <b>VOICE</b>
+                    <small id="voiceStatus">READY</small>
+                </div>
             </div>
-        </div>
 
-        <div class="system-card">
-            <div class="card-icon">◇</div>
-            <div>
-                <b>VISION</b>
-                <small>READY</small>
+
+            <div class="system-card">
+                <div class="card-icon">◇</div>
+                <div>
+                    <b>VISION</b>
+                    <small>READY</small>
+                </div>
             </div>
-        </div>
 
-        <div class="system-card">
-            <div class="card-icon">⌁</div>
-            <div>
-                <b>NETWORK</b>
-                <small id="networkStatus">ONLINE</small>
+
+            <div class="system-card">
+                <div class="card-icon">⌁</div>
+                <div>
+                    <b>NETWORK</b>
+                    <small id="networkStatus">ONLINE</small>
+                </div>
             </div>
-        </div>
 
-        <div class="system-card">
-            <div class="card-icon">✦</div>
-            <div>
-                <b>AI CORE</b>
-                <small>ACTIVE</small>
+
+            <div class="system-card">
+                <div class="card-icon">✦</div>
+                <div>
+                    <b>AI CORE</b>
+                    <small>ACTIVE</small>
+                </div>
             </div>
-        </div>
 
-        <div class="system-card">
-            <div class="card-icon">▣</div>
-            <div>
-                <b>SYSTEM</b>
-                <small>ONLINE</small>
+
+            <div class="system-card">
+                <div class="card-icon">▣</div>
+                <div>
+                    <b>SYSTEM</b>
+                    <small>ONLINE</small>
+                </div>
             </div>
-        </div>
 
-    </section>
+        </section>
 
 
-    <!-- COMMUNICATION -->
-    <section class="communication">
+        <!-- COMMUNICATION -->
+        <section class="communication">
 
-        <div class="communication-title">
-            <span></span>
-            D.I.S.C.O / COMMUNICATION
-            <span></span>
-        </div>
-
-        <div id="chat" class="chat-box">
-            <div class="message ai">
-                Systems online. How may I assist you, Boss?
+            <div class="communication-title">
+                <span></span>
+                D.I.S.C.O / COMMUNICATION
+                <span></span>
             </div>
-        </div>
 
-        <div class="input-area">
 
-            <input
-                id="msg"
-                type="text"
-                placeholder="Communicate with D.I.S.C.O..."
-                autocomplete="off"
-            >
+            <!-- CHAT -->
+            <div id="chat" class="chat-box">
 
-            <button id="mic" title="Voice input">🎙</button>
+                <div class="message ai">
+                    Systems online. How may I assist you, Boss?
+                </div>
 
-            <button id="send">SEND</button>
+            </div>
 
-        </div>
 
-        <div class="secondary-controls">
+            <!-- MESSAGE INPUT -->
+            <div class="input-area">
 
-            <button id="clearBtn">CLEAR MEMORY</button>
+                <input
+                    id="msg"
+                    type="text"
+                    placeholder="Enter command..."
+                    autocomplete="off"
+                >
 
-            <button id="keyBtn">API KEY</button>
+                <button
+                    id="mic"
+                    type="button"
+                    title="Voice input"
+                >
+                    🎙
+                </button>
 
-            <label class="image-button">
-                VISION
-                <input id="imgInput" type="file" accept="image/*">
-            </label>
+                <button
+                    id="send"
+                    type="button"
+                >
+                    SEND
+                </button>
 
-        </div>
+            </div>
 
-    </section>
 
-</main>
+            <!-- EXTRA CONTROLS -->
+            <div class="secondary-controls">
 
-<script src="script.js"></script>
+                <button
+                    id="clearBtn"
+                    type="button"
+                >
+                    CLEAR MEMORY
+                </button>
+
+
+                <button
+                    id="keyBtn"
+                    type="button"
+                >
+                    API KEY
+                </button>
+
+
+                <label class="image-button">
+
+                    VISION
+
+                    <input
+                        id="imgInput"
+                        type="file"
+                        accept="image/*"
+                    >
+
+                </label>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- YOUR EXISTING COMMANDING JAVASCRIPT -->
+    <script src="script.js"></script>
 
 </body>
 </html>
