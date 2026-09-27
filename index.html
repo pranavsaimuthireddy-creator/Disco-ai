@@ -1,234 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>D.I.S.C.O</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+    <title>D.I.S.C.O - Mobile AI Core</title>
+
+    <link rel="stylesheet"
+          href="style.css">
 </head>
 
 <body>
 
-    <div class="background-grid"></div>
-    <div class="scan-line"></div>
+<div class="app">
 
     <!-- HEADER -->
+
     <header>
 
-        <div class="logo">
-            D.I.S.C.O
-        </div>
+        <h1>D.I.S.C.O</h1>
 
-        <div class="subtitle">
-            MOBILE AI CORE
-        </div>
+        <p>MOBILE AI CORE</p>
 
-        <div class="online">
-            <span></span>
+        <div class="system-status">
             SYSTEM ONLINE
         </div>
 
     </header>
 
 
-    <!-- MAIN CORE -->
-    <main>
+    <!-- DISCO CORE -->
 
-        <section class="core-area">
+    <section class="core-area">
 
-            <div class="core-label">
-                D.I.S.C.O
-            </div>
+        <div class="disco-core">
 
-            <div
-                id="discoCore"
-                class="disco-core"
-            >
+            <div class="orbit orbit1"></div>
+            <div class="orbit orbit2"></div>
+            <div class="orbit orbit3"></div>
 
-                <div class="orbit orbit1"></div>
-                <div class="orbit orbit2"></div>
-                <div class="orbit orbit3"></div>
+            <div class="ball">
 
-                <div class="ball">
+                <div class="ball-surface"></div>
 
-                    <div class="ball-surface"></div>
+                <div class="ball-highlight"></div>
 
-                    <div class="ball-highlight"></div>
+                <div class="ball-light"></div>
 
-                    <div class="ball-light"></div>
-
-                    <div class="ball-letter">
-                        D
-                    </div>
-
+                <div class="ball-letter">
+                    D
                 </div>
 
             </div>
 
+        </div>
 
-            <div
-                id="state"
-                class="state"
-            >
-                <span id="stateDot"></span>
-                <span id="stateText">READY</span>
-            </div>
+    </section>
 
 
-            <div
-                id="activity"
-                class="activity"
-            >
-                SYSTEM READY
-            </div>
+    <!-- STATE -->
 
-        </section>
+    <div id="state">
 
+        <span id="stateDot"></span>
 
-        <!-- STATUS -->
-        <div class="status-grid">
+        <span id="stateText">
+            READY
+        </span>
 
-    <div class="status-card memory">
-        <strong>MEMORY</strong>
-        <span>ONLINE</span>
     </div>
 
-    <div class="status-card voice">
-        <strong>VOICE</strong>
-        <span>READY</span>
+
+    <div id="activity">
+        SYSTEM READY
     </div>
 
-    <div class="status-card vision">
-        <strong>VISION</strong>
-        <span>READY</span>
-    </div>
 
-    <div class="status-card network">
-        <strong>NETWORK</strong>
-        <span>ONLINE</span>
-    </div>
+    <!-- SYSTEM BOXES -->
 
-    <div class="status-card core">
-        <strong>AI CORE</strong>
-        <span>ACTIVE</span>
-    </div>
+    <section class="status-grid">
 
-    <div class="status-card system">
-        <strong>SYSTEM</strong>
-        <span>ONLINE</span>
-    </div>
+        <div class="status-card memory">
+
+            <strong>MEMORY</strong>
+
+            <span>ONLINE</span>
 
         </div>
 
 
-        <!-- CHAT -->
-        <section class="communication">
+        <div class="status-card voice">
 
-            <div class="section-title">
-                D.I.S.C.O / COMMUNICATION
+            <strong>VOICE</strong>
+
+            <span>READY</span>
+
+        </div>
+
+
+        <div class="status-card vision">
+
+            <strong>VISION</strong>
+
+            <span>READY</span>
+
+        </div>
+
+
+        <div class="status-card network">
+
+            <strong>NETWORK</strong>
+
+            <span id="networkStatus">
+                ONLINE
+            </span>
+
+        </div>
+
+
+        <div class="status-card core">
+
+            <strong>AI CORE</strong>
+
+            <span>ACTIVE</span>
+
+        </div>
+
+
+        <div class="status-card system">
+
+            <strong>SYSTEM</strong>
+
+            <span>ONLINE</span>
+
+        </div>
+
+    </section>
+
+
+    <!-- COMMUNICATION -->
+
+    <section class="communication">
+
+        <h2>
+            D.I.S.C.O / COMMUNICATION
+        </h2>
+
+
+        <!-- CHAT -->
+
+        <div id="chat">
+
+            <div class="message ai">
+                Systems online. How may I assist you, Boss?
             </div>
 
-            <div
-                id="chat"
-                class="chat"
+        </div>
+
+
+        <!-- INPUT -->
+
+        <div class="controls">
+
+            <input
+                type="text"
+                id="msg"
+                placeholder="Ask D.I.S.C.O..."
+                autocomplete="off"
             >
 
-                <div class="welcome">
+            <button id="mic">
+                🎙
+            </button>
 
-                    <div class="mini-core">
-                        D
-                    </div>
+            <button id="send">
+                SEND
+            </button>
 
-                    <div>
-                        <strong>D.I.S.C.O</strong>
-
-                        <p>
-                            Systems online.
-                            How may I assist you, Boss?
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
+        </div>
 
 
-        <!-- CONTROLS -->
-        <section class="controls">
+        <!-- EXTRA CONTROLS -->
 
-            <div class="input-row">
+        <div class="extra-controls">
 
-                <input
-                    id="msg"
-                    type="text"
-                    placeholder="Talk to D.I.S.C.O..."
-                    autocomplete="off"
-                >
+            <button id="clear-btn">
+                CLEAR MEMORY
+            </button>
 
-                <button id="send">
-                    SEND
-                </button>
+            <button id="key-btn">
+                API KEY
+            </button>
 
-            </div>
+            <label class="image-button">
 
-
-            <div class="control-row">
-
-                <button
-                    id="mic"
-                    class="tool"
-                    type="button"
-                >
-                    🎙
-                </button>
-
-                <button
-                    id="clear-btn"
-                    class="tool"
-                    type="button"
-                >
-                    ♻
-                </button>
-
-                <button
-                    id="key-btn"
-                    class="tool"
-                    type="button"
-                >
-                    🔑
-                </button>
-
-                <label
-                    for="img-input"
-                    class="tool"
-                >
-                    🖼
-                </label>
+                IMAGE
 
                 <input
-                    id="img-input"
                     type="file"
+                    id="img-input"
                     accept="image/*"
-                    hidden
                 >
 
-            </div>
+            </label>
 
-        </section>
+        </div>
 
-    </main>
+    </section>
 
+
+    <!-- FOOTER -->
 
     <footer>
-        D.I.S.C.O • ALWAYS WITH YOU
+
+        D.I.S.C.O MOBILE AI CORE
+
     </footer>
 
+</div>
 
-    <script src="script.js"></script>
+
+<script src="script.js"></script>
 
 </body>
+
 </html>
