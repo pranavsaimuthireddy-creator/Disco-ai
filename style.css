@@ -1,26 +1,33 @@
+/* =========================================
+   D.I.S.C.O MOBILE AI CORE
+   FUTURISTIC BLUE HUD
+========================================= */
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-html,
-body {
+html {
     width: 100%;
     min-height: 100%;
 }
 
 body {
+    width: 100%;
+    min-height: 100vh;
+
     background:
         radial-gradient(
-            circle at 50% 35%,
-            #062c52 0%,
-            #031525 25%,
-            #010912 55%,
+            circle at 50% 30%,
+            #07365d 0%,
+            #031a30 24%,
+            #020b16 55%,
             #000 100%
         );
 
-    color: #e8faff;
+    color: #e8f8ff;
 
     font-family:
         Arial,
@@ -31,38 +38,40 @@ body {
 }
 
 
-/* ==============================
+/* =========================================
    APP
-============================== */
+========================================= */
 
 .app {
     width: 100%;
     max-width: 1000px;
 
-    margin: auto;
+    margin: 0 auto;
 
-    padding: 15px;
+    padding: 16px;
 }
 
 
-/* ==============================
+/* =========================================
    HEADER
-============================== */
+========================================= */
 
 .top {
+    width: 100%;
+
     display: flex;
 
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
-    padding-bottom: 16px;
+    padding-bottom: 15px;
 
     border-bottom:
-        1px solid rgba(0, 170, 255, .35);
+        1px solid rgba(0, 170, 255, 0.35);
 }
 
 .brand {
-    color: white;
+    color: #ffffff;
 
     font-size: 29px;
 
@@ -72,14 +81,14 @@ body {
 
     text-shadow:
         0 0 8px #00aaff,
-        0 0 20px #008cff,
-        0 0 40px #0066ff;
+        0 0 18px #008cff,
+        0 0 40px #006eff;
 }
 
 .subtitle {
     margin-top: 4px;
 
-    color: #22aaff;
+    color: #26baff;
 
     font-size: 9px;
 
@@ -87,37 +96,43 @@ body {
 }
 
 .system-online {
-    color: #9deeff;
+    display: flex;
+
+    align-items: center;
+
+    color: #a8ecff;
 
     font-size: 9px;
 
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 }
 
 .online-dot {
-    display: inline-block;
+    width: 9px;
+    height: 9px;
 
-    width: 10px;
-    height: 10px;
-
-    margin-right: 5px;
+    margin-right: 6px;
 
     border-radius: 50%;
 
-    background: #28ff91;
+    background: #29ff91;
 
     box-shadow:
-        0 0 8px #28ff91,
-        0 0 20px #28ff91;
+        0 0 8px #29ff91,
+        0 0 18px #29ff91;
+
+    animation: onlinePulse 1.5s infinite;
 }
 
 
-/* ==============================
+/* =========================================
    CORE AREA
-============================== */
+========================================= */
 
 .core-area {
     position: relative;
+
+    width: 100%;
 
     height: 420px;
 
@@ -130,98 +145,136 @@ body {
 }
 
 
-/* OUTER HUD RINGS */
+/* =========================================
+   HUD RINGS
+========================================= */
 
-.orbit {
+.hud-ring {
     position: absolute;
 
     border-radius: 50%;
 
-    border:
-        1px solid rgba(0, 174, 255, .35);
-
     pointer-events: none;
+
+    border:
+        1px solid rgba(0, 170, 255, 0.35);
 }
 
-.orbit-one {
-    width: 300px;
-    height: 300px;
+.ring-1 {
+    width: 285px;
+    height: 285px;
 
     animation:
-        rotate 12s linear infinite;
+        rotateClockwise 14s linear infinite;
 }
 
-.orbit-two {
-    width: 365px;
+.ring-2 {
+    width: 355px;
     height: 175px;
 
     transform: rotate(-25deg);
 
+    border-style: dashed;
+
     animation:
-        reverseRotate 9s linear infinite;
+        rotateAnti 10s linear infinite;
 }
 
-.orbit-three {
-    width: 395px;
+.ring-3 {
+    width: 390px;
     height: 230px;
 
     transform: rotate(55deg);
 
-    border-style: dashed;
+    border-color:
+        rgba(0, 200, 255, 0.2);
 
     animation:
-        rotate 16s linear infinite;
+        rotateClockwise 18s linear infinite;
 }
 
 
-/* ==============================
-   CORE IMAGE
-============================== */
+/* =========================================
+   CORE
+========================================= */
 
-.core {
+.core-container {
     position: relative;
 
     width: 245px;
     height: 245px;
 
-    border-radius: 50%;
+    display: flex;
 
-    overflow: hidden;
+    align-items: center;
+    justify-content: center;
 
     z-index: 5;
 
-    background: #000913;
+    transform: translateX(12px);
 
-    border:
-        2px solid rgba(0, 183, 255, .75);
+    border-radius: 50%;
+}
 
-    box-shadow:
-        0 0 20px #008cff,
-        0 0 50px #006eff,
-        0 0 100px rgba(0, 110, 255, .6);
+
+/* GLOW */
+
+.core-glow {
+    position: absolute;
+
+    width: 100%;
+    height: 100%;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(0, 175, 255, 0.3),
+            transparent 68%
+        );
+
+    filter: blur(15px);
 
     animation:
-        floatCore 4s ease-in-out infinite;
+        coreGlow 3s ease-in-out infinite;
 }
 
 
 /* IMAGE */
 
 #coreImage {
-    width: 100%;
-    height: 100%;
+    position: relative;
+
+    width: 230px;
+    height: 230px;
 
     display: block;
 
     object-fit: cover;
 
     border-radius: 50%;
+
+    z-index: 2;
+
+    border:
+        2px solid rgba(0, 190, 255, 0.8);
+
+    background: #000;
+
+    box-shadow:
+        0 0 15px #008cff,
+        0 0 35px #0077ff,
+        0 0 70px rgba(0, 130, 255, 0.6);
+
+    animation:
+        coreFloat 4s ease-in-out infinite;
 }
 
 
-/* ==============================
-   READY STATE
-============================== */
+/* =========================================
+   STATE
+========================================= */
 
 .state-text {
     position: absolute;
@@ -230,100 +283,100 @@ body {
 
     z-index: 20;
 
-    padding: 11px 28px;
+    padding: 9px 25px;
 
-    color: #74dfff;
+    color: #62d9ff;
 
     background:
-        rgba(1, 9, 20, .9);
+        rgba(0, 8, 18, 0.92);
 
     border:
         1px solid #008cff;
 
-    font-size: 11px;
+    font-size: 10px;
 
     letter-spacing: 4px;
 
     box-shadow:
-        0 0 20px rgba(0, 145, 255, .25);
+        0 0 18px rgba(0, 140, 255, 0.2);
 }
 
 
-/* ==============================
-   LISTENING
-============================== */
+/* =========================================
+   LISTENING ANIMATION
+========================================= */
 
-body.listening .core {
-    animation:
-        listeningPulse .55s infinite;
-
-    border-color: #ff3333;
+body.listening #coreImage {
+    border-color: #ff3030;
 
     box-shadow:
-        0 0 25px #ff2222,
-        0 0 65px #ff0000,
-        0 0 120px rgba(255, 0, 0, .65);
+        0 0 20px #ff3030,
+        0 0 50px #ff0000,
+        0 0 100px rgba(255, 0, 0, 0.7);
+
+    animation:
+        listening 0.55s infinite;
 }
 
 body.listening .state-text {
-    color: #ff5555;
+    color: #ff4b4b;
 
     border-color: #ff3333;
 
     box-shadow:
-        0 0 25px rgba(255, 0, 0, .5);
+        0 0 25px rgba(255, 0, 0, 0.5);
 }
 
 
-/* ==============================
-   REASONING
-============================== */
+/* =========================================
+   REASONING ANIMATION
+========================================= */
 
-body.reasoning .core {
+body.reasoning #coreImage {
     animation:
-        thinkingPulse .7s infinite;
+        reasoning 0.75s infinite;
 
     box-shadow:
-        0 0 30px #008cff,
-        0 0 75px #006eff,
-        0 0 140px rgba(0, 110, 255, .65);
+        0 0 25px #00aaff,
+        0 0 60px #0077ff,
+        0 0 110px rgba(0, 120, 255, 0.7);
 }
 
 body.reasoning .state-text {
     animation:
-        blink .7s infinite;
-
-    color: #45caff;
+        stateBlink 0.7s infinite;
 }
 
 
-/* ==============================
-   SPEAKING
-============================== */
+/* =========================================
+   SPEAKING ANIMATION
+========================================= */
 
-body.speaking .core {
+body.speaking #coreImage {
     animation:
-        speakingPulse .4s infinite;
+        speaking 0.4s infinite;
 
     box-shadow:
-        0 0 35px #00c8ff,
-        0 0 90px #008cff,
-        0 0 160px rgba(0, 190, 255, .7);
+        0 0 30px #00d5ff,
+        0 0 70px #008cff,
+        0 0 130px rgba(0, 190, 255, 0.75);
 }
 
 body.speaking .state-text {
-    color: white;
+    color: #ffffff;
 
     box-shadow:
         0 0 30px #008cff;
 }
 
 
-/* ==============================
+/* =========================================
    STATUS GRID
-============================== */
+========================================= */
 
 .status-grid {
+    width: 100%;
+
     display: grid;
 
     grid-template-columns:
@@ -332,8 +385,13 @@ body.speaking .state-text {
     gap: 10px;
 }
 
+
+/* =========================================
+   STATUS CARD
+========================================= */
+
 .status-card {
-    min-height: 78px;
+    min-height: 76px;
 
     display: flex;
 
@@ -346,39 +404,42 @@ body.speaking .state-text {
     background:
         linear-gradient(
             135deg,
-            rgba(2, 20, 38, .95),
-            rgba(1, 8, 18, .95)
+            rgba(4, 28, 50, 0.96),
+            rgba(1, 9, 18, 0.96)
         );
 
     border:
-        1px solid rgba(0, 157, 255, .45);
+        1px solid rgba(0, 160, 255, 0.4);
 
     box-shadow:
-        inset 0 0 25px rgba(0, 120, 255, .06);
+        inset 0 0 25px rgba(0, 120, 255, 0.05);
 
-    transition: .25s;
+    transition:
+        0.25s ease;
 }
 
 .status-card:hover {
     border-color: #00baff;
 
+    transform: translateY(-2px);
+
     box-shadow:
-        0 0 20px rgba(0, 150, 255, .25);
+        0 0 20px rgba(0, 150, 255, 0.25);
 }
 
-.icon {
-    color: #17b9ff;
+.status-icon {
+    color: #19baff;
 
-    font-size: 23px;
+    font-size: 22px;
 
     text-shadow:
         0 0 15px #008cff;
 }
 
-.status-card b {
+.status-card strong {
     display: block;
 
-    color: #d9f6ff;
+    color: #dff8ff;
 
     font-size: 10px;
 
@@ -390,53 +451,61 @@ body.speaking .state-text {
 
     margin-top: 5px;
 
-    color: #42ff9a;
+    color: #35ff96;
 
-    font-size: 9px;
+    font-size: 8px;
 
     letter-spacing: 1px;
 }
 
 
-/* ==============================
+/* =========================================
    COMMUNICATION
-============================== */
+========================================= */
 
 .communication {
+    width: 100%;
+
     margin-top: 18px;
 
-    border:
-        1px solid rgba(0, 157, 255, .45);
-
     background:
-        rgba(1, 7, 17, .94);
+        rgba(0, 7, 16, 0.95);
+
+    border:
+        1px solid rgba(0, 160, 255, 0.42);
 
     box-shadow:
-        0 0 25px rgba(0, 100, 255, .08);
+        0 0 25px rgba(0, 120, 255, 0.08);
 }
 
-.communication-title {
+.communication-header {
+    display: flex;
+
+    gap: 10px;
+
     padding: 14px;
 
-    color: #27b9ff;
+    color: #28baff;
 
     border-bottom:
-        1px solid rgba(0, 157, 255, .3);
+        1px solid rgba(0, 160, 255, 0.3);
 
-    font-size: 12px;
+    font-size: 11px;
 
-    letter-spacing: 4px;
+    letter-spacing: 3px;
 }
 
 
-/* ==============================
+/* =========================================
    CHAT
-============================== */
+========================================= */
 
 .chat {
+    width: 100%;
+
     height: 340px;
 
-    padding: 16px;
+    padding: 15px;
 
     display: flex;
 
@@ -456,81 +525,87 @@ body.speaking .state-text {
 }
 
 
-/* BOTH BUBBLES */
+/* =========================================
+   MESSAGE
+========================================= */
 
 .message {
     max-width: 78%;
 
-    padding: 13px 16px;
-
-    font-size: 14px;
+    padding: 12px 15px;
 
     line-height: 1.5;
+
+    font-size: 14px;
 
     border-radius: 14px;
 
     animation:
-        messageIn .25s ease;
+        messageAppear 0.25s ease;
 }
 
 
-/* AI LEFT */
+/* AI = LEFT */
 
 .ai-message {
     align-self: flex-start;
 
-    color: #e4f8ff;
+    color: #e8f9ff;
 
     background:
         linear-gradient(
             135deg,
-            rgba(3, 27, 52, .96),
-            rgba(1, 10, 22, .96)
+            rgba(5, 34, 62, 0.96),
+            rgba(1, 10, 20, 0.96)
         );
 
     border:
-        1px solid rgba(0, 157, 255, .45);
+        1px solid rgba(0, 160, 255, 0.45);
 
     border-top-left-radius: 3px;
 
     box-shadow:
-        0 0 15px rgba(0, 120, 255, .08);
+        0 0 15px rgba(0, 130, 255, 0.08);
 }
 
 
-/* USER RIGHT */
+/* USER = RIGHT */
 
 .user-message {
     align-self: flex-end;
 
-    color: white;
+    color: #ffffff;
 
     background:
         linear-gradient(
             135deg,
-            #005eff,
-            #008dff
+            #005cff,
+            #008cff
         );
 
     border:
-        1px solid #39c9ff;
+        1px solid #32c8ff;
 
     border-top-right-radius: 3px;
 
     box-shadow:
-        0 0 18px rgba(0, 120, 255, .25);
+        0 0 18px rgba(0, 130, 255, 0.3);
 }
 
 
-/* ==============================
+/* =========================================
    CONTROLS
-============================== */
+========================================= */
 
 .controls {
+    width: 100%;
+
     margin-top: 14px;
 }
 
 .input-row {
+    width: 100%;
+
     display: flex;
 
     gap: 8px;
@@ -543,13 +618,13 @@ body.speaking .state-text {
 
     padding: 14px;
 
-    color: white;
+    color: #ffffff;
 
     background:
-        rgba(1, 9, 20, .96);
+        rgba(0, 8, 18, 0.96);
 
     border:
-        1px solid rgba(0, 157, 255, .5);
+        1px solid rgba(0, 160, 255, 0.5);
 
     border-radius: 8px;
 
@@ -558,29 +633,35 @@ body.speaking .state-text {
     font-size: 14px;
 }
 
+#msg::placeholder {
+    color: #5e9db8;
+}
+
 #msg:focus {
     border-color: #00baff;
 
     box-shadow:
-        0 0 18px rgba(0, 160, 255, .25);
+        0 0 18px rgba(0, 160, 255, 0.25);
 }
 
 
-/* BUTTONS */
+/* =========================================
+   BUTTONS
+========================================= */
 
 button,
 .vision-button {
-    padding: 12px 14px;
-
     border:
-        1px solid rgba(0, 157, 255, .55);
+        1px solid rgba(0, 160, 255, 0.5);
 
     border-radius: 7px;
+
+    padding: 12px 15px;
 
     color: #8be7ff;
 
     background:
-        rgba(2, 15, 31, .96);
+        rgba(1, 14, 28, 0.96);
 
     cursor: pointer;
 
@@ -588,19 +669,30 @@ button,
 
     letter-spacing: 1px;
 
-    transition: .2s;
+    transition:
+        0.2s ease;
 }
 
 button:hover,
 .vision-button:hover {
+    color: #ffffff;
+
     border-color: #00c8ff;
 
     box-shadow:
-        0 0 18px rgba(0, 150, 255, .3);
+        0 0 18px rgba(0, 160, 255, 0.3);
 }
 
+button:active,
+.vision-button:active {
+    transform: scale(0.96);
+}
+
+
+/* SEND */
+
 .send-button {
-    color: white;
+    color: #ffffff;
 
     background:
         linear-gradient(
@@ -612,13 +704,23 @@ button:hover,
     font-weight: bold;
 }
 
+
+/* MIC */
+
 .mic-button {
-    width: 52px;
+    width: 55px;
+
+    padding: 0;
 
     font-size: 17px;
 }
 
+
+/* BOTTOM BUTTONS */
+
 .button-row {
+    width: 100%;
+
     display: flex;
 
     gap: 8px;
@@ -634,28 +736,28 @@ button:hover,
 }
 
 
-/* ==============================
+/* =========================================
    FOOTER
-============================== */
+========================================= */
 
 footer {
     padding: 20px 0;
 
     text-align: center;
 
-    color: #1478aa;
+    color: #167ca8;
 
-    font-size: 9px;
+    font-size: 8px;
 
     letter-spacing: 3px;
 }
 
 
-/* ==============================
+/* =========================================
    ANIMATIONS
-============================== */
+========================================= */
 
-@keyframes rotate {
+@keyframes rotateClockwise {
 
     from {
         transform: rotate(0deg);
@@ -666,7 +768,8 @@ footer {
     }
 }
 
-@keyframes reverseRotate {
+
+@keyframes rotateAnti {
 
     from {
         transform: rotate(360deg);
@@ -677,7 +780,8 @@ footer {
     }
 }
 
-@keyframes floatCore {
+
+@keyframes coreFloat {
 
     0%,
     100% {
@@ -685,133 +789,226 @@ footer {
     }
 
     50% {
-        transform: translateY(-8px);
+        transform: translateY(-7px);
     }
 }
 
-@keyframes listeningPulse {
+
+@keyframes coreGlow {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(0.95);
+    }
 
     50% {
+        opacity: 1;
         transform: scale(1.08);
     }
 }
 
-@keyframes thinkingPulse {
+
+@keyframes listening {
+
+    0% {
+        transform: scale(1);
+    }
 
     50% {
-        transform:
-            scale(1.055)
-            rotate(1deg);
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
     }
 }
 
-@keyframes speakingPulse {
+
+@keyframes reasoning {
+
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.055) rotate(1deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+
+@keyframes speaking {
+
+    0% {
+        transform: scale(1);
+    }
 
     50% {
         transform: scale(1.1);
     }
-}
 
-@keyframes blink {
-
-    50% {
-        opacity: .4;
+    100% {
+        transform: scale(1);
     }
 }
 
-@keyframes messageIn {
+
+@keyframes stateBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+
+@keyframes onlinePulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+
+@keyframes messageAppear {
 
     from {
         opacity: 0;
-        transform: translateY(8px);
+
+        transform:
+            translateY(8px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+
+        transform:
+            translateY(0);
     }
 }
 
 
-/* ==============================
+/* =========================================
    MOBILE
-============================== */
+========================================= */
 
 @media (max-width: 600px) {
 
     .app {
-        padding: 11px;
+        padding: 10px;
     }
+
 
     .brand {
-        font-size: 22px;
-
-        letter-spacing: 5px;
-    }
-
-    .subtitle {
-        font-size: 7px;
+        font-size: 21px;
 
         letter-spacing: 4px;
     }
 
+
+    .subtitle {
+        font-size: 6px;
+
+        letter-spacing: 3px;
+    }
+
+
     .system-online {
         font-size: 7px;
 
-        letter-spacing: 2px;
+        letter-spacing: 1px;
     }
+
 
     .core-area {
         height: 350px;
     }
 
-    .core {
-        width: 205px;
-        height: 205px;
 
-        /* moves the core slightly right */
-        transform: translateX(12px);
+    .core-container {
+        width: 210px;
+        height: 210px;
+
+        transform:
+            translateX(12px);
     }
 
-    .orbit-one {
-        width: 260px;
-        height: 260px;
+
+    #coreImage {
+        width: 200px;
+        height: 200px;
     }
 
-    .orbit-two {
+
+    .ring-1 {
+        width: 255px;
+        height: 255px;
+    }
+
+
+    .ring-2 {
         width: 315px;
+        height: 155px;
     }
 
-    .orbit-three {
-        width: 340px;
+
+    .ring-3 {
+        width: 345px;
+        height: 210px;
     }
+
 
     .status-grid {
         grid-template-columns:
             repeat(2, 1fr);
     }
 
+
     .status-card {
         min-height: 70px;
 
         padding: 9px;
+
+        gap: 8px;
     }
 
-    .status-card b {
-        font-size: 9px;
+
+    .status-icon {
+        font-size: 18px;
     }
+
+
+    .status-card strong {
+        font-size: 8px;
+
+        letter-spacing: 2px;
+    }
+
 
     .status-card small {
-        font-size: 8px;
+        font-size: 7px;
     }
 
-    .icon {
-        font-size: 19px;
-    }
 
     .chat {
-        height: 320px;
+        height: 310px;
+
+        padding: 12px;
     }
+
 
     .message {
         max-width: 86%;
@@ -819,9 +1016,11 @@ footer {
         font-size: 13px;
     }
 
+
     .input-row {
         flex-wrap: wrap;
     }
+
 
     #msg {
         width: 100%;
@@ -829,11 +1028,66 @@ footer {
         flex-basis: 100%;
     }
 
+
     .mic-button {
         width: 52px;
     }
 
+
     .send-button {
         flex: 1;
     }
+
+
+    .button-row {
+        flex-wrap: wrap;
     }
+
+
+    .button-row button,
+    .vision-button {
+        min-width: 30%;
+    }
+}
+
+
+/* =========================================
+   VERY SMALL PHONES
+========================================= */
+
+@media (max-width: 380px) {
+
+    .brand {
+        font-size: 18px;
+
+        letter-spacing: 3px;
+    }
+
+
+    .system-online {
+        font-size: 6px;
+    }
+
+
+    .core-area {
+        height: 320px;
+    }
+
+
+    .core-container {
+        transform:
+            translateX(8px);
+    }
+
+
+    .status-card {
+        min-height: 65px;
+    }
+
+
+    .communication-header {
+        font-size: 9px;
+
+        letter-spacing: 2px;
+    }
+}
