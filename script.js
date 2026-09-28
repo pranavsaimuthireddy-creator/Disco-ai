@@ -1,1839 +1,1757 @@
-// ======================================================
-// D.I.S.C.O. MOBILE AI CORE
-// FULL COMMANDING VERSION
-// ======================================================
 
-const MODEL = "gemini-3.8-flash";
+/* =====================================================
+   D.I.S.C.O — MOBILE AI CORE
+   PART 1 OF 10
+   Configuration, storage and core setup
+   ===================================================== */
 
-const API_KEY_STORAGE = "disco_api_key";
-const MEMORY_STORAGE = "disco_memory";
+"use strict";
 
-let memory = JSON.parse(
-    localStorage.getItem(MEMORY_STORAGE) || "{}"
-);
+/* ================= CONFIGURATION ================= */
 
-let selectedImage = null;
+const DISCO_CONFIG = {
+  name: "D.I.S.C.O",
+  model: "gemini-3.6-flash",
+  language: "en-GB",
+  temperature: 0.7,
+  maxOutputTokens: 1500
+};
 
-let timerTimeout = null;
-let alarmTimeout = null;
-let reminderTimeout = null;
+const DISCO_STORAGE = {
+  apiKey: "disco_api_key",
+  memory: "disco_memory",
+  history: "disco_chat_history"
+};
 
+/* ================= DOM ELEMENTS ================= */
 
-// ======================================================
-// ELEMENTS
-// ======================================================
+const $ = (id) => document.getElementById(id);
 
-const chat = document.getElementById("chat");
-const msg = document.getElementById("msg");
-const send = document.getElementById("send");
-const mic = document.getElementById("mic");
-const clearBtn = document.getElementById("clearBtn");
-const keyBtn = document.getElementById("keyBtn");
-const imgInput = document.getElementById("imgInput");
+const discoUI = {
+  chat: $("chat"),
+  input: $("msg"),
+  send: $("send"),
+  mic: $("mic") || $("mic-btn"),
+  imageInput: $("imgInput") || $("img-input"),
+  clear: $("clearBtn") || $("clear-btn"),
+  key: $("keyBtn") || $("key-btn"),
+  network: $("networkStatus"),
+  voice: $("voiceStatus"),
+  memory: $("memoryStatus"),
+  state: $("stateText"),
+  core: $("coreImage")
+};
 
-const stateText = document.getElementById("stateText");
-const networkStatus = document.getElementById("networkStatus");
-const voiceStatus = document.getElementById("voiceStatus");
-const memoryStatus = document.getElementById("memoryStatus");
+/* ================= CORE VARIABLES ================= */
 
+let discoApiKey = localStorage.getItem(DISCO_STORAGE.apiKey) || "";
+let discoBusy = false;
+let discoListening = false;
+let discoRecognition = null;
+let discoSelectedImage = null;
+let discoTimerInterval = null;
+let discoTimerEnd = 0;
 
-// ======================================================
-// STATE
-// ======================================================
+let discoHistory = [];
 
-function setState(state) {
+try {
+  const savedHistory = JSON.parse(
+    localStorage.getItem(DISCO_STORAGE.history) || "[]"
+  );
 
-    document.body.classList.remove(
-        "listening",
-        "reasoning",
-        "speaking"
-    );
-
-    if (state === "listening") {
-
-        document.body.classList.add("listening");
-
-        if (stateText) {
-            stateText.textContent = "● LISTENING";
-        }
-    }
-
-    else if (state === "reasoning") {
-
-        document.body.classList.add("reasoning");
-
-        if (stateText) {
-            stateText.textContent = "◈ REASONING";
-        }
-    }
-
-    else if (state === "speaking") {
-
-        document.body.classList.add("speaking");
-
-        if (stateText) {
-            stateText.textContent = "✦ SPEAKING";
-        }
-    }
-
-    else {
-
-        if (stateText) {
-            stateText.textContent = "◈ READY";
-        }
-    }
+  if (Array.isArray(savedHistory)) {
+    discoHistory = savedHistory;
+  }
+} catch {
+  discoHistory = [];
 }
 
+/* ================= STATUS HELPERS ================= */
 
-// ======================================================
-// CHAT
-// ======================================================
-
-function addMessage(sender, text) {
-
-    const div = document.createElement("div");
-
-    if (sender === "D.I.S.C.O.") {
-
-        div.className = "message ai-message";
-
-    } else {
-
-        div.className = "message user-message";
-    }
-
-    div.innerHTML = text;
-
-    chat.appendChild(div);
-
-    chat.scrollTop = chat.scrollHeight;
+function discoSetStatus(element, message) {
+  if (element) {
+    element.textContent = message;
+  }
 }
 
-
-// ======================================================
-// MEMORY SAVE
-// ======================================================
-
-function saveMemory() {
-
-    localStorage.setItem(
-        MEMORY_STORAGE,
-        JSON.stringify(memory)
-    );
-
-    if (memoryStatus) {
-        memoryStatus.textContent = "ONLINE";
-    }
+function discoSetCoreState(message) {
+  discoSetStatus(discoUI.state, message);
 }
 
+function discoSetBusy(value) {
+  discoBusy = value;
 
-// ======================================================
-// MEMORY CLEAR
-// ======================================================
+  if (discoUI.send) {
+    discoUI.send.disabled = value;
+  }
 
-function clearMemory() {
+  if (discoUI.input) {
+    discoUI.input.disabled = value;
+  }
 
-    memory = {};
-
-    localStorage.removeItem(
-        MEMORY_STORAGE
-    );
-
-    if (memoryStatus) {
-        memoryStatus.textContent = "CLEARED";
-    }
-
-    addMessage(
-        "D.I.S.C.O.",
-        "Memory cleared successfully, Boss."
-    );
-
-    speak(
-        "Memory cleared successfully, Boss."
-    );
+  discoSetCoreState(value ? "PROCESSING" : "CORE ACTIVE");
 }
 
+/* ================= CHAT DISPLAY ================= */
 
-// ======================================================
-// REMEMBER INFORMATION
-// ======================================================
+function discoAddMessage(role, message) {
+  const chat = discoUI.chat;
 
-function rememberInformation(text) {
+  if (!chat) {
+    console.log(`${role}: ${message}`);
+    return null;
+  }
 
-    let changed = false;
+  const item = document.createElement("div");
+  item.className =
+    `message ${role === "user" ? "user-message" : "ai-message"}`;
 
-    // NAME
-    const nameMatch = text.match(
-        /(?:my name is|name is)\s+(.+)/i
-    );
+  const heading = document.createElement("strong");
+  heading.textContent =
+    role === "user" ? "BOSS" : "D.I.S.C.O";
 
-    if (nameMatch) {
+  const content = document.createElement("div");
+  content.className = "message-text";
+  content.textContent = String(message);
 
-        let name = nameMatch[1]
-            .replace(
-                /\s+(and|my favourite|my favorite).*$/i,
-                ""
-            )
-            .trim();
+  item.append(heading, content);
+  chat.appendChild(item);
 
-        if (name) {
+  chat.scrollTop = chat.scrollHeight;
 
-            memory.name = name;
-
-            changed = true;
-        }
-    }
-
-
-    // FAVOURITE COLOUR
-    const colourMatch = text.match(
-        /(?:my favourite colour is|my favorite color is|my favourite color is|my favorite colour is)\s+([a-zA-Z]+)/i
-    );
-
-    if (colourMatch) {
-
-        memory.favouriteColour =
-            colourMatch[1].trim();
-
-        changed = true;
-    }
-
-
-    if (changed) {
-
-        saveMemory();
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Got it, Boss. I have saved that in memory."
-        );
-
-        speak(
-            "Got it Boss. I have saved that in memory."
-        );
-
-        return true;
-    }
-
-    return false;
+  return item;
 }
 
+function discoUpdateMessage(item, message) {
+  const content = item?.querySelector(".message-text");
 
-// ======================================================
-// MEMORY QUESTIONS
-// ======================================================
-
-function answerMemoryQuestion(text) {
-
-    const lower = text.toLowerCase();
-
-
-    // NAME
-    if (
-        lower.includes("what is my name") ||
-        lower.includes("what's my name")
-    ) {
-
-        if (memory.name) {
-
-            const answer =
-                `Your name is <b>${memory.name}</b>, Boss.`;
-
-            addMessage(
-                "D.I.S.C.O.",
-                answer
-            );
-
-            speak(
-                `Your name is ${memory.name}, Boss.`
-            );
-
-        } else {
-
-            addMessage(
-                "D.I.S.C.O.",
-                "Boss, I don't have your name saved yet."
-            );
-        }
-
-        return true;
-    }
-
-
-    // COLOUR
-    if (
-        lower.includes("favourite colour") ||
-        lower.includes("favorite color") ||
-        lower.includes("favourite color") ||
-        lower.includes("favorite colour")
-    ) {
-
-        if (memory.favouriteColour) {
-
-            const answer =
-                `Your favourite colour is <b>${memory.favouriteColour}</b>, Boss.`;
-
-            addMessage(
-                "D.I.S.C.O.",
-                answer
-            );
-
-            speak(
-                `Your favourite colour is ${memory.favouriteColour}, Boss.`
-            );
-
-        } else {
-
-            addMessage(
-                "D.I.S.C.O.",
-                "Boss, I don't have your favourite colour saved yet."
-            );
-        }
-
-        return true;
-    }
-
-    return false;
+  if (content) {
+    content.textContent = String(message);
+  }
 }
 
-
-// ======================================================
-// TIME
-// ======================================================
-
-function tellTime() {
-
-    const now = new Date();
-
-    const time =
-        now.toLocaleTimeString(
-            "en-IN",
-            {
-                hour: "numeric",
-                minute: "2-digit",
-                second: "2-digit"
-            }
-        );
-
-    addMessage(
-        "D.I.S.C.O.",
-        `The current time is <b>${time}</b>, Boss.`
-    );
-
-    speak(
-        `The current time is ${time}, Boss.`
-    );
+function discoShowError(message) {
+  discoAddMessage("assistant", `Sorry, Boss. ${message}`);
 }
 
+/* ================= INPUT HELPERS ================= */
 
-// ======================================================
-// DATE
-// ======================================================
-
-function tellDate() {
-
-    const now = new Date();
-
-    const date =
-        now.toLocaleDateString(
-            "en-IN",
-            {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            }
-        );
-
-    addMessage(
-        "D.I.S.C.O.",
-        `Today is <b>${date}</b>, Boss.`
-    );
-
-    speak(
-        `Today is ${date}, Boss.`
-    );
+function discoGetInput() {
+  return (discoUI.input?.value || "").trim();
 }
 
-
-// ======================================================
-// LOCATION
-// ======================================================
-
-function getMyLocation() {
-
-    if (!navigator.geolocation) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, your browser does not support location access."
-        );
-
-        return;
-    }
-
-    if (!navigator.onLine) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, the browser is offline. Please reconnect to the internet and reload the page."
-        );
-
-        return;
-    }
-
-    setState("reasoning");
-
-    addMessage(
-        "D.I.S.C.O.",
-        "Checking your location, Boss..."
-    );
-
-    navigator.geolocation.getCurrentPosition(
-
-        async function(position) {
-
-            const latitude =
-                position.coords.latitude;
-
-            const longitude =
-                position.coords.longitude;
-
-            try {
-
-                const response =
-                    await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`
-                    );
-
-                if (!response.ok) {
-                    throw new Error(
-                        "Reverse location lookup failed"
-                    );
-                }
-
-                const data =
-                    await response.json();
-
-                const address =
-                    data.address || {};
-
-                const city =
-                    address.city ||
-                    address.town ||
-                    address.village ||
-                    address.municipality ||
-                    address.county ||
-                    "Unknown location";
-
-                const state =
-                    address.state || "";
-
-                const country =
-                    address.country || "";
-
-                const result =
-                    `Boss, you are currently in <b>${city}</b>${state ? `, ${state}` : ""}${country ? `, ${country}` : ""}.`;
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    result
-                );
-
-                speak(
-                    `Boss, you are currently in ${city}${state ? `, ${state}` : ""}.`
-                );
-
-            }
-
-            catch (error) {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    `Boss, I found your coordinates.<br><br>
-                    Latitude: ${latitude.toFixed(5)}<br>
-                    Longitude: ${longitude.toFixed(5)}`
-                );
-            }
-
-            setState("idle");
-        },
-
-        function(error) {
-
-            setState("idle");
-
-            if (error.code === 1) {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    "Boss, location permission was denied. Allow Location permission for this website and try again."
-                );
-            }
-
-            else if (error.code === 2) {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    "Boss, your location is currently unavailable."
-                );
-            }
-
-            else if (error.code === 3) {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    "Boss, location detection timed out. Please try again."
-                );
-            }
-
-            else {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    "Boss, I couldn't access your location."
-                );
-            }
-        },
-
-        {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
-        }
-    );
+function discoClearInput() {
+  if (discoUI.input) {
+    discoUI.input.value = "";
+  }
 }
 
+/* ================= API KEY SETTINGS ================= */
 
-// ======================================================
-// YOUTUBE
-// ======================================================
+function discoConfigureAPIKey() {
+  const enteredKey = prompt(
+    "Enter your Gemini API key, Boss:"
+  );
 
-function openYouTube() {
+  if (enteredKey === null) return;
 
-    window.open(
-        "https://www.youtube.com",
-        "_blank"
+  const key = enteredKey.trim();
+
+  if (!key) {
+    discoApiKey = "";
+    localStorage.removeItem(DISCO_STORAGE.apiKey);
+
+    discoAddMessage(
+      "assistant",
+      "The saved API key has been removed."
     );
 
-    addMessage(
-        "D.I.S.C.O.",
-        "Opening YouTube, Boss."
-    );
+    return;
+  }
 
-    speak(
-        "Opening YouTube, Boss."
-    );
+  discoApiKey = key;
+
+  localStorage.setItem(
+    DISCO_STORAGE.apiKey,
+    discoApiKey
+  );
+
+  discoAddMessage(
+    "assistant",
+    "API key saved in this browser, Boss."
+  );
 }
 
+/* ================= NETWORK STATUS ================= */
 
-// ======================================================
-// BATTERY
-// ======================================================
-
-async function getBattery() {
-
-    if (!navigator.getBattery) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Battery information is not available in this browser."
-        );
-
-        return;
-    }
-
-    try {
-
-        const battery =
-            await navigator.getBattery();
-
-        const level =
-            Math.round(
-                battery.level * 100
-            );
-
-        addMessage(
-            "D.I.S.C.O.",
-            `Boss, your battery is at <b>${level}%</b>.`
-        );
-
-        speak(
-            `Boss, your battery is at ${level} percent.`
-        );
-
-    }
-
-    catch {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, I couldn't read the battery status."
-        );
-    }
+function discoUpdateNetworkStatus() {
+  discoSetStatus(
+    discoUI.network,
+    navigator.onLine ? "NETWORK ONLINE" : "NETWORK OFFLINE"
+  );
 }
 
+window.addEventListener("online", discoUpdateNetworkStatus);
+window.addEventListener("offline", discoUpdateNetworkStatus);
 
-// ======================================================
-// NETWORK
-// ======================================================
+/* ================= PART 1 COMPLETE ================= */
+/* =====================================================
+   D.I.S.C.O — PART 2 OF 10
+   Persistent memory system
+   ===================================================== */
 
-function checkNetwork() {
-
-    const status =
-        navigator.onLine
-            ? "ONLINE"
-            : "OFFLINE";
-
-    if (networkStatus) {
-        networkStatus.textContent = status;
-    }
-
-    addMessage(
-        "D.I.S.C.O.",
-        `Network status: <b>${status}</b>.`
+function discoGetMemory() {
+  try {
+    const data = JSON.parse(
+      localStorage.getItem(DISCO_STORAGE.memory) || "[]"
     );
+
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 }
 
+function discoUpdateMemoryStatus() {
+  const memories = discoGetMemory();
 
-// ======================================================
-// CALCULATOR
-// ======================================================
-
-function calculator(text) {
-
-    let expression =
-        text
-            .replace(/calculate/gi, "")
-            .replace(/what is/gi, "")
-            .replace(/plus/gi, "+")
-            .replace(/minus/gi, "-")
-            .replace(/times/gi, "*")
-            .replace(/multiplied by/gi, "*")
-            .replace(/divided by/gi, "/")
-            .trim();
-
-    if (
-        !/^[0-9+\-*/().%\s]+$/.test(
-            expression
-        )
-    ) {
-        return false;
-    }
-
-    try {
-
-        const result =
-            Function(
-                `"use strict"; return (${expression})`
-            )();
-
-        addMessage(
-            "D.I.S.C.O.",
-            `The answer is <b>${result}</b>, Boss.`
-        );
-
-        speak(
-            `The answer is ${result}, Boss.`
-        );
-
-        return true;
-
-    }
-
-    catch {
-
-        return false;
-    }
+  discoSetStatus(
+    discoUI.memory,
+    memories.length > 0
+      ? `MEMORY ONLINE (${memories.length})`
+      : "MEMORY EMPTY"
+  );
 }
 
+function discoSaveMemory(text) {
+  const value = String(text || "").trim();
 
-// ======================================================
-// TIMER
-// ======================================================
+  if (!value) {
+    return "Boss, please tell me what to remember.";
+  }
 
-function startTimer(seconds) {
+  const memories = discoGetMemory();
 
-    if (timerTimeout) {
+  memories.push({
+    text: value.slice(0, 1000),
+    date: new Date().toISOString()
+  });
 
-        clearTimeout(
-            timerTimeout
-        );
-    }
+  // Keep the most recent 100 memories.
+  localStorage.setItem(
+    DISCO_STORAGE.memory,
+    JSON.stringify(memories.slice(-100))
+  );
 
-    if (!seconds || seconds <= 0) {
+  discoUpdateMemoryStatus();
 
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, please give me a valid timer duration."
-        );
-
-        return;
-    }
-
-    const minutes =
-        Math.floor(seconds / 60);
-
-    const remainingSeconds =
-        seconds % 60;
-
-    let durationText = "";
-
-    if (minutes > 0) {
-
-        durationText +=
-            `${minutes} minute${minutes !== 1 ? "s" : ""}`;
-    }
-
-    if (remainingSeconds > 0) {
-
-        if (durationText) {
-            durationText += " ";
-        }
-
-        durationText +=
-            `${remainingSeconds} second${remainingSeconds !== 1 ? "s" : ""}`;
-    }
-
-    addMessage(
-        "D.I.S.C.O.",
-        `Timer started for <b>${durationText}</b>, Boss.`
-    );
-
-    speak(
-        `Timer started for ${durationText}, Boss.`
-    );
-
-    timerTimeout =
-        setTimeout(
-            function() {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    "⏱️ <b>Timer finished, Boss.</b>"
-                );
-
-                speak(
-                    "Boss, your timer is finished."
-                );
-
-                alert(
-                    "D.I.S.C.O. TIMER FINISHED"
-                );
-
-            },
-            seconds * 1000
-        );
+  return "I have saved that to memory, Boss.";
 }
 
+function discoSearchMemory(query) {
+  const searchTerm = String(query || "").trim().toLowerCase();
 
-// ======================================================
-// PARSE TIMER
-// ======================================================
+  if (!searchTerm) {
+    return "Boss, please tell me what memory to search for.";
+  }
 
-function parseTimer(text) {
+  const results = discoGetMemory().filter((item) =>
+    item.text.toLowerCase().includes(searchTerm)
+  );
 
-    const lower =
-        text.toLowerCase();
+  if (results.length === 0) {
+    return "I couldn't find a matching memory, Boss.";
+  }
 
-    let seconds = 0;
-
-    const hourMatch =
-        lower.match(
-            /(\d+(?:\.\d+)?)\s*(hour|hours|hr|hrs)/
-        );
-
-    const minuteMatch =
-        lower.match(
-            /(\d+(?:\.\d+)?)\s*(minute|minutes|min|mins)/
-        );
-
-    const secondMatch =
-        lower.match(
-            /(\d+(?:\.\d+)?)\s*(second|seconds|sec|secs)/
-        );
-
-    if (hourMatch) {
-
-        seconds +=
-            Number(hourMatch[1]) * 3600;
-    }
-
-    if (minuteMatch) {
-
-        seconds +=
-            Number(minuteMatch[1]) * 60;
-    }
-
-    if (secondMatch) {
-
-        seconds +=
-            Number(secondMatch[1]);
-    }
-
-    return seconds;
+  return results
+    .slice(-10)
+    .map((item, index) => `${index + 1}. ${item.text}`)
+    .join("\n");
 }
 
+function discoShowAllMemories() {
+  const memories = discoGetMemory();
 
-// ======================================================
-// ALARM
-// ======================================================
+  if (memories.length === 0) {
+    return "Your memory is empty, Boss.";
+  }
 
-function setAlarm(timeString) {
+  return memories
+    .map((item, index) => {
+      const date = new Date(item.date).toLocaleDateString("en-GB");
 
-    const parts =
-        timeString.split(":");
-
-    if (parts.length < 2) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, use a time such as 7:30 PM."
-        );
-
-        return;
-    }
-
-    let hours =
-        parseInt(parts[0], 10);
-
-    let minutes =
-        parseInt(parts[1], 10);
-
-    const ampm =
-        parts[2]
-            ? parts[2].trim().toUpperCase()
-            : "";
-
-    if (ampm === "PM" && hours < 12) {
-        hours += 12;
-    }
-
-    if (ampm === "AM" && hours === 12) {
-        hours = 0;
-    }
-
-    const now =
-        new Date();
-
-    const alarm =
-        new Date();
-
-    alarm.setHours(
-        hours,
-        minutes,
-        0,
-        0
-    );
-
-    if (
-        alarm.getTime() <=
-        now.getTime()
-    ) {
-
-        alarm.setDate(
-            alarm.getDate() + 1
-        );
-    }
-
-    const delay =
-        alarm.getTime() -
-        now.getTime();
-
-    if (alarmTimeout) {
-
-        clearTimeout(
-            alarmTimeout
-        );
-    }
-
-    addMessage(
-        "D.I.S.C.O.",
-        `⏰ Alarm set for <b>${alarm.toLocaleTimeString("en-IN", {
-            hour: "numeric",
-            minute: "2-digit"
-        })}</b>, Boss.`
-    );
-
-    speak(
-        "Alarm set successfully, Boss."
-    );
-
-    alarmTimeout =
-        setTimeout(
-            function() {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    "⏰ <b>ALARM! Boss, your alarm is ringing.</b>"
-                );
-
-                speak(
-                    "Boss, your alarm is ringing."
-                );
-
-                alert(
-                    "D.I.S.C.O. ALARM"
-                );
-
-            },
-            delay
-        );
+      return `${index + 1}. ${item.text} (${date})`;
+    })
+    .join("\n");
 }
 
+function discoClearMemory() {
+  const confirmed = confirm(
+    "Boss, do you want to permanently clear all saved memories?"
+  );
 
-// ======================================================
-// REMINDER
-// ======================================================
+  if (!confirmed) {
+    return "Memory clearing cancelled.";
+  }
 
-function setReminder(seconds, reminderText) {
+  localStorage.removeItem(DISCO_STORAGE.memory);
 
-    if (!seconds || seconds <= 0) {
+  discoUpdateMemoryStatus();
 
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, please give me a valid reminder time."
-        );
-
-        return;
-    }
-
-    if (reminderTimeout) {
-
-        clearTimeout(
-            reminderTimeout
-        );
-    }
-
-    addMessage(
-        "D.I.S.C.O.",
-        `🔔 Reminder set, Boss: <b>${reminderText}</b>`
-    );
-
-    speak(
-        "Reminder set successfully, Boss."
-    );
-
-    reminderTimeout =
-        setTimeout(
-            function() {
-
-                addMessage(
-                    "D.I.S.C.O.",
-                    `🔔 <b>Reminder:</b> ${reminderText}`
-                );
-
-                speak(
-                    `Boss, reminder. ${reminderText}`
-                );
-
-                alert(
-                    `D.I.S.C.O. REMINDER\n\n${reminderText}`
-                );
-
-            },
-            seconds * 1000
-        );
+  return "All saved memories have been cleared, Boss.";
 }
 
+function discoHandleMemoryCommand(message) {
+  const text = String(message || "").trim();
 
-// ======================================================
-// VOICE OUTPUT
-// ======================================================
+  let match = text.match(
+    /^(?:remember|save to memory|remember that)\s+(.+)$/i
+  );
 
-function speak(text) {
+  if (match) {
+    return discoSaveMemory(match[1]);
+  }
 
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
+  match = text.match(
+    /^(?:recall|search memory|find memory)\s+(.+)$/i
+  );
 
-    window.speechSynthesis.cancel();
+  if (match) {
+    return discoSearchMemory(match[1]);
+  }
 
-    const cleanText =
-        text.replace(
-            /<[^>]*>/g,
-            ""
-        );
+  if (/^(?:show|list|view)\s+(?:all\s+)?memories$/i.test(text)) {
+    return discoShowAllMemories();
+  }
 
-    const utterance =
-        new SpeechSynthesisUtterance(
-            cleanText
-        );
+  if (/^(?:clear|delete|erase)\s+(?:all\s+)?memories$/i.test(text)) {
+    return discoClearMemory();
+  }
 
-    utterance.lang = "en-IN";
-    utterance.rate = 0.95;
-    utterance.pitch = 0.8;
-    utterance.volume = 1;
-
-    const voices =
-        window.speechSynthesis.getVoices();
-
-    const preferred =
-        voices.find(
-            voice =>
-                /en-IN/i.test(voice.lang) &&
-                /male|ravi|raj|david|daniel|alex|mark|james|george/i.test(
-                    voice.name
-                )
-        )
-        ||
-        voices.find(
-            voice =>
-                /en-IN/i.test(voice.lang)
-        )
-        ||
-        voices.find(
-            voice =>
-                /en/i.test(voice.lang)
-        );
-
-    if (preferred) {
-
-        utterance.voice =
-            preferred;
-    }
-
-        utterance.onstart =
-        function() {
-
-            setState("speaking");
-
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "SPEAKING";
-            }
-        };
-
-    utterance.onend =
-        function() {
-
-            setState("idle");
-
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "READY";
-            }
-        };
-
-    utterance.onerror =
-        function() {
-
-            setState("idle");
-
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "READY";
-            }
-        };
-
-    window.speechSynthesis.speak(
-        utterance
-    );
+  return null;
 }
 
+/* ================= PART 2 COMPLETE ================= */
+/* =====================================================
+   D.I.S.C.O — PART 3 OF 10
+   Gemini API connection and conversation context
+   ===================================================== */
 
-// ======================================================
-// API KEY
-// ======================================================
+async function discoAskGemini(message, imageFile = null) {
+  if (!discoApiKey) {
+    discoConfigureAPIKey();
 
-function getApiKey() {
+    if (!discoApiKey) {
+      throw new Error("A Gemini API key is required.");
+    }
+  }
 
-    let key =
-        localStorage.getItem(
-            API_KEY_STORAGE
-        );
+  const contents = [];
 
-    if (!key) {
+  // Include recent conversation context.
+  const recentHistory = discoHistory.slice(-10);
 
-        key =
-            prompt(
-                "Enter your Gemini API key:"
-            );
+  for (const entry of recentHistory) {
+    if (!entry || !entry.text || !entry.role) continue;
 
-        if (key) {
+    contents.push({
+      role: entry.role === "assistant" ? "model" : "user",
+      parts: [{ text: String(entry.text) }]
+    });
+  }
 
-            localStorage.setItem(
-                API_KEY_STORAGE,
-                key.trim()
-            );
-        }
+  const parts = [{ text: String(message) }];
+
+  // Attach an image when one has been selected.
+  if (imageFile) {
+    if (!imageFile.type.startsWith("image/")) {
+      throw new Error("Please select a valid image.");
     }
 
-    return key;
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        resolve(result.split(",")[1] || "");
+      };
+
+      reader.onerror = () => reject(
+        new Error("Could not read the selected image.")
+      );
+
+      reader.readAsDataURL(imageFile);
+    });
+
+    parts.push({
+      inline_data: {
+        mime_type: imageFile.type,
+        data: base64
+      }
+    });
+  }
+
+  contents.push({
+    role: "user",
+    parts
+  });
+
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/` +
+    `${DISCO_CONFIG.model}:generateContent`;
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": discoApiKey
+    },
+    body: JSON.stringify({
+      system_instruction: {
+        parts: [{
+          text:
+            "You are D.I.S.C.O, a helpful mobile AI assistant. " +
+            "Address the user as Boss. Use clear, simple British English. " +
+            "Answer naturally and accurately. Never claim an action was " +
+            "completed unless it actually was."
+        }]
+      },
+      contents,
+      generationConfig: {
+        temperature: DISCO_CONFIG.temperature,
+        maxOutputTokens: DISCO_CONFIG.maxOutputTokens
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const detail = data.error?.message || `HTTP ${response.status}`;
+
+    if (response.status === 429) {
+      throw new Error(
+        "Gemini quota or rate limit reached. Check your API quota. " + detail
+      );
+    }
+
+    throw new Error(`Gemini API error: ${detail}`);
+  }
+
+  const answer = data.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text || "")
+    .join("")
+    .trim();
+
+  if (!answer) {
+    throw new Error("Gemini returned an empty response.");
+  }
+
+  return answer;
 }
 
+/* ================= PART 3 COMPLETE ================= */
 
-function changeApiKey() {
+/* =====================================================
+   D.I.S.C.O — PART 4 OF 10
+   Voice input and British English voice output
+   ===================================================== */
 
-    const key =
-        prompt(
-            "Enter your new Gemini API key:"
-        );
+/* ================= VOICE OUTPUT ================= */
 
-    if (!key) {
-        return;
-    }
+function discoSpeak(text) {
+  if (!("speechSynthesis" in window)) {
+    discoSetStatus(discoUI.voice, "VOICE OUTPUT UNSUPPORTED");
+    return;
+  }
 
-    localStorage.setItem(
-        API_KEY_STORAGE,
-        key.trim()
-    );
+  window.speechSynthesis.cancel();
 
-    addMessage(
-        "D.I.S.C.O.",
-        "API key updated successfully, Boss."
-    );
+  const message = String(text || "").trim();
+  if (!message) return;
 
-    speak(
-        "API key updated successfully, Boss."
-    );
+  const utterance = new SpeechSynthesisUtterance(message);
+
+  utterance.lang = DISCO_CONFIG.language;
+  utterance.rate = 0.92;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+
+  const britishVoice = voices.find(
+    voice => /^en-GB$/i.test(voice.lang)
+  );
+
+  if (britishVoice) {
+    utterance.voice = britishVoice;
+  }
+
+  utterance.onstart = () => {
+    discoSetStatus(discoUI.voice, "SPEAKING");
+  };
+
+  utterance.onend = () => {
+    discoSetStatus(discoUI.voice, "VOICE READY");
+  };
+
+  utterance.onerror = () => {
+    discoSetStatus(discoUI.voice, "VOICE ERROR");
+  };
+
+  window.speechSynthesis.speak(utterance);
 }
 
+/* ================= VOICE INPUT SETUP ================= */
 
-// ======================================================
-// OFFLINE / ONLINE
-// ======================================================
-
-window.addEventListener(
-    "online",
-    function() {
-
-        if (networkStatus) {
-            networkStatus.textContent =
-                "ONLINE";
-        }
-    }
-);
-
-
-window.addEventListener(
-    "offline",
-    function() {
-
-        if (networkStatus) {
-            networkStatus.textContent =
-                "OFFLINE";
-        }
-    }
-);
-
-
-// ======================================================
-// GEMINI
-// ======================================================
-
-async function askGemini(question) {
-
-    const apiKey =
-        getApiKey();
-
-    if (!apiKey) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Boss, I need a Gemini API key to answer that."
-        );
-
-        return;
-    }
-
-    setState("reasoning");
-
-    try {
-
-        const memoryText =
-            JSON.stringify(memory);
-
-        const systemInstruction =
-            `
-You are D.I.S.C.O., a personal AI assistant.
-
-Call the user Boss.
-
-Use simple, clear English.
-
-Use Indian English.
-
-Be helpful and concise.
-
-Saved memory:
-${memoryText}
-`;
-
-        const body = {
-
-            system_instruction: {
-
-                parts: [
-                    {
-                        text: systemInstruction
-                    }
-                ]
-            },
-
-            contents: [
-
-                {
-                    role: "user",
-
-                    parts: [
-                        {
-                            text: question
-                        }
-                    ]
-                }
-
-            ],
-
-            generationConfig: {
-
-                temperature: 0.7,
-
-                maxOutputTokens: 700
-            }
-        };
-
-
-        const response =
-            await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-                {
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json",
-
-                        "x-goog-api-key":
-                            apiKey
-                    },
-
-                    body:
-                        JSON.stringify(body)
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data?.error?.message ||
-                "Gemini request failed"
-            );
-        }
-
-
-        const answer =
-            data?.candidates?.[0]
-                ?.content?.parts
-                ?.map(part => part.text || "")
-                .join("")
-                .trim();
-
-
-        if (!answer) {
-
-            throw new Error(
-                "No response received from Gemini."
-            );
-        }
-
-
-        addMessage(
-            "D.I.S.C.O.",
-            answer
-        );
-
-
-        speak(
-            answer
-        );
-
-    }
-
-    catch (error) {
-
-        setState("idle");
-
-        addMessage(
-            "D.I.S.C.O.",
-            `Boss, I couldn't connect to Gemini.<br><br><small>${error.message}</small>`
-        );
-    }
-}
-
-
-// ======================================================
-// DIRECT COMMANDS
-// ======================================================
-
-async function processCommand(text) {
-
-    const lower =
-        text.toLowerCase().trim();
-
-
-    // MEMORY SAVE
-    if (
-        rememberInformation(text)
-    ) {
-        return;
-    }
-
-
-    // MEMORY QUESTIONS
-    if (
-        answerMemoryQuestion(text)
-    ) {
-        return;
-    }
-
-
-    // CLEAR MEMORY
-    if (
-        lower.includes("clear memory") ||
-        lower.includes("forget everything") ||
-        lower.includes("forget all memory")
-    ) {
-
-        clearMemory();
-
-        return;
-    }
-
-
-    // TIME
-    if (
-        lower === "time" ||
-        lower.includes("what time is it") ||
-        lower.includes("current time") ||
-        lower.includes("tell me the time")
-    ) {
-
-        tellTime();
-
-        return;
-    }
-
-
-    // DATE
-    if (
-        lower === "date" ||
-        lower.includes("what is today's date") ||
-        lower.includes("what's today's date") ||
-        lower.includes("today's date") ||
-        lower.includes("what day is it")
-    ) {
-
-        tellDate();
-
-        return;
-    }
-
-
-    // LOCATION
-    if (
-        lower.includes("where am i") ||
-        lower.includes("my location") ||
-        lower.includes("where are we") ||
-        lower.includes("locate me")
-    ) {
-
-        getMyLocation();
-
-        return;
-    }
-
-
-    // YOUTUBE
-    if (
-        lower === "youtube" ||
-        lower.includes("open youtube") ||
-        lower.includes("launch youtube")
-    ) {
-
-        openYouTube();
-
-        return;
-    }
-
-
-    // BATTERY
-    if (
-        lower.includes("battery") ||
-        lower.includes("battery percentage") ||
-        lower.includes("battery level")
-    ) {
-
-        await getBattery();
-
-        return;
-    }
-
-
-    // NETWORK
-    if (
-        lower.includes("network status") ||
-        lower.includes("internet status") ||
-        lower === "network"
-    ) {
-
-        checkNetwork();
-
-        return;
-    }
-
-
-    // TIMER
-    if (
-        lower.includes("set a timer") ||
-        lower.includes("set timer") ||
-        lower.includes("start a timer") ||
-        lower.includes("start timer")
-    ) {
-
-        const seconds =
-            parseTimer(lower);
-
-        if (seconds > 0) {
-
-            startTimer(seconds);
-
-        } else {
-
-            addMessage(
-                "D.I.S.C.O.",
-                "Boss, tell me the timer duration. For example: set a timer for 5 minutes."
-            );
-        }
-
-        return;
-    }
-
-
-    // ALARM
-    if (
-        lower.includes("set an alarm") ||
-        lower.includes("set alarm") ||
-        lower.includes("alarm for")
-    ) {
-
-        const match =
-            lower.match(
-                /(?:set an alarm|set alarm|alarm for)\s*(?:at\s*)?(\d{1,2}:\d{2}(?:\s*(?:am|pm))?)/i
-            );
-
-        if (match) {
-
-            setAlarm(
-                match[1]
-            );
-
-        } else {
-
-            addMessage(
-                "D.I.S.C.O.",
-                "Boss, tell me the alarm time. For example: set an alarm for 7:30 PM."
-            );
-        }
-
-        return;
-    }
-
-
-    // REMINDER
-    if (
-        lower.includes("remind me")
-    ) {
-
-        const timerSeconds =
-            parseTimer(lower);
-
-        const match =
-            lower.match(
-                /remind me\s+(?:in\s+)?(?:\d+(?:\.\d+)?\s*(?:hour|hours|hr|hrs|minute|minutes|min|mins|second|seconds|sec|secs))\s+(?:to\s+)?(.+)/i
-            );
-
-        if (
-            timerSeconds > 0 &&
-            match
-        ) {
-
-            setReminder(
-                timerSeconds,
-                match[1].trim()
-            );
-
-        } else {
-
-            addMessage(
-                "D.I.S.C.O.",
-                "Boss, try: remind me in 10 minutes to study."
-            );
-        }
-
-        return;
-    }
-
-
-    // CALCULATOR
-    if (
-        lower.startsWith("calculate ") ||
-        lower.startsWith("what is ")
-    ) {
-
-        if (
-            calculator(text)
-        ) {
-            return;
-        }
-    }
-
-
-    // GREETINGS
-    if (
-        lower === "hi" ||
-        lower === "hello" ||
-        lower === "hey" ||
-        lower.includes("good morning") ||
-        lower.includes("good afternoon") ||
-        lower.includes("good evening")
-    ) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "Hello Boss. D.I.S.C.O. is ready."
-        );
-
-        speak(
-            "Hello Boss. D.I.S.C.O. is ready."
-        );
-
-        return;
-    }
-
-
-    // ABOUT D.I.S.C.O.
-    if (
-        lower.includes("who are you") ||
-        lower.includes("what are you") ||
-        lower.includes("tell me about yourself") ||
-        lower.includes("tell me about your self")
-    ) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            "I am D.I.S.C.O., your personal AI assistant, Boss. I can handle commands, memory, voice, location, timers, alarms, reminders, calculations and AI conversations."
-        );
-
-        speak(
-            "I am D.I.S.C.O., your personal AI assistant, Boss."
-        );
-
-        return;
-    }
-
-
-    // HELP
-    if (
-        lower === "help" ||
-        lower.includes("what can you do") ||
-        lower.includes("your commands")
-    ) {
-
-        addMessage(
-            "D.I.S.C.O.",
-            `
-            <b>Available commands:</b><br><br>
-            • What is my name?<br>
-            • What is my favourite colour?<br>
-            • Remember that my name is...<br>
-            • What time is it?<br>
-            • What is today's date?<br>
-            • Where am I?<br>
-            • Open YouTube<br>
-            • Battery status<br>
-            • Network status<br>
-            • Set a timer for 5 minutes<br>
-            • Set an alarm for 7:30 PM<br>
-            • Remind me in 10 minutes to study<br>
-            • Calculate 25 + 50<br>
-            • Clear memory<br>
-            • Change API key
-            `
-        );
-
-        return;
-    }
-
-
-    // NORMAL AI QUESTION
-    await askGemini(text);
-}
-
-
-// ======================================================
-// SEND
-// ======================================================
-
-async function sendMessage() {
-
-    const text =
-        msg.value.trim();
-
-    if (!text) {
-        return;
-    }
-
-    addMessage(
-        "USER",
-        text
-    );
-
-    msg.value = "";
-
-    await processCommand(
-        text
-    );
-}
-
-
-if (send) {
-
-    send.addEventListener(
-        "click",
-        sendMessage
-    );
-}
-
-
-if (msg) {
-
-    msg.addEventListener(
-        "keydown",
-        function(event) {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                sendMessage();
-            }
-        }
-    );
-}
-
-
-// ======================================================
-// CLEAR BUTTON
-// ======================================================
-
-if (clearBtn) {
-
-    clearBtn.addEventListener(
-        "click",
-        clearMemory
-    );
-}
-
-
-// ======================================================
-// API KEY BUTTON
-// ======================================================
-
-if (keyBtn) {
-
-    keyBtn.addEventListener(
-        "click",
-        changeApiKey
-    );
-}
-
-
-// ======================================================
-// IMAGE / VISION
-// ======================================================
-
-if (imgInput) {
-
-    imgInput.addEventListener(
-        "change",
-        function(event) {
-
-            const file =
-                event.target.files[0];
-
-            if (!file) {
-                return;
-            }
-
-            selectedImage =
-                file;
-
-            addMessage(
-                "USER",
-                `📷 Image selected: <b>${file.name}</b>`
-            );
-
-            addMessage(
-                "D.I.S.C.O.",
-                "Vision image received, Boss."
-            );
-        }
-    );
-}
-
-
-// ======================================================
-// MICROPHONE
-// ======================================================
-
-let recognition = null;
-
-const SpeechRecognition =
+function discoSetupVoiceInput() {
+  const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
+  if (!SpeechRecognition) {
+    discoRecognition = null;
+    discoSetStatus(discoUI.voice, "VOICE INPUT UNSUPPORTED");
+    return false;
+  }
 
-if (SpeechRecognition) {
+  discoRecognition = new SpeechRecognition();
 
-    recognition =
-        new SpeechRecognition();
+  discoRecognition.lang = DISCO_CONFIG.language;
+  discoRecognition.continuous = false;
+  discoRecognition.interimResults = false;
+  discoRecognition.maxAlternatives = 1;
 
-    recognition.lang =
-        "en-IN";
+  discoRecognition.onstart = () => {
+    discoListening = true;
+    discoSetStatus(discoUI.voice, "LISTENING");
+    discoSetCoreState("LISTENING");
+  };
 
-    recognition.continuous =
-        false;
+  discoRecognition.onresult = (event) => {
+    const result = event.results?.[0]?.[0];
+    const transcript = result?.transcript?.trim();
 
-    recognition.interimResults =
-        false;
+    if (transcript && discoUI.input) {
+      discoUI.input.value = transcript;
 
+      // Part 10 will connect this to the main agent.
+      discoSetStatus(discoUI.voice, "VOICE CAPTURED");
+    }
+  };
 
-    recognition.onstart =
-        function() {
+  discoRecognition.onerror = (event) => {
+    discoListening = false;
+    discoSetStatus(
+      discoUI.voice,
+      `VOICE ERROR: ${event.error}`
+    );
+    discoSetCoreState("CORE ACTIVE");
+  };
 
-            setState(
-                "listening"
-            );
+  discoRecognition.onend = () => {
+    discoListening = false;
+    discoSetCoreState("CORE ACTIVE");
 
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "LISTENING";
-            }
-        };
+    if (discoUI.voice?.textContent === "LISTENING") {
+      discoSetStatus(discoUI.voice, "VOICE READY");
+    }
+  };
 
+  discoSetStatus(discoUI.voice, "VOICE READY");
+  return true;
+}
 
-    recognition.onresult =
-        function(event) {
+/* ================= START / STOP LISTENING ================= */
 
-            const text =
-                event.results[0][0].transcript;
+function discoToggleVoiceInput() {
+  if (!discoRecognition) {
+    const ready = discoSetupVoiceInput();
 
-            msg.value =
-                text;
+    if (!ready) {
+      discoShowError(
+        "voice input is not supported in this browser. Try a supported browser."
+      );
+      return;
+    }
+  }
 
-            sendMessage();
-        };
+  if (discoListening) {
+    discoRecognition.stop();
+    return;
+  }
 
+  try {
+    discoRecognition.start();
+  } catch (error) {
+    console.error("D.I.S.C.O voice input:", error);
 
-    recognition.onerror =
-        function() {
+    discoSetStatus(discoUI.voice, "VOICE START FAILED");
 
-            setState(
-                "idle"
-            );
+    discoShowError(
+      "I could not start voice recognition. Please try again."
+    );
+  }
+}
 
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "READY";
-            }
-        };
+/* ================= PART 4 COMPLETE ================= */
 
+/* =====================================================
+   D.I.S.C.O — PART 5 OF 10
+   Weather report and current time/date
+   ===================================================== */
 
-    recognition.onend =
-        function() {
+/* ================= WEATHER REPORT ================= */
 
-            setState(
-                "idle"
-            );
+async function discoGetWeather(place = "Hyderabad") {
+  const locationURL =
+    "https://geocoding-api.open-meteo.com/v1/search" +
+    `?name=${encodeURIComponent(place)}` +
+    "&count=1&language=en&format=json";
 
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "READY";
-            }
-        };
+  const locationResponse = await fetch(locationURL);
 
+  if (!locationResponse.ok) {
+    throw new Error("Unable to find the weather location.");
+  }
 
-    if (mic) {
+  const locationData = await locationResponse.json();
+  const location = locationData.results?.[0];
 
-        mic.addEventListener(
-            "click",
-            function() {
+  if (!location) {
+    return `Boss, I couldn't find the location "${place}".`;
+  }
 
-                try {
+  const weatherURL =
+    "https://api.open-meteo.com/v1/forecast" +
+    `?latitude=${location.latitude}` +
+    `&longitude=${location.longitude}` +
+    "&current=temperature_2m,relative_humidity_2m," +
+    "apparent_temperature,precipitation,weather_code,wind_speed_10m" +
+    "&daily=temperature_2m_max,temperature_2m_min," +
+    "precipitation_probability_max" +
+    "&timezone=auto";
 
-                    recognition.start();
+  const weatherResponse = await fetch(weatherURL);
 
-                }
+  if (!weatherResponse.ok) {
+    throw new Error("The weather service is unavailable.");
+  }
 
-                catch {
+  const data = await weatherResponse.json();
+  const current = data.current;
+  const daily = data.daily;
 
-                    // Prevent duplicate recognition start errors
-                }
-            }
-        );
+  const descriptions = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    71: "Slight snow",
+    73: "Moderate snow",
+    75: "Heavy snow",
+    80: "Rain showers",
+    81: "Moderate rain showers",
+    82: "Heavy rain showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with hail",
+    99: "Severe thunderstorm with hail"
+  };
+
+  return [
+    `WEATHER REPORT — ${location.name}, ${location.country || ""}`,
+    `Condition: ${descriptions[current.weather_code] || "Unknown conditions"}`,
+    `Temperature: ${current.temperature_2m} °C`,
+    `Feels like: ${current.apparent_temperature} °C`,
+    `Humidity: ${current.relative_humidity_2m}%`,
+    `Wind speed: ${current.wind_speed_10m} km/h`,
+    `Precipitation: ${current.precipitation} mm`,
+    `Today's maximum: ${daily.temperature_2m_max[0]} °C`,
+    `Today's minimum: ${daily.temperature_2m_min[0]} °C`,
+    `Maximum rain probability: ${daily.precipitation_probability_max[0]}%`
+  ].join("\n");
+}
+
+/* ================= CURRENT TIME AND DATE ================= */
+
+function discoGetCurrentTime() {
+  const now = new Date();
+
+  const timeZone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const date = now.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone
+  });
+
+  const time = now.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone
+  });
+
+  return [
+    `Date: ${date}`,
+    `Time: ${time}`,
+    `Time zone: ${timeZone}`
+  ].join("\n");
+}
+
+/* ================= PART 5 COMPLETE ================= */
+
+/* =====================================================
+   D.I.S.C.O — PART 6 OF 10
+   Timer, cancellation and calculator
+   ===================================================== */
+
+/* ================= TIMER ================= */
+
+function discoStopTimer(announce = true) {
+  if (discoTimerInterval) {
+    clearInterval(discoTimerInterval);
+  }
+
+  discoTimerInterval = null;
+  discoTimerEnd = 0;
+
+  discoSetStatus($("timerStatus"), "TIMER OFF");
+
+  if (announce) {
+    return "Timer cancelled, Boss.";
+  }
+
+  return "Timer stopped.";
+}
+
+function discoStartTimer(seconds) {
+  const duration = Number(seconds);
+
+  if (!Number.isFinite(duration) || duration <= 0) {
+    return "Boss, please provide a timer duration greater than zero.";
+  }
+
+  discoStopTimer(false);
+
+  const safeDuration = Math.min(Math.floor(duration), 86400);
+
+  discoTimerEnd = Date.now() + safeDuration * 1000;
+
+  discoTimerInterval = setInterval(() => {
+    const remaining = Math.max(
+      0,
+      Math.ceil((discoTimerEnd - Date.now()) / 1000)
+    );
+
+    if (remaining <= 0) {
+      discoStopTimer(false);
+
+      discoSetStatus($("timerStatus"), "TIMER FINISHED");
+
+      discoAddMessage(
+        "assistant",
+        "Boss, your timer has finished."
+      );
+
+      discoSpeak("Boss, your timer has finished.");
+      return;
     }
 
+    const minutes = Math.floor(remaining / 60);
+    const secondsLeft = remaining % 60;
+
+    discoSetStatus(
+      $("timerStatus"),
+      `TIMER ${minutes}:${String(secondsLeft).padStart(2, "0")}`
+    );
+  }, 250);
+
+  return `Timer started for ${safeDuration} seconds, Boss.`;
+}
+
+/* ================= CALCULATOR ================= */
+
+function discoCalculate(expression) {
+  const input = String(expression || "")
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/−/g, "-")
+    .trim();
+
+  if (!input) {
+    return "Boss, please provide a calculation.";
+  }
+
+  // Only allow basic arithmetic characters.
+  if (!/^[0-9+\-*/().%\s]+$/.test(input)) {
+    return "Use numbers and basic arithmetic operators only.";
+  }
+
+  if (!/\d/.test(input)) {
+    return "Please provide a valid arithmetic expression.";
+  }
+
+  try {
+    // The character whitelist above prevents other JavaScript
+    // expressions from being evaluated.
+    const result = Function(
+      `"use strict"; return (${input});`
+    )();
+
+    if (typeof result !== "number" || !Number.isFinite(result)) {
+      return "That calculation has no finite result.";
+    }
+
+    return `Answer: ${result}`;
+  } catch {
+    return "Boss, I couldn't calculate that expression.";
+  }
+}
+
+/* ================= PART 6 COMPLETE ================= */
+
+/* =====================================================
+   D.I.S.C.O — PART 7 OF 10
+   Camera, image selection and AI image analysis
+   ===================================================== */
+
+/* ================= OPEN CAMERA ================= */
+
+function discoOpenCamera() {
+  if (!discoUI.imageInput) {
+    discoShowError(
+      "the image input is missing from index.html."
+    );
+    return;
+  }
+
+  discoUI.imageInput.accept = "image/*";
+  discoUI.imageInput.setAttribute("capture", "environment");
+  discoUI.imageInput.click();
+}
+
+/* ================= IMAGE INPUT ================= */
+
+function discoSetupImageInput() {
+  const input = discoUI.imageInput;
+
+  if (!input) {
+    console.warn("D.I.S.C.O: image input element not found.");
+    return;
+  }
+
+  input.accept = "image/*";
+
+  input.addEventListener("change", () => {
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      discoShowError("please select an image file.");
+      input.value = "";
+      return;
+    }
+
+    discoSelectedImage = file;
+
+    discoAddMessage(
+      "assistant",
+      `Image selected: ${file.name}. Boss, type your question about the image and press SEND.`
+    );
+  });
+}
+
+/* ================= IMAGE TO BASE64 ================= */
+
+function discoImageToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const dataURL = String(reader.result || "");
+      const base64 = dataURL.split(",")[1];
+
+      if (!base64) {
+        reject(new Error("Could not convert the image."));
+        return;
+      }
+
+      resolve(base64);
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Could not read the image file."));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ================= ANALYSE IMAGE ================= */
+
+async function discoAnalyseImage(file, question) {
+  if (!file) {
+    return "Boss, select an image first.";
+  }
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error("The selected file is not an image.");
+  }
+
+  const base64 = await discoImageToBase64(file);
+
+  const prompt = question?.trim() ||
+    "Describe this image and explain what can be seen.";
+
+  return discoAskGemini(
+    prompt,
+    new File(
+      [file],
+      file.name,
+      { type: file.type }
+    )
+  );
+}
+
+/* ================= IMAGE COMMAND HANDLER ================= */
+
+function discoHandleImageCommand(message) {
+  const text = String(message || "").trim();
+
+  if (
+    /^(?:open camera|take photo|take a photo|choose image|select image)$/i
+      .test(text)
+  ) {
+    discoOpenCamera();
+
+    return "Boss, choose or capture an image, then send your question.";
+  }
+
+  if (
+    /^(?:cancel image|remove image|clear image)$/i.test(text)
+  ) {
+    discoSelectedImage = null;
+
+    if (discoUI.imageInput) {
+      discoUI.imageInput.value = "";
+    }
+
+    return "Selected image cleared, Boss.";
+  }
+
+  return null;
+}
+
+/* ================= PART 7 COMPLETE ================= */
+
+/* =====================================================
+   D.I.S.C.O — PART 8 OF 10
+   YouTube, Google, GitHub, URLs and subtitles
+   ===================================================== */
+
+/* ================= YOUTUBE SEARCH ================= */
+
+function discoSearchYouTube(query) {
+  const search = String(query || "").trim();
+
+  if (!search) {
+    return "Boss, please tell me what you want to search on YouTube.";
+  }
+
+  const url =
+    "https://www.youtube.com/results?search_query=" +
+    encodeURIComponent(search);
+
+  window.open(url, "_blank", "noopener,noreferrer");
+
+  return `YouTube search opened for: ${search}`;
+}
+
+/* ================= GOOGLE SEARCH ================= */
+
+function discoSearchGoogle(query) {
+  const search = String(query || "").trim();
+
+  if (!search) {
+    return "Boss, please tell me what you want to search for.";
+  }
+
+  const url =
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(search);
+
+  window.open(url, "_blank", "noopener,noreferrer");
+
+  return `Google search opened for: ${search}`;
+}
+
+/* ================= OPEN WEBSITE ================= */
+
+function discoOpenURL(address) {
+  let value = String(address || "").trim();
+
+  if (!value) {
+    return "Boss, please provide a website address.";
+  }
+
+  if (!/^https?:\/\//i.test(value)) {
+    value = "https://" + value;
+  }
+
+  try {
+    const url = new URL(value);
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return "Only normal web addresses can be opened.";
+    }
+
+    window.open(
+      url.href,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    return `Opened ${url.hostname}, Boss.`;
+  } catch {
+    return "Boss, that website address is not valid.";
+  }
+}
+
+/* ================= GITHUB ================= */
+
+function discoOpenGitHub(query = "") {
+  const search = String(query || "").trim();
+
+  if (!search) {
+    window.open(
+      "https://github.com/",
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    return "GitHub opened, Boss.";
+  }
+
+  const url =
+    "https://github.com/search?q=" +
+    encodeURIComponent(search);
+
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+  return `GitHub search opened for: ${search}`;
+}
+
+/* ================= SUBTITLE SEARCH ================= */
+
+function discoSearchSubtitles(query) {
+  const search = String(query || "").trim();
+
+  if (!search) {
+    return "Boss, please provide the video or topic.";
+  }
+
+  const youtubeURL =
+    "https://www.youtube.com/results?search_query=" +
+    encodeURIComponent(
+      `${search} subtitles transcript captions`
+    );
+
+  window.open(
+    youtubeURL,
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+  return (
+    `I opened a subtitle and transcript search for "${search}", Boss.\n` +
+    "If the video provides captions, they can be opened from the video."
+  );
+}
+
+/* ================= SEARCH COMMANDS ================= */
+
+function discoHandleSearchCommand(message) {
+  const text = String(message || "").trim();
+
+  let match;
+
+  /* YouTube */
+
+  match = text.match(
+    /^(?:search youtube|youtube search)\s+(.+)$/i
+  );
+
+  if (match) {
+    return discoSearchYouTube(match[1]);
+  }
+
+  /* Google */
+
+  match = text.match(
+    /^(?:search google|google search|web search|search the web)\s+(.+)$/i
+  );
+
+  if (match) {
+    return discoSearchGoogle(match[1]);
+  }
+
+  /* Website */
+
+  match = text.match(
+    /^(?:open website|open site|open url)\s+(.+)$/i
+  );
+
+  if (match) {
+    return discoOpenURL(match[1]);
+  }
+
+  /* GitHub */
+
+  match = text.match(
+    /^(?:open github|github search)\s*(.*)$/i
+  );
+
+  if (match) {
+    return discoOpenGitHub(match[1]);
+  }
+
+  /* Subtitles */
+
+  match = text.match(
+    /^(?:search subtitles|find subtitles|search captions|find captions)\s*(.*)$/i
+  );
+
+  if (match) {
+    return discoSearchSubtitles(
+      match[1] || "YouTube video"
+    );
+  }
+
+  return null;
+}
+
+/* ================= PART 8 COMPLETE ================= */
+/* =====================================================
+   D.I.S.C.O — PART 9 OF 10
+   Battery • Device • Network • Telugu Translation
+   ===================================================== */
+
+/* ================= BATTERY ================= */
+
+async function discoGetBattery() {
+  if (!navigator.getBattery) {
+    return "Boss, battery information is not supported by this browser.";
+  }
+
+  const battery = await navigator.getBattery();
+
+  const level = Math.round(battery.level * 100);
+
+  return [
+    `Battery level: ${level}%`,
+    `Charging: ${battery.charging ? "Yes" : "No"}`
+  ].join("\n");
+}
+
+/* ================= DEVICE INFORMATION ================= */
+
+function discoGetDeviceInfo() {
+  const connection =
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
+
+  return [
+    `Platform: ${navigator.platform || "Unknown"}`,
+    `Language: ${navigator.language || "Unknown"}`,
+    `Online: ${navigator.onLine ? "Yes" : "No"}`,
+    `Screen: ${screen.width} × ${screen.height}`,
+    `Connection: ${connection?.effectiveType || "Unknown"}`,
+    `Downlink: ${
+      connection?.downlink != null
+        ? connection.downlink + " Mbps"
+        : "Unknown"
+    }`,
+    `Browser: ${navigator.userAgent}`
+  ].join("\n");
+}
+
+/* ================= TELUGU TRANSLATION ================= */
+
+async function discoTranslateTelugu(text, direction) {
+  const value = String(text || "").trim();
+
+  if (!value) {
+    return "Boss, please provide the text to translate.";
+  }
+
+  const mode = direction || "English to Telugu";
+
+  return discoAskGemini(
+    `Translate the following text from ${mode}.
+Return only the translation.
+Keep the original meaning.
+
+Text:
+${value}`
+  );
+}
+
+/* ================= TOOL COMMAND HANDLER ================= */
+
+async function discoHandleUtilityCommand(message) {
+  const text = String(message || "").trim();
+  const lower = text.toLowerCase();
+
+  /* Battery */
+
+  if (
+    /\b(battery|battery level|charging status|charging)\b/.test(lower)
+  ) {
+    return await discoGetBattery();
+  }
+
+  /* Device */
+
+  if (
+    /\b(device info|device information|system info|system information)\b/.test(lower)
+  ) {
+    return discoGetDeviceInfo();
+  }
+
+  /* Network */
+
+  if (
+    /\b(network info|network information|internet status|connection status)\b/.test(lower)
+  ) {
+    return discoGetDeviceInfo();
+  }
+
+  /* English → Telugu */
+
+  let match = text.match(
+    /^(?:translate to telugu|english to telugu)\s*[:\-]?\s*(.+)$/i
+  );
+
+  if (match) {
+    return await discoTranslateTelugu(
+      match[1],
+      "English to Telugu"
+    );
+  }
+
+  /* Telugu → English */
+
+  match = text.match(
+    /^(?:translate to english|telugu to english)\s*[:\-]?\s*(.+)$/i
+  );
+
+  if (match) {
+    return await discoTranslateTelugu(
+      match[1],
+      "Telugu to English"
+    );
+  }
+
+  return null;
+}
+
+/* ================= PART 9 COMPLETE ================= */
+/* =====================================================
+   D.I.S.C.O — PART 10 OF 10
+   FINAL AGENT • TOOL ROUTER • BUTTONS • STARTUP
+   ===================================================== */
+
+/* ================= MAIN TOOL ROUTER ================= */
+
+async function discoRunTool(message) {
+  const text = String(message || "").trim();
+  const lower = text.toLowerCase();
+
+  if (!text) {
+    return null;
+  }
+
+  /* ---------- MEMORY ---------- */
+
+  const memoryResult = discoHandleMemoryCommand(text);
+
+  if (memoryResult !== null) {
+    return memoryResult;
+  }
+
+  /* ---------- IMAGE / CAMERA ---------- */
+
+  const imageResult = discoHandleImageCommand(text);
+
+  if (imageResult !== null) {
+    return imageResult;
+  }
+
+  /* ---------- SEARCH / GITHUB / URL / SUBTITLES ---------- */
+
+  const searchResult = discoHandleSearchCommand(text);
+
+  if (searchResult !== null) {
+    return searchResult;
+  }
+
+  /* ---------- BATTERY / DEVICE / NETWORK / TRANSLATION ---------- */
+
+  const utilityResult = await discoHandleUtilityCommand(text);
+
+  if (utilityResult !== null) {
+    return utilityResult;
+  }
+
+  /* ---------- TIMER CANCEL ---------- */
+
+  if (
+    /^(?:cancel|stop|clear)\s+(?:the\s+)?timer$/i.test(text)
+  ) {
+    return discoStopTimer(true);
+  }
+
+  /* ---------- TIMER START ---------- */
+
+  let match = text.match(
+    /^(?:start|set)\s+(?:a\s+)?timer\s+(?:for\s+)?(\d+(?:\.\d+)?)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)$/i
+  );
+
+  if (match) {
+    let seconds = Number(match[1]);
+    const unit = match[2].toLowerCase();
+
+    if (/minute|min/.test(unit)) {
+      seconds *= 60;
+    }
+
+    if (/hour|hr/.test(unit)) {
+      seconds *= 3600;
+    }
+
+    return discoStartTimer(seconds);
+  }
+
+  /* ---------- TIME / DATE ---------- */
+
+  if (
+    /\b(current time|what time is it|what's the time|time now|date today|today's date|current date)\b/i
+      .test(lower)
+  ) {
+    return discoGetCurrentTime();
+  }
+
+  /* ---------- WEATHER ---------- */
+
+  match = text.match(
+    /^(?:weather|weather report)(?:\s+(?:in|at|for))?\s*(.*)$/i
+  );
+
+  if (match) {
+    const place = match[1].trim() || "Hyderabad";
+
+    return await discoGetWeather(place);
+  }
+
+  /* ---------- CALCULATOR ---------- */
+
+  match = text.match(
+    /^(?:calculate|calculator|compute|solve)\s+(.+)$/i
+  );
+
+  if (match) {
+    return discoCalculate(match[1]);
+  }
+
+  /* Direct arithmetic */
+
+  if (
+    /^[0-9+\-*/().%\s×÷−]+$/.test(text) &&
+    /\d/.test(text)
+  ) {
+    return discoCalculate(text);
+  }
+
+  /* ---------- CAMERA ---------- */
+
+  if (
+    /^(?:camera|open camera|take photo|take a photo)$/i.test(text)
+  ) {
+    return discoOpenCamera();
+  }
+
+  /* ---------- OTHERWISE USE GEMINI ---------- */
+
+  return null;
 }
 
 
-// ======================================================
-// SPEECH VOICE LOADING
-// ======================================================
+/* ================= MAIN D.I.S.C.O AGENT ================= */
 
-if (
-    "speechSynthesis" in window
-) {
+async function discoAgent(message) {
+  const text = String(message || "").trim();
 
-    window.speechSynthesis.onvoiceschanged =
-        function() {
-            window.speechSynthesis.getVoices();
-        };
+  if (!text) {
+    return;
+  }
+
+  if (discoBusy) {
+    return;
+  }
+
+  discoSetBusy(true);
+
+  const userMessage = discoAddMessage(
+    "user",
+    text
+  );
+
+  discoHistory.push({
+    role: "user",
+    text,
+    time: Date.now()
+  });
+
+   localStorage.setItem(
+    DISCO_STORAGE.history,
+    JSON.stringify(discoHistory.slice(-50))
+  );
+
+  discoClearInput();
+
+  const replyMessage = discoAddMessage(
+    "assistant",
+    "Processing, Boss..."
+  );
+
+  try {
+    let answer = null;
+
+    /* ---------- IMAGE QUESTION ---------- */
+
+    if (discoSelectedImage) {
+      const image = discoSelectedImage;
+
+      discoSelectedImage = null;
+
+      if (discoUI.imageInput) {
+        discoUI.imageInput.value = "";
+      }
+
+      answer = await discoAskGemini(
+        text,
+        image
+      );
+    }
+
+    /* ---------- LOCAL TOOL ---------- */
+
+    if (answer === null) {
+      answer = await discoRunTool(text);
+    }
+
+    /* ---------- GEMINI AI ---------- */
+
+    if (answer === null) {
+      answer = await discoAskGemini(text);
+    }
+
+    /* ---------- DISPLAY ---------- */
+
+    discoUpdateMessage(
+      replyMessage,
+      answer
+    );
+
+    discoHistory.push({
+      role: "assistant",
+      text: answer,
+      time: Date.now()
+    });
+
+    localStorage.setItem(
+      DISCO_STORAGE.history,
+      JSON.stringify(discoHistory.slice(-50))
+    );
+
+    /* ---------- VOICE ---------- */
+
+    discoSpeak(answer);
+
+  } catch (error) {
+
+    console.error(
+      "D.I.S.C.O ERROR:",
+      error
+    );
+
+    const errorMessage =
+      error?.message ||
+      "An unexpected error occurred.";
+
+    discoUpdateMessage(
+      replyMessage,
+      `Sorry, Boss. ${errorMessage}`
+    );
+
+  } finally {
+
+    discoSetBusy(false);
+  }
 }
 
 
-// ======================================================
-// STARTUP
-// ======================================================
+/* ================= SEND BUTTON ================= */
 
-if (networkStatus) {
+function discoSendMessage() {
+  const message = discoGetInput();
 
-    networkStatus.textContent =
-        navigator.onLine
-            ? "ONLINE"
-            : "OFFLINE";
+  if (!message) {
+    return;
+  }
+
+  discoAgent(message);
 }
 
-if (memoryStatus) {
 
-    memoryStatus.textContent =
-        Object.keys(memory).length
-            ? "ONLINE"
-            : "ONLINE";
+/* ================= ENTER KEY ================= */
+
+function discoSetupInput() {
+
+  if (!discoUI.input) {
+    return;
+  }
+
+  discoUI.input.addEventListener(
+    "keydown",
+    (event) => {
+
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
+
+        event.preventDefault();
+
+        discoSendMessage();
+      }
+    }
+  );
 }
 
-if (voiceStatus) {
 
-    voiceStatus.textContent =
-        "READY";
+/* ================= SEND BUTTON EVENT ================= */
+
+function discoSetupSendButton() {
+
+  if (!discoUI.send) {
+    return;
+  }
+
+  discoUI.send.addEventListener(
+    "click",
+    discoSendMessage
+  );
 }
 
-setState("idle");
+
+/* ================= MIC BUTTON ================= */
+
+function discoSetupMicButton() {
+
+  if (!discoUI.mic) {
+    return;
+  }
+
+  discoUI.mic.addEventListener(
+    "click",
+    discoToggleVoiceInput
+  );
+}
+
+
+/* ================= API KEY BUTTON ================= */
+
+function discoSetupKeyButton() {
+
+  if (!discoUI.key) {
+    return;
+  }
+
+  discoUI.key.addEventListener(
+    "click",
+    discoConfigureAPIKey
+  );
+}
+
+
+/* ================= CLEAR CHAT ================= */
+
+function discoSetupClearButton() {
+
+  if (!discoUI.clear) {
+    return;
+  }
+
+  discoUI.clear.addEventListener(
+    "click",
+    () => {
+
+      const confirmed = confirm(
+        "Boss, clear the chat history?"
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      if (discoUI.chat) {
+        discoUI.chat.replaceChildren();
+      }
+
+      discoHistory = [];
+
+      localStorage.removeItem(
+        DISCO_STORAGE.history
+      );
+
+      discoAddMessage(
+        "assistant",
+        "Chat cleared, Boss. Your memories are still محفوظ."
+      );
+    }
+  );
+}
+
+
+/* ================= CAMERA BUTTON ================= */
+
+function discoSetupCameraButton() {
+
+  if (!discoUI.core) {
+    return;
+  }
+
+  discoUI.core.addEventListener(
+    "dblclick",
+    () => {
+      discoOpenCamera();
+    }
+  );
+}
+
+
+/* ================= SPEECH VOICES ================= */
+
+function discoLoadVoices() {
+
+  if (!("speechSynthesis" in window)) {
+    return;
+  }
+
+  window.speechSynthesis.getVoices();
+
+  discoSetStatus(
+    discoUI.voice,
+    "VOICE READY"
+  );
+}
+
+if ("speechSynthesis" in window) {
+
+  window.speechSynthesis.onvoiceschanged =
+    discoLoadVoices;
+}
+
+
+/* ================= STARTUP ================= */
+
+function discoInitialise() {
+
+  /* Network */
+
+  discoUpdateNetworkStatus();
+
+  /* Memory */
+
+  discoUpdateMemoryStatus();
+
+  /* Voice */
+
+  discoSetupVoiceInput();
+
+  /* Image */
+
+  discoSetupImageInput();
+
+  /* Buttons */
+
+  discoSetupInput();
+  discoSetupSendButton();
+  discoSetupMicButton();
+  discoSetupKeyButton();
+  discoSetupClearButton();
+  discoSetupCameraButton();
+
+  /* Voice */
+
+  discoLoadVoices();
+
+  /* Core */
+
+  discoSetCoreState(
+    "CORE ACTIVE"
+  );
+
+  /* Timer */
+
+  discoSetStatus(
+    $("timerStatus"),
+    "TIMER OFF"
+  );
+
+  console.log(
+    "D.I.S.C.O MOBILE AI CORE ONLINE"
+  );
+}
+
+
+/* ================= START D.I.S.C.O ================= */
+
+if (document.readyState === "loading") {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    discoInitialise
+  );
+
+} else {
+
+  discoInitialise();
+
+}
+
+
+/* =====================================================
+   D.I.S.C.O — 10 PARTS COMPLETE
+   ===================================================== */
+        
