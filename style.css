@@ -1,4 +1,4 @@
-/* =====================================================
+55/* =====================================================
    D.I.S.C.O MOBILE EDITION
    CYAN FUTURISTIC HUD
    ===================================================== */
@@ -1626,3 +1626,146 @@ body.speaking #coreImage {
         width: 80px;
     }
                }
+/* ===== D.I.S.C.O AI ENERGY BALL FIX ===== */
+
+#coreImage {
+    position: relative;
+    width: 175px;
+    height: 175px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 28%,
+            #d9ffff 0%,
+            #54f7ff 4%,
+            #00cfff 13%,
+            #006eac 35%,
+            #00304e 58%,
+            #00101e 76%,
+            #00050c 100%
+        );
+
+    border: 1px solid rgba(90, 250, 255, 0.9);
+
+    box-shadow:
+        0 0 12px #00eaff,
+        0 0 30px rgba(0, 220, 255, 0.8),
+        0 0 65px rgba(0, 150, 255, 0.45),
+        inset 0 0 25px rgba(0, 235, 255, 0.65);
+
+    animation: coreFloat 4s ease-in-out infinite;
+}
+
+/* Glowing energy inside the sphere */
+
+.orb-inner {
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+
+    background:
+        repeating-radial-gradient(
+            circle at 50% 50%,
+            transparent 0 9px,
+            rgba(0, 238, 255, 0.25) 10px 11px,
+            transparent 12px 17px
+        ),
+        conic-gradient(
+            from 0deg,
+            transparent,
+            rgba(0, 240, 255, 0.8),
+            transparent,
+            rgba(0, 125, 255, 0.7),
+            transparent
+        );
+
+    animation: orbRotate 7s linear infinite;
+}
+
+/* Bright central energy */
+
+.orb-highlight {
+    position: absolute;
+    width: 28%;
+    height: 28%;
+    top: 36%;
+    left: 36%;
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            #ffffff 0%,
+            #9cffff 15%,
+            #00eaff 45%,
+            rgba(0, 180, 255, 0.15) 75%,
+            transparent 100%
+        );
+
+    box-shadow:
+        0 0 15px #00eaff,
+        0 0 35px #00bfff;
+
+    animation: orbPulse 1.5s ease-in-out infinite alternate;
+}
+
+/* Small energy particles */
+
+.orb-particles {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+
+    background-image:
+        radial-gradient(circle at 25% 35%, #ffffff 1px, transparent 2px),
+        radial-gradient(circle at 70% 25%, #00ffff 1px, transparent 2px),
+        radial-gradient(circle at 65% 72%, #ffffff 1px, transparent 2px),
+        radial-gradient(circle at 32% 75%, #00eaff 1px, transparent 2px),
+        radial-gradient(circle at 52% 18%, #00eaff 1px, transparent 2px),
+        radial-gradient(circle at 80% 50%, #ffffff 1px, transparent 2px);
+
+    filter: drop-shadow(0 0 4px #00eaff);
+
+    animation: particleDrift 5s linear infinite;
+}
+
+@keyframes orbRotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes orbPulse {
+    from {
+        transform: scale(0.8);
+        opacity: 0.7;
+    }
+
+    to {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+@keyframes particleDrift {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+/* Keep the energy ball responsive on phones */
+
+@media (max-width: 700px) {
+    #coreImage {
+        width: 155px;
+        height: 155px;
+    }
+}
+
