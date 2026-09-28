@@ -1,8 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#020b10">
+    <meta name="description" content="D.I.S.C.O Mobile AI Core">
 
     <title>D.I.S.C.O - MOBILE EDITION</title>
 
@@ -11,20 +16,30 @@
 
 <body>
 
-    <div class="scanlines"></div>
+    <!-- BACKGROUND EFFECTS -->
     <div class="stars"></div>
+    <div class="scanlines"></div>
+
 
     <!-- HEADER -->
     <header class="top-header">
 
-        <button class="menu-btn" type="button">☰</button>
+        <button
+            class="menu-btn"
+            id="menuBtn"
+            type="button"
+            aria-label="Open menu"
+        >
+            ☰
+        </button>
 
         <div class="header-logo">
             D.I.S.C.O
         </div>
 
         <div class="edition">
-            ▯ &nbsp; MOBILE EDITION
+            <span>▯</span>
+            MOBILE EDITION
         </div>
 
     </header>
@@ -32,7 +47,7 @@
 
     <main>
 
-        <!-- HERO -->
+        <!-- HERO SECTION -->
         <section class="hero">
 
             <div class="hero-content">
@@ -54,8 +69,10 @@
             </div>
 
 
-            <!-- CORE -->
-            <div class="core-area">
+            <!-- AI ENERGY BALL -->
+            <!-- No external image required -->
+
+            <div class="core-area" id="coreArea">
 
                 <div class="core-ring ring1"></div>
                 <div class="core-ring ring2"></div>
@@ -63,100 +80,143 @@
 
                 <div class="core-glow"></div>
 
-                <img
+                <div
                     id="coreImage"
-                    src="./core.png"
-                    alt="D.I.S.C.O Core"
+                    role="img"
+                    aria-label="D.I.S.C.O glowing AI energy core"
                 >
+
+                    <div class="orb-inner"></div>
+
+                    <div class="orb-highlight"></div>
+
+                    <div class="orb-particles"></div>
+
+                </div>
 
             </div>
 
         </section>
 
 
-        <!-- SYSTEM STATUS -->
+        <!-- SYSTEM STATUS PANEL -->
         <section class="system-status">
 
             <div class="status-heading">
+
                 <span class="heading-icon">▣</span>
-                SYSTEM STATUS
+
+                <span>SYSTEM STATUS</span>
+
             </div>
 
 
+            <!-- AI CORE -->
             <div class="status-row">
 
                 <div class="status-label">
+
                     <span class="status-icon cyan">▣</span>
-                    AI CORE
+
+                    <span>AI CORE</span>
+
                 </div>
 
                 <div class="status-online">
+
                     <span class="green-dot"></span>
+
                     ONLINE
+
                 </div>
 
             </div>
 
 
+            <!-- NETWORK -->
             <div class="status-row">
 
                 <div class="status-label">
+
                     <span class="status-icon cyan">⌁</span>
-                    NETWORK
+
+                    <span>NETWORK</span>
+
                 </div>
 
                 <div
                     class="status-online"
                     id="networkStatus"
                 >
+
                     <span class="green-dot"></span>
+
                     ONLINE
+
                 </div>
 
             </div>
 
 
+            <!-- VOICE -->
             <div class="status-row">
 
                 <div class="status-label">
+
                     <span class="status-icon red">♩</span>
-                    VOICE
+
+                    <span>VOICE</span>
+
                 </div>
 
                 <div
                     class="status-locked"
                     id="voiceStatus"
                 >
+
                     <span>▣</span>
+
                     LOCKED
+
                 </div>
 
             </div>
 
 
+            <!-- MEMORY -->
             <div class="status-row">
 
                 <div class="status-label">
+
                     <span class="status-icon red">▣</span>
-                    MEMORY
+
+                    <span>MEMORY</span>
+
                 </div>
 
                 <div
                     class="status-locked"
                     id="memoryStatus"
                 >
+
                     <span>▣</span>
+
                     LOCKED
+
                 </div>
 
             </div>
 
 
+            <!-- USER STATUS -->
             <div class="status-row">
 
                 <div class="status-label">
+
                     <span class="status-icon cyan">♙</span>
-                    YOU
+
+                    <span>YOU</span>
+
                 </div>
 
                 <div
@@ -171,12 +231,15 @@
         </section>
 
 
-        <!-- CHAT -->
+        <!-- CHAT PANEL -->
         <section class="chat-panel">
 
             <div
                 id="chat"
                 class="chat-box"
+                role="log"
+                aria-live="polite"
+                aria-label="D.I.S.C.O conversation"
             >
 
                 <div class="message ai-message">
@@ -194,21 +257,24 @@
         </section>
 
 
-        <!-- COMMAND -->
+        <!-- COMMAND INPUT -->
         <section class="command-area">
 
             <div class="input-box">
 
                 <input
                     id="msg"
+                    name="message"
                     type="text"
                     placeholder="Ask D.I.S.C.O..."
                     autocomplete="off"
+                    aria-label="Enter a message"
                 >
 
                 <button
                     id="mic"
                     type="button"
+                    aria-label="Start voice input"
                     title="Voice input"
                 >
                     🎙
@@ -219,8 +285,8 @@
 
             <button
                 id="send"
-                type="button"
                 class="send-button"
+                type="button"
             >
                 SEND
             </button>
@@ -228,7 +294,7 @@
         </section>
 
 
-        <!-- EXTRA BUTTONS -->
+        <!-- ADDITIONAL CONTROLS -->
         <section class="extra-controls">
 
             <button
@@ -245,16 +311,18 @@
                 API KEY
             </button>
 
-            <label class="vision-button">
-
+            <label
+                class="vision-button"
+                for="imgInput"
+            >
                 VISION
 
                 <input
                     id="imgInput"
                     type="file"
                     accept="image/*"
+                    aria-label="Choose an image"
                 >
-
             </label>
 
         </section>
@@ -264,9 +332,11 @@
         <footer>
 
             <div class="footer-bars">
+
                 <span></span>
                 <span></span>
                 <span></span>
+
             </div>
 
             <div class="footer-dots">
@@ -286,7 +356,9 @@
     </main>
 
 
+    <!-- EXISTING JAVASCRIPT -->
     <script src="./script.js"></script>
 
 </body>
+
 </html>
