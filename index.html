@@ -6,6 +6,11 @@
 
     <title>DISCO — AI CORE</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -17,6 +22,7 @@
 
 <main class="app">
 
+    <!-- TOP BAR -->
     <header class="topbar">
 
         <div class="logo">
@@ -33,11 +39,14 @@
             SYSTEM ONLINE
         </div>
 
-        <button id="settingsBtn" class="settings">⚙</button>
+        <button id="settingsBtn" class="settings">
+            ⚙ AI KEY
+        </button>
 
     </header>
 
 
+    <!-- HERO -->
     <section class="hero">
 
         <div class="orbit orbit1"></div>
@@ -53,7 +62,10 @@
         </div>
 
         <div class="core-title">DISCO</div>
-        <div id="coreState" class="core-state">CORE READY</div>
+
+        <div id="coreState" class="core-state">
+            CORE READY
+        </div>
 
         <div class="clock">
             <strong id="clock">00:00:00</strong>
@@ -63,6 +75,7 @@
     </section>
 
 
+    <!-- STATUS -->
     <section class="status-grid">
 
         <div class="status-card">
@@ -92,6 +105,7 @@
     </section>
 
 
+    <!-- CHAT -->
     <section class="chat-box">
 
         <div class="chat-head">
@@ -101,7 +115,9 @@
                 <h2>COMMAND INTERFACE</h2>
             </div>
 
-            <button id="clearBtn">CLEAR</button>
+            <button id="clearBtn">
+                CLEAR
+            </button>
 
         </div>
 
@@ -110,14 +126,18 @@
 
             <div class="message">
 
-                <div class="avatar">D</div>
+                <div class="avatar">
+                    D
+                </div>
 
                 <div class="bubble">
+
                     <strong>DISCO</strong>
+
                     <p>
-                        Systems online, Boss.
-                        How may I assist you?
+                        Systems online, Boss. How may I assist you?
                     </p>
+
                 </div>
 
             </div>
@@ -125,6 +145,7 @@
         </div>
 
 
+        <!-- IMAGE PREVIEW -->
         <div id="imageBox" class="image-box" hidden>
 
             <img id="preview">
@@ -134,19 +155,24 @@
                 <b id="imageName">IMAGE</b>
             </div>
 
-            <button id="removeImage">×</button>
+            <button id="removeImage">
+                ×
+            </button>
 
         </div>
 
 
+        <!-- COMMAND -->
         <form id="commandForm" class="command">
 
             <button
                 type="button"
                 id="imageBtn"
                 class="tool"
-                title="Image"
-            >◈</button>
+                title="Upload image">
+                ◈
+            </button>
+
 
             <input
                 id="msg"
@@ -154,23 +180,25 @@
                 placeholder="Enter command, Boss..."
             >
 
+
             <button
                 type="button"
                 id="micBtn"
-                class="tool"
-                title="Voice"
-            >◉</button>
+                class="tool mic-button"
+                title="Voice input">
+                🎙
+            </button>
+
 
             <button
                 type="submit"
                 id="sendBtn"
-                class="send"
-            >
-                SEND
-                <span>➤</span>
+                class="send">
+                SEND ➤
             </button>
 
         </form>
+
 
         <input
             id="imageInput"
@@ -182,18 +210,23 @@
     </section>
 
 
+    <!-- QUICK COMMANDS -->
     <section class="quick">
 
         <small>QUICK COMMANDS</small>
 
         <div>
 
-            <button data-command="activate agents">
-                ACTIVATE AGENTS
+            <button data-command="plan today">
+                PLAN TODAY
             </button>
 
             <button data-command="plan tomorrow">
                 PLAN TOMORROW
+            </button>
+
+            <button data-command="activate agents">
+                ACTIVATE AGENTS
             </button>
 
             <button data-command="show memory">
@@ -204,43 +237,56 @@
                 TIME
             </button>
 
-            <button data-command="weather">
-                WEATHER
-            </button>
-
         </div>
 
     </section>
 
 
+    <!-- FOOTER -->
     <footer>
-        <span>DISCO // FUTURE CORE</span>
-        <span id="network">NETWORK READY</span>
+
+        <span>
+            DISCO // FUTURE CORE
+        </span>
+
+        <span id="network">
+            NETWORK READY
+        </span>
+
     </footer>
 
 </main>
 
 
+<!-- SETTINGS -->
 <div id="settingsModal" class="modal" hidden>
 
     <div class="modal-content">
 
-        <button id="closeSettings" class="close">×</button>
+        <button id="closeSettings" class="close">
+            ×
+        </button>
 
-        <small>DISCO SETTINGS</small>
+        <small>
+            DISCO SETTINGS
+        </small>
 
-        <h2>AI CONNECTION</h2>
+        <h2>
+            AI CONNECTION
+        </h2>
 
         <p>
-            Add your Gemini API key to enable AI responses.
+            Enter your Gemini API key here.
         </p>
 
-        <label>GEMINI API KEY</label>
+        <label>
+            GEMINI API KEY
+        </label>
 
         <input
             id="apiKey"
             type="password"
-            placeholder="Paste API key"
+            placeholder="Paste your Gemini API key"
         >
 
         <div class="modal-buttons">
@@ -255,11 +301,16 @@
 
         </div>
 
+        <div class="key-note">
+            Your key is stored locally in this browser.
+        </div>
+
     </div>
 
 </div>
 
 
+<!-- TOAST -->
 <div id="toast" class="toast"></div>
 
 
