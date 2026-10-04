@@ -1,81 +1,927 @@
-
 (() => {
-  'use strict';
-  const $ = id => document.getElementById(id);
-  const MEMORY_KEY = 'disco_memory_v3';
-  const API_KEY = 'disco_gemini_key_v3';
-  let chosenImage = null, recognition = null, toastTimer, timerHandle = null, agentsActive = true;
-  const chat = $('chat'), form = $('commandForm'), input = $('msg'), sendBtn = $('sendBtn');
-  const norm = s => s.toLowerCase().trim().replace(/[’']/g, "'");
-  const clock = () => new Date().toLocaleTimeString([], {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  function toast(s){const el=$('toast');el.textContent=s;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600)}
-  function status(s){$('coreState').textContent=s.toUpperCase();$('systemStatus').textContent=s.toUpperCase()}
-  function busy(v){sendBtn.disabled=v;document.querySelector('.core-area').classList.toggle('processing',v);if(v)status('Processing');else status('Awaiting input')}
-  function tick(){const d=new Date();$('clockTime').textContent=clock();$('clockDate').textContent=d.toLocaleDateString([], {weekday:'short',year:'numeric',month:'short',day:'2-digit'}).toUpperCase()}
-  tick();setInterval(tick,1000);
-  function addMessage(text,who='assistant',tag='CORE RESPONSE'){
-    const row=document.createElement('div');row.className='message'+(who==='user'?' user':'');
-    const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=who==='user'?'B':'D';
-    const bubble=document.createElement('div');bubble.className='bubble';const meta=document.createElement('div');meta.className='meta';meta.textContent=who==='user'?'BOSS':'D.I.S.C.O.';
-    const span=document.createElement('span');span.textContent=tag;meta.appendChild(span);const p=document.createElement('p');p.textContent=String(text);bubble.append(meta,p);row.append(avatar,bubble);chat.appendChild(row);chat.scrollTop=chat.scrollHeight;return row;
-  }
-  function memory(){try{return JSON.parse(localStorage.getItem(MEMORY_KEY)||'{}')}catch{return {}}}
-  function saveMemory(m){localStorage.setItem(MEMORY_KEY,JSON.stringify(m))}
-  function refreshStatus(){$('neuralStatus').textContent=localStorage.getItem(API_KEY)?'CONNECTED':'LOCAL MODE';$('agentStatus').textContent=agentsActive?'ACTIVE':'STANDBY';$('networkStatus').textContent=navigator.onLine?'NETWORK: ONLINE':'NETWORK: OFFLINE'}
-  refreshStatus();window.addEventListener('online',refreshStatus);window.addEventListener('offline',refreshStatus);
-  function calculate(raw){
-    let s=raw.replace(/^(calculate|calc|what is|solve)\s*/i,'').trim();if(!s||!/^[\d\s()+\-*/%.^]+$/.test(s))return null;
-    const t=s.match(/\d*\.?\d+|[()+\-*/%^]/g);if(!t||t.join('')!==s.replace(/\s+/g,''))return null;let i=0;const peek=()=>t[i],take=()=>t[i++];
-    function atom(){if(peek()==='+'){take();return atom()}if(peek()==='-'){take();return-atom()}if(peek()==='('){take();const v=add();if(take()!==')')throw Error('Missing closing bracket.');return v}const a=take();if(a===undefined||!/^(\d*\.?\d+)$/.test(a))throw Error('Check the calculation.');return Number(a)}
-    function pow(){let a=atom();if(peek()==='^'){take();a=Math.pow(a,pow())}return a}
-    function mul(){let a=pow();while(['*','/','%'].includes(peek())){const op=take(),b=pow();if((op==='/'||op==='%')&&b===0)throw Error('Cannot divide by zero.');a=op==='*'?a*b:op==='/'?a/b:a%b}return a}
-    function add(){let a=mul();while(peek()==='+'||peek()==='-'){const op=take(),b=mul();a=op==='+'?a+b:a-b}return a}
-    const v=add();if(i!==t.length||!Number.isFinite(v))throw Error('Could not calculate that.');return v;
-  }
-  function tomorrowPlan(){const d=new Date();d.setDate(d.getDate()+1);return `TOMORROW'S MISSION PLAN — ${d.toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'})}\n\n07:00  Wake up, wash and have breakfast\n08:00  Study your most important subject\n09:30  Short break and water\n09:45  Practise exam questions\n11:15  Break and move around\n11:30  Finish notes or assignments\n13:00  Lunch and rest\n14:00  College work or practical tasks\n16:00  Snack and break\n16:30  Exercise or a walk\n17:15  Revise what you learnt\n18:15  Free time and hobbies\n19:30  Dinner\n20:15  Light revision and prepare your bag\n21:15  Relax and reduce screen time\n22:00  Sleep\n\nAdjust the times to your actual college schedule, Boss. Pick three priority tasks and keep your phone away during study blocks.`}
-  function memoryCommand(text){const m=memory(),r=text.match(/^(?:please\s+)?remember(?: that)?\s+(.+)/i);if(r){const detail=r[1].replace(/[.!?]+$/,'').trim(),pair=detail.match(/^my\s+(.+?)\s+is\s+(.+)$/i);if(pair)m[pair[1].toLowerCase()]=pair[2];else{m.notes=Array.isArray(m.notes)?m.notes:[];m.notes.push(detail)}saveMemory(m);return `Saved to your local memory, Boss: “${detail}”.`}
-    if(/show my memory|what do you remember|what is my favourite|what is my favorite|what's my favourite|what's my favorite/i.test(text)){const a=Object.entries(m).flatMap(([k,v])=>k==='notes'?v.map(n=>'note: '+n):[`${k}: ${v}`]);return a.length?'LOCAL MEMORY\n'+a.join('\n'):'Your memory is empty. Try: “Remember that my favourite colour is black.”'}
-    if(/forget my memory|clear memory|delete my memory/i.test(text)){localStorage.removeItem(MEMORY_KEY);return 'Your local memory has been cleared.'}return null}
-  async function weather(place){const name=place||'Hyderabad';const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`);if(!g.ok)throw Error('Location service unavailable.');const loc=(await g.json()).results?.[0];if(!loc)throw Error(`Could not find ${name}.`);const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`);if(!r.ok)throw Error('Weather service unavailable.');const c=(await r.json()).current;const codes={0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorm'};return `WEATHER SCAN — ${loc.name}, ${loc.country||''}\n${codes[c.weather_code]||'Current conditions'}\nTemperature: ${c.temperature_2m}°C (feels like ${c.apparent_temperature}°C)\nHumidity: ${c.relative_humidity_2m}%\nWind: ${c.wind_speed_10m} km/h\nUpdated: ${c.time}`}
-  async function gemini(prompt,imageData){const key=localStorage.getItem(API_KEY);if(!key)return 'I can run local tools, Boss, but AI chat needs a Gemini API key. Tap ⌘ in the top-right to add one. Try “plan tomorrow”, “weather in Hyderabad”, “calculate 12*8”, or “what time is it”.';const parts=[{text:`You are D.I.S.C.O., a helpful futuristic assistant. Call the user Boss. Answer clearly in simple English.\nUser request: ${prompt||'Please describe this image.'}`}];if(imageData){const m=imageData.match(/^data:(image\/[\w.+-]+);base64,(.+)$/);if(m)parts.push({inline_data:{mime_type:m[1],data:m[2]}})}const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{temperature:.7,maxOutputTokens:900}})});const data=await res.json().catch(()=>({}));if(!res.ok){if(res.status===429)throw Error('Gemini rate limit reached. Wait a little and try again.');throw Error(data.error?.message||`AI request failed (${res.status}). Check the API key and Gemini API access.`)}const answer=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('\n').trim();if(!answer)throw Error('AI returned no text. Try again.');return answer}
-   
-  function open(url){window.open(url,'_blank','noopener,noreferrer')}
-  async function route(raw,image){const text=raw.trim(),q=norm(text);if(!q&&!image)return 'Enter a command first, Boss.';
-    if(/^(activate|start|enable)\s+(all\s+)?agents?$/.test(q)||q==='activate all agents'){agentsActive=true;refreshStatus();return 'AGENT NETWORK ACTIVATED.\nORACLE: ready for questions\nCHRONOS: clock, schedule and timer ready\nMNEMOS: local memory ready\nATMOS: weather lookup ready\nOPTIC: image input ready\nCalculator and search tools ready. AI chat needs a Gemini key.'}
-    if(/^(deactivate|stop|disable)\s+agents?$/.test(q)){agentsActive=false;refreshStatus();return 'Agent network placed in standby. Type “activate agents” to turn it on.'}
-    const mem=memoryCommand(text);if(mem)return mem;
-    if(/^(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(q))return 'Hello, Boss. D.I.S.C.O. is online. What shall we work on?';
-    if(/plan (for )?tomorrow|tomorrow('s)? plan|make (me )?a plan for tomorrow/.test(q))return tomorrowPlan();
-    if(/what time|current time|time is it|^time$|what date|current date|today's date/.test(q))return `CHRONOS CLOCK\nTime: ${clock()}\nDate: ${new Date().toLocaleDateString([], {weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
-    if(/weather|forecast|temperature/.test(q)){const m=text.match(/(?:weather|forecast|temperature)(?:\s+(?:in|for|at))?\s+(.+)$/i);try{return await weather(m?.[1]?.replace(/[?.!]+$/,'').trim()||'Hyderabad')}catch(e){return e.message}}
-    if(/^(start|set|create)\s+(a\s+)?timer|\btimer for\b/.test(q)){const m=q.match(/(\d+(?:\.\d+)?)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)/);if(!m)return 'Try “set a timer for 5 minutes”.';const n=Number(m[1]),u=m[2],secs=n*(/hour|hr/.test(u)?3600:/min/.test(u)?60:1);if(secs<=0||secs>86400)return 'Choose a timer between 1 second and 24 hours.';clearTimeout(timerHandle);timerHandle=setTimeout(()=>{toast(`TIMER COMPLETE: ${n} ${u}`);addMessage(`Timer complete, Boss (${n} ${u}).`,'assistant','CHRONOS / TIMER');if(navigator.vibrate)navigator.vibrate([150,80,150])},secs*1000);return `Timer started for ${n} ${u}. Keep this page open for the alert.`}
-    if(/cancel timer|stop timer/.test(q)){clearTimeout(timerHandle);return 'Timer cancelled.'}
-    if(/^(calculate|calc|what is|solve)\s*[\d(+-]/i.test(text)||/^\d[\d\s()+\-*/%.^]*$/.test(text)){try{const v=calculate(text);if(v!==null)return `CALCULATOR RESULT\n${text.replace(/^calculate\s*/i,'')} = ${v}`}catch(e){return e.message}}
-    if(/open\s+(google|youtube|github|instagram)$/.test(q)){const site=q.replace(/^(open|go to)\s*/,'');const urls={google:'https://google.com',youtube:'https://youtube.com',github:'https://github.com',instagram:'https://instagram.com'};open(urls[site]);return `Opening ${site}.`}
-    if(/youtube/.test(q)&&/search|find|play/.test(q)){const query=text.replace(/.*?(?:search|find|play)\s+(?:youtube\s+for\s+)?/i,'').trim();open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query||text)}`);return `Searching YouTube for ${query||text}.`}
-    if(/search (google|web) for|google search/.test(q)){const query=text.replace(/.*?(?:search (?:google|web) for|google search)\s*/i,'');open(`https://www.google.com/search?q=${encodeURIComponent(query||text)}`);return `Searching Google for ${query||text}.`}
-    if(/translate/.test(q)&&/telugu/.test(q)){const phrase=text.replace(/translate/i,'').replace(/\bto\s+telugu\b/i,'').replace(/\bin\s+telugu\b/i,'').replace(/[“”"]/g,'').trim();const d={hello:'హలో','how are you':'మీరు ఎలా ఉన్నారు?',thanks:'ధన్యవాదాలు','thank you':'ధన్యవాదాలు',yes:'అవును',no:'కాదు','good morning':'శుభోదయం','i am fine':'నేను బాగున్నాను'};if(d[phrase.toLowerCase()])return `Telugu: ${d[phrase.toLowerCase()]}`;return gemini(`Translate into Telugu: ${phrase}`,image)}
-    if(/battery/.test(q)){if(navigator.getBattery){try{const b=await navigator.getBattery();return `DEVICE BATTERY\nCharge: ${Math.round(b.level*100)}%\nCharging: ${b.charging?'Yes':'No'}`}catch{}}return 'This browser does not share battery information. Check device settings.'}
-    if(/camera|take a photo|vision scanner/.test(q)&&!image){$('imageInput').click();return 'Vision scanner opened. Select or take a photo, then send it with a question.'}
-    if(/what do you know about me|who am i/.test(q)){const m=memory();return `I am D.I.S.C.O., your assistant, Boss.\n${Object.entries(m).map(([k,v])=>`${k}: ${Array.isArray(v)?v.join(', '):v}`).join('\n')||'No personal details are saved yet.'}`}
-    if(!agentsActive)return 'The agent network is in standby. Type “activate agents” to switch it on.';
-    return gemini(text,image)
-  }
-  async function send(textOverride){const text=(textOverride??input.value).trim(),image=chosenImage;if(!text&&!image)return;addMessage(text||(image?'Please analyse this image.':''),'user',image?'IMAGE / COMMAND':'OUTGOING COMMAND');input.value='';chosenImage=null;$('imageWrap').hidden=true;$('imagePreview').removeAttribute('src');busy(true);const typing=addMessage('Connecting to the selected tool…','assistant','PROCESSING');try{const answer=await route(text,image);typing.remove();addMessage(answer,'assistant','CORE RESPONSE')}catch(e){typing.remove();addMessage(`I could not complete that request, Boss.\n${e.message||'Unknown error'}\n\nTap ⌘ to check the AI connection. Local tools do not need an API key.`,'assistant','CONNECTION NOTICE')}finally{busy(false);input.focus()}}
-  form.addEventListener('submit',e=>{e.preventDefault();send()});
-  $('clearBtn').addEventListener('click',()=>{chat.replaceChildren();addMessage('Conversation cleared, Boss. Your saved local memory is unchanged.');toast('CHAT CLEARED')});
-  $('activateBtn').addEventListener('click',()=>send('activate agents'));
-  document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.prompt==='show my memory'){send('show my memory');return}send(b.dataset.prompt)}));
-  function openKeyModal(){$('apiKeyInput').value=localStorage.getItem(API_KEY)||'';$('keyModal').hidden=false;$('apiKeyInput').focus()}
-  $('keyBtn').addEventListener('click',openKeyModal);$('closeKeyBtn').addEventListener('click',()=>$('keyModal').hidden=true);$('keyModal').addEventListener('click',e=>{if(e.target===$('keyModal'))$('keyModal').hidden=true});
-  $('saveKeyBtn').addEventListener('click',()=>{const k=$('apiKeyInput').value.trim();if(!k){toast('Paste an API key first');return}localStorage.setItem(API_KEY,k);refreshStatus();$('keyModal').hidden=true;toast('AI CONNECTION SAVED')});
-  $('removeKeyBtn').addEventListener('click',()=>{localStorage.removeItem(API_KEY);$('apiKeyInput').value='';refreshStatus();$('keyModal').hidden=true;toast('AI KEY REMOVED')});
-  function pickImage(){$('imageInput').click()}$('cameraBtn').addEventListener('click',pickImage);$('imageBtn').addEventListener('click',pickImage);$('coreOrb').addEventListener('dblclick',pickImage);
-  $('imageInput').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Choose an image');return}if(f.size>8*1024*1024){toast('Image must be under 8 MB');return}const r=new FileReader();r.onload=()=>{chosenImage=r.result;$('imagePreview').src=chosenImage;$('imageName').textContent=f.name;$('imageWrap').hidden=false;input.placeholder='Ask a question about this image…';input.focus()};r.readAsDataURL(f);e.target.value=''});
-  $('removeImageBtn').addEventListener('click',()=>{chosenImage=null;$('imageWrap').hidden=true;$('imagePreview').removeAttribute('src');input.placeholder='Enter a command, Boss…'});
-  $('micBtn').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Voice input is not supported in this browser. Try Chrome.');return}if(recognition){recognition.stop();return}recognition=new SR();recognition.lang='en-GB';recognition.interimResults=false;$('micBtn').classList.add('recording');$('voiceStatus').textContent='LISTENING';toast('Listening… speak now');recognition.onresult=e=>{input.value=e.results[0][0].transcript;toast('Voice captured — tap Transmit')};recognition.onerror=e=>toast(`Voice input: ${e.error}`);recognition.onend=()=>{recognition=null;$('micBtn').classList.remove('recording');$('voiceStatus').textContent='READY'};recognition.start()});
-  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openKeyModal()}if(e.key==='Escape')$('keyModal').hidden=true});
-  window.discoSpeak=text=>{if(!('speechSynthesis'in window)){toast('Speech output is unsupported');return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text));u.lang='en-GB';u.rate=.94;speechSynthesis.speak(u)};
-  if(!navigator.onLine)toast('Offline mode: local commands still work');console.info('D.I.S.C.O. Future Interface loaded.');
+
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const API_KEY = "disco_gemini_key";
+const MEMORY_KEY = "disco_memory";
+
+let selectedImage = null;
+let recognition = null;
+let timer = null;
+
+
+/* =========================
+   CLOCK
+========================= */
+
+function updateClock() {
+
+    const now = new Date();
+
+    $("clock").textContent =
+        now.toLocaleTimeString("en-GB");
+
+    $("date").textContent =
+        now.toLocaleDateString("en-GB", {
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }).toUpperCase();
+}
+
+updateClock();
+
+setInterval(updateClock, 1000);
+
+
+/* =========================
+   TOAST
+========================= */
+
+let toastTimer;
+
+function toast(message) {
+
+    const box = $("toast");
+
+    box.textContent = message;
+    box.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+        box.classList.remove("show");
+    }, 2500);
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+function setState(text) {
+
+    $("coreState").textContent = text;
+}
+
+
+function updateStatus() {
+
+    $("network").textContent =
+        navigator.onLine
+            ? "NETWORK READY"
+            : "OFFLINE MODE";
+
+    $("neuralStatus").textContent =
+        localStorage.getItem(API_KEY)
+            ? "CONNECTED"
+            : "LOCAL";
+
+    $("memoryStatus").textContent =
+        localStorage.getItem(MEMORY_KEY)
+            ? "ACTIVE"
+            : "LOCAL";
+}
+
+updateStatus();
+
+
+/* =========================
+   CHAT
+========================= */
+
+function addMessage(text, user = false) {
+
+    const message =
+        document.createElement("div");
+
+    message.className =
+        user ? "message user" : "message";
+
+    const avatar =
+        document.createElement("div");
+
+    avatar.className = "avatar";
+    avatar.textContent =
+        user ? "B" : "D";
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className = "bubble";
+
+    const name =
+        document.createElement("strong");
+
+    name.textContent =
+        user ? "BOSS" : "DISCO";
+
+    const paragraph =
+        document.createElement("p");
+
+    paragraph.textContent = text;
+
+    bubble.appendChild(name);
+    bubble.appendChild(paragraph);
+
+    message.appendChild(avatar);
+    message.appendChild(bubble);
+
+    $("chat").appendChild(message);
+
+    $("chat").scrollTop =
+        $("chat").scrollHeight;
+}
+
+
+/* =========================
+   MEMORY
+========================= */
+
+function getMemory() {
+
+    try {
+
+        return JSON.parse(
+            localStorage.getItem(MEMORY_KEY) || "{}"
+        );
+
+    } catch {
+
+        return {};
+    }
+}
+
+
+function saveMemory(memory) {
+
+    localStorage.setItem(
+        MEMORY_KEY,
+        JSON.stringify(memory)
+    );
+
+    updateStatus();
+}
+
+
+function memoryCommand(text) {
+
+    const lower =
+        text.toLowerCase();
+
+    const memory =
+        getMemory();
+
+
+    if (lower.startsWith("remember ")) {
+
+        const information =
+            text.substring(9).trim();
+
+        memory.notes =
+            memory.notes || [];
+
+        memory.notes.push(
+            information
+        );
+
+        saveMemory(memory);
+
+        return `Saved to memory, Boss:
+${information}`;
+    }
+
+
+    if (
+        lower.includes("show memory") ||
+        lower.includes("what do you remember")
+    ) {
+
+        if (!memory.notes?.length) {
+
+            return "My local memory is empty, Boss.";
+        }
+
+        return "LOCAL MEMORY\n\n" +
+            memory.notes
+                .map((x, i) =>
+                    `${i + 1}. ${x}`
+                )
+                .join("\n");
+    }
+
+
+    if (
+        lower.includes("clear memory") ||
+        lower.includes("forget memory")
+    ) {
+
+        localStorage.removeItem(
+            MEMORY_KEY
+        );
+
+        updateStatus();
+
+        return "Local memory cleared, Boss.";
+    }
+
+    return null;
+}
+
+
+/* =========================
+   CALCULATOR
+========================= */
+
+function calculator(text) {
+
+    let expression =
+        text
+            .replace(/^calculate/i, "")
+            .replace(/^calc/i, "")
+            .trim();
+
+    if (!expression) {
+        return null;
+    }
+
+    if (!/^[0-9+\-*/().%\s]+$/.test(expression)) {
+        return null;
+    }
+
+    try {
+
+        const result =
+            Function(
+                `"use strict"; return (${expression})`
+            )();
+
+        if (!Number.isFinite(result)) {
+            return "Invalid calculation.";
+        }
+
+        return `${expression} = ${result}`;
+
+    } catch {
+
+        return "I could not calculate that.";
+    }
+}
+
+
+/* =========================
+   TOMORROW PLAN
+========================= */
+
+function tomorrowPlan() {
+
+    return `TOMORROW'S DISCO PLAN
+
+07:00 — Wake up and get ready
+08:00 — Breakfast
+08:30 — Main study session
+10:00 — Short break
+10:15 — Practise questions
+12:00 — College work
+13:00 — Lunch
+14:00 — Rest
+15:00 — Revision
+16:30 — Exercise / walk
+17:15 — Free time
+18:30 — Study session
+20:00 — Dinner
+20:30 — Light revision
+21:30 — Prepare for tomorrow
+22:00 — Sleep
+
+Focus on your three most important tasks, Boss.`;
+}
+
+
+/* =========================
+   WEATHER
+========================= */
+
+async function weather(city = "Hyderabad") {
+
+    try {
+
+        const search =
+            await fetch(
+                `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+            );
+
+        const locations =
+            await search.json();
+
+        const location =
+            locations.results?.[0];
+
+        if (!location) {
+
+            return "I could not find that location.";
+        }
+
+        const response =
+            await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`
+            );
+
+        const data =
+            await response.json();
+
+        const current =
+            data.current;
+
+        return `WEATHER — ${location.name}
+
+Temperature: ${current.temperature_2m}°C
+Humidity: ${current.relative_humidity_2m}%
+Wind: ${current.wind_speed_10m} km/h`;
+
+    } catch {
+
+        return "Weather service is currently unavailable.";
+    }
+}
+
+
+/* =========================
+   TIMER
+========================= */
+
+function startTimer(text) {
+
+    const match =
+        text.match(
+            /(\d+)\s*(second|seconds|minute|minutes|hour|hours)/i
+        );
+
+    if (!match) {
+
+        return "Example: set timer for 5 minutes.";
+    }
+
+    const amount =
+        Number(match[1]);
+
+    const unit =
+        match[2].toLowerCase();
+
+    let seconds = amount;
+
+    if (unit.startsWith("minute")) {
+        seconds *= 60;
+    }
+
+    if (unit.startsWith("hour")) {
+        seconds *= 3600;
+    }
+
+    clearTimeout(timer);
+
+    timer =
+        setTimeout(() => {
+
+            toast("TIMER COMPLETE");
+
+            addMessage(
+                "Timer complete, Boss."
+            );
+
+            if (navigator.vibrate) {
+                navigator.vibrate([
+                    200, 100, 200
+                ]);
+            }
+
+        }, seconds * 1000);
+
+    return `Timer started for ${amount} ${unit}.`;
+}
+
+
+/* =========================
+   LOCAL COMMANDS
+========================= */
+
+async function localCommand(text) {
+
+    const q =
+        text.toLowerCase().trim();
+
+
+    if (
+        q === "hi" ||
+        q === "hello" ||
+        q === "hey"
+    ) {
+
+        return "Hello, Boss. DISCO is online.";
+    }
+
+
+    if (
+        q.includes("activate agents") ||
+        q === "activate agent"
+    ) {
+
+        $("agentStatus").textContent =
+            "ACTIVE";
+
+        return `AGENT NETWORK ACTIVATED
+
+ORACLE — READY
+CHRONOS — READY
+MNEMOS — READY
+VISION — READY
+ATMOS — READY`;
+    }
+
+
+    if (
+        q.includes("plan tomorrow") ||
+        q.includes("plan for tomorrow")
+    ) {
+
+        return tomorrowPlan();
+    }
+
+
+    if (
+        q.includes("what time") ||
+        q === "time" ||
+        q.includes("current time")
+    ) {
+
+        return `CURRENT TIME
+
+${new Date().toLocaleTimeString("en-GB")}
+
+${new Date().toLocaleDateString("en-GB")}`;
+    }
+
+
+    if (
+        q === "weather" ||
+        q.includes("weather in")
+    ) {
+
+        const match =
+            text.match(
+                /weather\s+(?:in|at|for)\s+(.+)/i
+            );
+
+        return weather(
+            match
+                ? match[1].trim()
+                : "Hyderabad"
+        );
+    }
+
+
+    if (
+        q.startsWith("set timer") ||
+        q.startsWith("start timer") ||
+        q.includes("timer for")
+    ) {
+
+        return startTimer(text);
+    }
+
+
+    const memory =
+        memoryCommand(text);
+
+    if (memory) {
+        return memory;
+    }
+
+
+    if (
+        q.startsWith("calculate") ||
+        q.startsWith("calc")
+    ) {
+
+        const result =
+            calculator(text);
+
+        if (result) {
+            return result;
+        }
+    }
+
+
+    if (/^[0-9+\-*/().%\s]+$/.test(text)) {
+
+        const result =
+            calculator(text);
+
+        if (result) {
+            return result;
+        }
+    }
+
+
+    return null;
+}
+  /* =========================
+   GEMINI AI
+========================= */
+async function askAI(text, image) {
+    const key = localStorage.getItem(API_KEY);
+
+    if (!key) {
+        return `I can handle local commands, Boss.
+
+For full AI conversation, open ⚙ and add your Gemini API key.
+
+Try:
+• activate agents
+• plan tomorrow
+• weather
+• calculate 25*4
+• remember my favourite colour is black`;
+    }
+
+    const parts = [{
+        text:
+            `You are DISCO, a futuristic AI assistant.
+
+Call the user Boss.
+
+Use simple, clear English.
+
+User message:
+${text || "Analyse this image."}`
+    }];
+
+    if (image) {
+        const match = image.match(
+            /^data:(image\/[^;]+);base64,(.+)$/
+        );
+
+        if (match) {
+            parts.push({
+                inline_data: {
+                    mime_type: match[1],
+                    data: match[2]
+                }
+            });
+        }
+    }
+
+    const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                contents: [{
+                    role: "user",
+                    parts
+                }]
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.error?.message || "AI request failed."
+        );
+    }
+
+    return (
+        data.candidates?.[0]?.content?.parts
+            ?.map(part => part.text || "")
+            .join("\n")
+            .trim()
+    ) || "DISCO received no response.";
+}
+
+
+/* =========================
+   SEND
+========================= */
+async function sendMessage(text) {
+    text = text.trim();
+
+    if (!text && !selectedImage) return;
+
+    const image = selectedImage;
+
+    addMessage(
+        text || "Analyse this image.",
+        true
+    );
+
+    $("msg").value = "";
+
+    selectedImage = null;
+    $("imageBox").hidden = true;
+
+    setState("PROCESSING");
+
+    try {
+        const local = await localCommand(text);
+
+        if (local) {
+            addMessage(local);
+        } else {
+            const answer = await askAI(text, image);
+            addMessage(answer);
+        }
+
+    } catch (error) {
+
+        addMessage(
+            `DISCO connection error.
+
+${error.message}
+
+Check your AI key in ⚙ settings.`
+        );
+
+    } finally {
+        setState("CORE READY");
+    }
+}
+
+
+/* =========================
+   FORM
+========================= */
+$("commandForm").addEventListener(
+    "submit",
+    event => {
+        event.preventDefault();
+        sendMessage($("msg").value);
+    }
+);
+
+
+/* =========================
+   QUICK COMMANDS
+========================= */
+document
+    .querySelectorAll("[data-command]")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+                sendMessage(
+                    button.dataset.command
+                );
+            }
+        );
+
+    });
+
+
+/* =========================
+   CLEAR CHAT
+========================= */
+$("clearBtn").addEventListener(
+    "click",
+    () => {
+
+        $("chat").innerHTML = "";
+
+        addMessage(
+            "Chat cleared, Boss. DISCO is ready."
+        );
+
+    }
+);
+
+
+/* =========================
+   IMAGE
+========================= */
+$("imageBtn").addEventListener(
+    "click",
+    () => {
+        $("imageInput").click();
+    }
+);
+
+
+$("imageInput").addEventListener(
+    "change",
+    event => {
+
+        const file =
+            event.target.files?.[0];
+
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            toast("Please select an image.");
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+
+            selectedImage = reader.result;
+
+            $("preview").src =
+                selectedImage;
+
+            $("imageName").textContent =
+                file.name;
+
+            $("imageBox").hidden = false;
+
+            $("msg").placeholder =
+                "Ask DISCO about this image...";
+        };
+
+        reader.readAsDataURL(file);
+    }
+);
+
+
+$("removeImage").addEventListener(
+    "click",
+    () => {
+
+        selectedImage = null;
+
+        $("imageBox").hidden = true;
+
+        $("preview")
+            .removeAttribute("src");
+
+        $("msg").placeholder =
+            "Enter command, Boss...";
+    }
+);
+
+
+/* =========================
+   VOICE
+========================= */
+$("micBtn").addEventListener(
+    "click",
+    () => {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            toast(
+                "Voice input is not supported here."
+            );
+            return;
+        }
+
+        if (recognition) {
+            recognition.stop();
+            return;
+        }
+
+        recognition =
+            new SpeechRecognition();
+
+        recognition.lang = "en-GB";
+        recognition.interimResults = false;
+
+        $("voiceStatus").textContent =
+            "LISTENING";
+
+        recognition.onresult =
+            event => {
+
+                $("msg").value =
+                    event.results[0][0]
+                        .transcript;
+            };
+
+        recognition.onerror =
+            () => {
+
+                toast(
+                    "Voice input error."
+                );
+            };
+
+        recognition.onend =
+            () => {
+
+                recognition = null;
+
+                $("voiceStatus").textContent =
+                    "READY";
+            };
+
+        recognition.start();
+    }
+);
+
+
+/* =========================
+   SETTINGS
+========================= */
+$("settingsBtn").addEventListener(
+    "click",
+    () => {
+
+        $("apiKey").value =
+            localStorage.getItem(API_KEY) || "";
+
+        $("settingsModal").hidden = false;
+    }
+);
+
+
+$("closeSettings").addEventListener(
+    "click",
+    () => {
+
+        $("settingsModal").hidden = true;
+    }
+);
+
+
+$("saveKey").addEventListener(
+    "click",
+    () => {
+
+        const key =
+            $("apiKey").value.trim();
+
+        if (!key) {
+            toast("Enter an API key.");
+            return;
+        }
+
+        localStorage.setItem(
+            API_KEY,
+            key
+        );
+
+        $("settingsModal").hidden = true;
+
+        updateStatus();
+
+        toast(
+            "AI CONNECTION SAVED"
+        );
+    }
+);
+
+
+$("removeKey").addEventListener(
+    "click",
+    () => {
+
+        localStorage.removeItem(
+            API_KEY
+        );
+
+        $("apiKey").value = "";
+
+        updateStatus();
+
+        toast(
+            "AI KEY REMOVED"
+        );
+    }
+);
+
+
+/* =========================
+   ONLINE STATUS
+========================= */
+window.addEventListener(
+    "online",
+    updateStatus
+);
+
+window.addEventListener(
+    "offline",
+    updateStatus
+);
+
+
+/* =========================
+   STARTUP
+========================= */
+updateStatus();
+
+console.log(
+    "DISCO Future AI Core loaded."
+);
+
 })();
-   
