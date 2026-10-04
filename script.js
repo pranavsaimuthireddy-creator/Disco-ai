@@ -1,1360 +1,1761 @@
 (() => {
+    "use strict";
 
-"use strict";
+    // =========================================
+    // DISCO CONFIGURATION
+    // =========================================
 
-const MODEL = "gemini-3.8-flash";
-const API_STORAGE_KEY = "disco_gemini_key";
-const MEMORY_STORAGE_KEY = "disco_memory";
+    const MODEL = "gemini-3.8-flash";
 
-const DISCO_LOCATION =
-    "Gajuwaka, Visakhapatnam, Andhra Pradesh, India";
+    const API_STORAGE_KEY = "disco_gemini_key";
+    const MEMORY_STORAGE_KEY = "disco_memory";
 
-const $ = id => document.getElementById(id);
-
-let selectedImage = null;
-let recognition = null;
-let voices = [];
-let listening = false;
+    const DISCO_LOCATION =
+        "Gajuwaka, Visakhapatnam, Andhra Pradesh, India";
 
 
-/* =========================
-   TOAST
-========================= */
+    // =========================================
+    // ELEMENT HELPER
+    // =========================================
 
-function toast(message) {
-    const box = $("toast");
-    if (!box) return;
-
-    box.textContent = message;
-    box.classList.add("show");
-
-    clearTimeout(box._timer);
-
-    box._timer = setTimeout(() => {
-        box.classList.remove("show");
-    }, 2500);
-}
+    const $ = (id) => document.getElementById(id);
 
 
-/* =========================
-   CLOCK
-========================= */
+    // =========================================
+    // GLOBAL VARIABLES
+    // =========================================
 
-function updateClock() {
+    let selectedImage = null;
+    let recognition = null;
+    let voices = [];
+    let listening = false;
 
-    const now = new Date();
 
-    const time = now.toLocaleTimeString("en-GB", {
-        hour12: false
-    });
+    // =========================================
+    // TOAST
+    // =========================================
 
-    const date = now.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-    });
+    function toast(message) {
 
-    if ($("clock")) {
-        $("clock").textContent = time;
+        const box = $("toast");
+
+        if (!box) return;
+
+        box.textContent = message;
+        box.hidden = false;
+
+        clearTimeout(box._timer);
+
+        box._timer = setTimeout(() => {
+            box.hidden = true;
+        }, 2500);
     }
 
-    if ($("date")) {
-        $("date").textContent =
-            `${date} // VIZAG`;
-    }
-}
 
-setInterval(updateClock, 1000);
-updateClock();
+    // =========================================
+    // CLOCK
+    // =========================================
 
+    function updateClock() {
 
-/* =========================
-   SYSTEM STATUS
-========================= */
+        const now = new Date();
 
-function getApiKey() {
-    return localStorage.getItem(API_STORAGE_KEY);
-}
-
-
-function getMemory() {
-
-    try {
-        return JSON.parse(
-            localStorage.getItem(MEMORY_STORAGE_KEY) || "[]"
-        );
-    } catch {
-        return [];
-    }
-}
-
-
-function saveMemory(memory) {
-
-    localStorage.setItem(
-        MEMORY_STORAGE_KEY,
-        JSON.stringify(memory)
-    );
-
-    updateStatus();
-}
-
-
-function updateStatus() {
-
-    const key = getApiKey();
-
-    if ($("neuralStatus")) {
-        $("neuralStatus").textContent =
-            key ? "CONNECTED" : "NO KEY";
-    }
-
-    if ($("network")) {
-        $("network").textContent =
-            key ? "AI CONNECTED" : "API KEY REQUIRED";
-    }
-
-    if ($("memoryStatus")) {
-
-        const memory = getMemory();
-
-        $("memoryStatus").textContent =
-            memory.length ? "ACTIVE" : "LOCAL";
-    }
-}
-
-
-function setState(text) {
-
-    if ($("coreState")) {
-        $("coreState").textContent = text;
-    }
-}
-
-
-/* =========================
-   CHAT
-========================= */
-
-function addMessage(sender, text) {
-
-    const chat = $("chat");
-
-    if (!chat) return;
-
-    const message =
-        document.createElement("div");
-
-    message.className =
-        "message" +
-        (sender === "user" ? " user" : "");
-
-    const avatar =
-        document.createElement("div");
-
-    avatar.className = "avatar";
-
-    avatar.textContent =
-        sender === "user" ? "B" : "D";
-
-    const bubble =
-        document.createElement("div");
-
-    bubble.className = "bubble";
-
-    const name =
-        document.createElement("strong");
-
-    name.textContent =
-        sender === "user" ? "BOSS" : "DISCO";
-
-    const paragraph =
-        document.createElement("p");
-
-    paragraph.textContent = text;
-
-    bubble.appendChild(name);
-    bubble.appendChild(paragraph);
-
-    message.appendChild(avatar);
-    message.appendChild(bubble);
-
-    chat.appendChild(message);
-
-    chat.scrollTop = chat.scrollHeight;
-}
-
-
-/* =========================
-   MEMORY
-========================= */
-
-function remember(text) {
-
-    const memory = getMemory();
-
-    memory.push({
-        text,
-        time: new Date().toISOString()
-    });
-
-    while (memory.length > 30) {
-        memory.shift();
-    }
-
-    saveMemory(memory);
-}
-
-
-function memoryCommand() {
-
-    const memory = getMemory();
-
-    if (!memory.length) {
-        return "Boss, I don't have any saved memory yet.";
-    }
-
-    return (
-        "Boss, my saved local memory contains:\n\n" +
-        memory
-            .slice(-10)
-            .map((item, index) =>
-                `${index + 1}. ${item.text}`
-            )
-            .join("\n")
-    );
-}
-
-
-/* =========================
-   VOICE SELECTION
-========================= */
-
-function loadVoices() {
-
-    voices =
-        window.speechSynthesis
-            ? window.speechSynthesis.getVoices()
-            : [];
-}
-
-loadVoices();
-
-if ("speechSynthesis" in window) {
-    speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-
-function findMaleEnglishVoice() {
-
-    const english =
-        voices.filter(voice =>
-            /^en(-|_)/i.test(voice.lang)
-        );
-
-    if (!english.length) {
-        return null;
-    }
-
-    const preferredNames = [
-        "Daniel",
-        "George",
-        "Arthur",
-        "James",
-        "Oliver",
-        "Ryan",
-        "Alex",
-        "Thomas",
-        "Google UK English Male"
-    ];
-
-    for (const name of preferredNames) {
-
-        const found =
-            english.find(voice =>
-                voice.name
-                    .toLowerCase()
-                    .includes(name.toLowerCase())
-            );
-
-        if (found) {
-            return found;
-        }
-    }
-
-    const male =
-        english.find(voice =>
-            /male|man|boy/i.test(voice.name)
-        );
-
-    return male || english[0];
-}
-
-
-/* =========================
-   SPEAK
-========================= */
-
-function speak(text) {
-
-    if (!("speechSynthesis" in window)) {
-        return;
-    }
-
-    speechSynthesis.cancel();
-
-    const utterance =
-        new SpeechSynthesisUtterance(text);
-
-    const voice =
-        findMaleEnglishVoice();
-
-    if (voice) {
-        utterance.voice = voice;
-    }
-
-    utterance.lang = "en-GB";
-    utterance.rate = 0.88;
-    utterance.pitch = 0.82;
-    utterance.volume = 1;
-
-    utterance.onstart = () => {
-
-        if ($("voiceStatus")) {
-            $("voiceStatus").textContent =
-                "SPEAKING";
-        }
-    };
-
-    utterance.onend = () => {
-
-        if ($("voiceStatus")) {
-            $("voiceStatus").textContent =
-                "READY";
-        }
-    };
-
-    speechSynthesis.speak(utterance);
-}
-   /* =========================
-   GEMINI AI
-========================= */
-
-async function askGemini(prompt, image = null) {
-
-    const key = getApiKey();
-
-    if (!key) {
-        throw new Error(
-            "No Gemini API key. Open ⚙ AI KEY and add your key."
-        );
-    }
-
-    const parts = [
-        {
-            text:
-`You are DISCO, a futuristic personal AI assistant.
-
-Address the user as "Boss".
-
-Use clear, simple British English.
-
-The user's location is:
-${DISCO_LOCATION}
-
-Be useful and practical.
-
-Do not invent information about the user's schedule.
-
-If the user asks for a plan, use only the tasks and times the user gives you.
-
-If information is missing, ask for it.
-
-Current date and time:
-${new Date().toLocaleString("en-GB")}
-
-User request:
-${prompt}`
-        }
-    ];
-
-
-    if (image) {
-
-        parts.push({
-            inline_data: {
-                mime_type: image.mimeType,
-                data: image.data
+        const time = now.toLocaleTimeString(
+            "en-GB",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
             }
-        });
-    }
-
-
-    const url =
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
-
-
-    const response =
-        await fetch(url, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
-
-            body: JSON.stringify({
-
-                contents: [
-                    {
-                        role: "user",
-                        parts
-                    }
-                ],
-
-                generationConfig: {
-                    thinkingConfig: {
-                        thinkingLevel: "low"
-                    }
-                }
-
-            })
-        });
-
-
-    const data =
-        await response.json();
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            data?.error?.message ||
-            "Gemini connection failed."
-        );
-    }
-
-
-    const answer =
-        data?.candidates?.[0]?.content?.parts
-            ?.map(part => part.text || "")
-            .join("")
-            .trim();
-
-
-    if (!answer) {
-
-        throw new Error(
-            "Gemini returned an empty response."
-        );
-    }
-
-    return answer;
-}
-
-
-/* =========================
-   PLAN TODAY
-========================= */
-
-async function startPlanToday() {
-
-    const existing =
-        $("msg")?.value.trim();
-
-    if (existing) {
-
-        $("msg").value = "";
-
-        await createTodayPlan(existing);
-
-        return;
-    }
-
-
-    addMessage(
-        "assistant",
-        "Boss, what are the works you need to do today? Tell me everything — college, study, assignments, exercise, travel, personal work, or anything else. I will organise it into a realistic plan."
-    );
-
-    speak(
-        "Boss, what are the works you need to do today?"
-    );
-
-    setState("WAITING FOR YOUR TASKS");
-
-    if ($("msg")) {
-
-        $("msg").placeholder =
-            "Tell DISCO everything you need to do today...";
-
-        $("msg").focus();
-    }
-
-    $("msg").dataset.planMode = "today";
-}
-
-
-/* =========================
-   CREATE TODAY PLAN
-========================= */
-
-async function createTodayPlan(tasks) {
-
-    addMessage("user", tasks);
-
-    setState("BUILDING TODAY'S PLAN");
-
-    if ($("neuralStatus")) {
-        $("neuralStatus").textContent =
-            "THINKING";
-    }
-
-
-    try {
-
-        const answer =
-            await askGemini(
-`Create my plan for TODAY.
-
-These are the works I need to do:
-
-${tasks}
-
-Important:
-- Do not add fake tasks.
-- Use the times I give you.
-- If I did not give a time, choose a sensible time.
-- Keep enough breaks.
-- Do not overload the schedule.
-- Put urgent and important work first.
-- Give me a clear timeline.
-- Use simple English.
-- Call me Boss.
-
-Format:
-
-NOW
-NEXT
-LATER
-EVENING
-NIGHT
-PRIORITY`
-            );
-
-
-        addMessage(
-            "assistant",
-            answer
         );
 
-        speak(answer);
+        const clock = $("clock");
 
-        remember(
-            `Today's plan: ${tasks}`
-        );
-
-    } catch (error) {
-
-        addMessage(
-            "assistant",
-            "DISCO connection error.\n\n" +
-            error.message
-        );
-
-    } finally {
-
-        setState("CORE READY");
-
-        updateStatus();
+        if (clock) {
+            clock.textContent = time;
+        }
     }
-}
+
+    setInterval(updateClock, 1000);
+
+    updateClock();
 
 
-/* =========================
-   PLAN TOMORROW
-========================= */
+    // =========================================
+    // API KEY
+    // =========================================
 
-async function planTomorrow() {
+    function getApiKey() {
 
-    addMessage(
-        "assistant",
-        "Boss, what works do you need to do tomorrow?"
-    );
-
-    speak(
-        "Boss, what works do you need to do tomorrow?"
-    );
-
-    setState("WAITING FOR TOMORROW TASKS");
-
-    if ($("msg")) {
-
-        $("msg").placeholder =
-            "Tell me your work for tomorrow...";
-
-        $("msg").focus();
-
-        $("msg").dataset.planMode =
-            "tomorrow";
-    }
-}
-
-
-/* =========================
-   PLAN INPUT
-========================= */
-
-async function processPlanInput(text) {
-
-    const input = $("msg");
-
-    const mode =
-        input?.dataset.planMode;
-
-
-    if (mode === "today") {
-
-        delete input.dataset.planMode;
-
-        await createTodayPlan(text);
-
-        return true;
+        return localStorage.getItem(API_STORAGE_KEY) || "";
     }
 
 
-    if (mode === "tomorrow") {
+    // =========================================
+    // MEMORY
+    // =========================================
 
-        delete input.dataset.planMode;
-
-        addMessage("user", text);
-
-        setState("BUILDING TOMORROW");
+    function getMemory() {
 
         try {
 
-            const answer =
-                await askGemini(
-`Create a realistic plan for TOMORROW.
-
-My tasks are:
-
-${text}
-
-Use my actual tasks.
-
-If I give a time, respect it.
-
-If I don't give a time, choose a sensible time.
-
-Include breaks.
-
-Prioritise important work.
-
-Use:
-
-MORNING
-AFTERNOON
-EVENING
-NIGHT
-PRIORITY`
-                );
-
-
-            addMessage(
-                "assistant",
-                answer
+            return JSON.parse(
+                localStorage.getItem(MEMORY_STORAGE_KEY) || "{}"
             );
-
-            speak(answer);
 
         } catch (error) {
 
-            addMessage(
-                "assistant",
-                "DISCO connection error.\n\n" +
-                error.message
-            );
+            return {};
+        }
+    }
 
-        } finally {
 
-            setState("CORE READY");
+    function saveMemory(memory) {
 
-            updateStatus();
+        localStorage.setItem(
+            MEMORY_STORAGE_KEY,
+            JSON.stringify(memory)
+        );
+    }
+
+
+    // =========================================
+    // STATUS
+    // =========================================
+
+    function setState(state) {
+
+        const systemState = $("systemState");
+
+        if (systemState) {
+            systemState.textContent = state;
+        }
+    }
+
+
+    function updateStatus() {
+
+        const keyExists = Boolean(getApiKey());
+
+        const aiStatus = $("aiStatus");
+        const networkStatus = $("networkStatus");
+        const memoryStatus = $("memoryStatus");
+
+        if (aiStatus) {
+            aiStatus.textContent =
+                keyExists ? "CONNECTED" : "KEY REQUIRED";
         }
 
-        return true;
+        if (networkStatus) {
+
+            networkStatus.textContent =
+                navigator.onLine ? "ONLINE" : "OFFLINE";
+        }
+
+        if (memoryStatus) {
+
+            memoryStatus.textContent = "READY";
+        }
     }
 
 
-    return false;
-}
+    // =========================================
+    // CHAT MESSAGE
+    // =========================================
 
-
-/* =========================
-   LOCAL COMMANDS
-========================= */
-
-function localCommand(text) {
-
-    const lower =
-        text.toLowerCase().trim();
-
-
-    if (
-        lower === "plan today" ||
-        lower === "today's plan" ||
-        lower === "plan my day"
+    function addMessage(
+        text,
+        type = "ai"
     ) {
 
-        return {
-            type: "plan-today"
-        };
+        const chat = $("chat");
+
+        if (!chat) return;
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            `message ${type}-message`;
+
+
+        const label =
+            document.createElement("div");
+
+        label.className =
+            "message-label";
+
+        label.textContent =
+            type === "user"
+                ? "BOSS"
+                : "DISCO";
+
+
+        const content =
+            document.createElement("div");
+
+        content.className =
+            "message-content";
+
+        content.textContent = text;
+
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(content);
+
+        chat.appendChild(wrapper);
+
+        chat.scrollTop =
+            chat.scrollHeight;
     }
 
 
-    if (
-        lower === "plan tomorrow" ||
-        lower === "tomorrow's plan"
-    ) {
+    // =========================================
+    // MEMORY FUNCTIONS
+    // =========================================
 
-        return {
-            type: "plan-tomorrow"
-        };
+    function remember(key, value) {
+
+        const memory = getMemory();
+
+        memory[key] = value;
+
+        saveMemory(memory);
+
+        toast("Memory saved.");
     }
 
 
-    if (
-        lower === "show memory" ||
-        lower === "memory"
-    ) {
+    function showMemory() {
 
-        return {
-            type: "answer",
-            text: memoryCommand()
-        };
-    }
+        const memory = getMemory();
 
+        const keys =
+            Object.keys(memory);
 
-    if (
-        lower === "activate agents"
-    ) {
-
-        return {
-            type: "answer",
-            text:
-                "Agents activated, Boss. DISCO is ready."
-        };
-    }
-
-
-    if (
-        lower === "what time is it" ||
-        lower === "time"
-    ) {
-
-        return {
-            type: "answer",
-            text:
-                `Boss, the current time is ${new Date().toLocaleTimeString("en-GB")}.`
-        };
-    }
-
-
-    if (
-        lower === "hello" ||
-        lower === "hi" ||
-        lower === "hey"
-    ) {
-
-        return {
-            type: "answer",
-            text:
-                "Hello, Boss. DISCO is online and ready."
-        };
-    }
-
-
-    return null;
-}
-
-
-/* =========================
-   SEND MESSAGE
-========================= */
-
-async function sendMessage(text) {
-
-    text = text.trim();
-
-    if (!text) return;
-
-
-    if (
-        await processPlanInput(text)
-    ) {
-        return;
-    }
-
-
-    const command =
-        localCommand(text);
-
-
-    if (
-        command?.type === "plan-today"
-    ) {
-
-        await startPlanToday();
-
-        return;
-    }
-
-
-    if (
-        command?.type === "plan-tomorrow"
-    ) {
-
-        await planTomorrow();
-
-        return;
-    }
-
-
-    addMessage("user", text);
-
-    setState("PROCESSING");
-
-    if ($("neuralStatus")) {
-        $("neuralStatus").textContent =
-            "THINKING";
-    }
-
-
-    try {
-
-        if (command?.type === "answer") {
+        if (keys.length === 0) {
 
             addMessage(
-                "assistant",
-                command.text
+                "Boss, I currently have no saved memories."
             );
-
-            speak(command.text);
 
             return;
         }
 
 
-        const answer =
-            await askGemini(
-                text,
-                selectedImage
+        let output =
+            "Boss, my saved memories:\n\n";
+
+
+        keys.forEach((key) => {
+
+            output +=
+                `${key}: ${memory[key]}\n`;
+        });
+
+
+        addMessage(output);
+    }
+
+
+    // =========================================
+    // VOICE SYSTEM
+    // =========================================
+
+    function loadVoices() {
+
+        if (!("speechSynthesis" in window)) {
+            return;
+        }
+
+        voices =
+            window.speechSynthesis.getVoices();
+    }
+
+
+    if ("speechSynthesis" in window) {
+
+        loadVoices();
+
+        window.speechSynthesis
+            .addEventListener(
+                "voiceschanged",
+                loadVoices
             );
-
-
-        addMessage(
-            "assistant",
-            answer
-        );
-
-        speak(answer);
-
-    } catch (error) {
-
-        addMessage(
-            "assistant",
-            "DISCO connection error.\n\n" +
-            error.message
-        );
-
-    } finally {
-
-        setState("CORE READY");
-
-        updateStatus();
     }
-       }
-   /* =========================
-   COMMAND FORM
-========================= */
 
-$("commandForm")?.addEventListener(
-    "submit",
-    async event => {
 
-        event.preventDefault();
+    function findMaleEnglishVoice() {
 
-        const input = $("msg");
+        if (!voices.length) {
+            return null;
+        }
 
-        const text =
-            input.value.trim();
 
-        if (!text) return;
+        const preferredNames = [
 
-        input.value = "";
+            "Daniel",
+            "George",
+            "Arthur",
+            "James",
+            "Oliver",
+            "Ryan",
+            "Alex",
+            "Thomas",
+            "Google UK English Male"
 
-        await sendMessage(text);
+        ];
+
+
+        for (const name of preferredNames) {
+
+            const voice =
+                voices.find(v =>
+                    v.name
+                        .toLowerCase()
+                        .includes(
+                            name.toLowerCase()
+                        )
+                );
+
+            if (voice) {
+                return voice;
+            }
+        }
+
+
+        const maleVoice =
+            voices.find(v => {
+
+                const name =
+                    v.name.toLowerCase();
+
+                return (
+                    name.includes("male") ||
+                    name.includes("man") ||
+                    name.includes("boy")
+                );
+            });
+
+
+        if (maleVoice) {
+            return maleVoice;
+        }
+
+
+        return voices.find(v =>
+            v.lang &&
+            v.lang.toLowerCase()
+                .startsWith("en")
+        ) || null;
     }
-);
 
 
-/* =========================
-   QUICK COMMANDS
-========================= */
+    function speak(text) {
 
-document
-    .querySelectorAll("[data-command]")
-    .forEach(button => {
+        if (
+            !("speechSynthesis" in window)
+        ) {
+            return;
+        }
 
-        button.addEventListener(
-            "click",
-            async () => {
 
-                const command =
-                    button.dataset.command;
+        window.speechSynthesis.cancel();
 
-                if (
-                    command === "plan today"
-                ) {
 
-                    await startPlanToday();
+        const utterance =
+            new SpeechSynthesisUtterance(text);
 
-                    return;
-                }
 
-                if (
-                    command === "plan tomorrow"
-                ) {
+        const voice =
+            findMaleEnglishVoice();
 
-                    await planTomorrow();
 
-                    return;
-                }
+        if (voice) {
+            utterance.voice = voice;
+        }
 
-                await sendMessage(command);
+
+        utterance.lang = "en-GB";
+
+        utterance.rate = 0.88;
+
+        utterance.pitch = 0.82;
+
+
+        const voiceStatus =
+            $("voiceStatus");
+
+        if (voiceStatus) {
+            voiceStatus.textContent =
+                "SPEAKING";
+        }
+
+
+        utterance.onend = () => {
+
+            if (voiceStatus) {
+                voiceStatus.textContent =
+                    "READY";
             }
-        );
-    });
-
-
-/* =========================
-   CLEAR CHAT
-========================= */
-
-$("clearBtn")?.addEventListener(
-    "click",
-    () => {
-
-        $("chat").innerHTML = "";
-
-        addMessage(
-            "assistant",
-            "Chat cleared, Boss. DISCO is ready."
-        );
-
-        setState("CORE READY");
-    }
-);
-
-
-/* =========================
-   IMAGE UPLOAD
-========================= */
-
-$("imageBtn")?.addEventListener(
-    "click",
-    () => {
-
-        $("imageInput")?.click();
-    }
-);
-
-
-$("imageInput")?.addEventListener(
-    "change",
-    event => {
-
-        const file =
-            event.target.files?.[0];
-
-        if (!file) return;
-
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload = () => {
-
-            const result =
-                reader.result;
-
-            const base64 =
-                result.split(",")[1];
-
-
-            selectedImage = {
-                data: base64,
-                mimeType: file.type
-            };
-
-
-            if ($("preview")) {
-                $("preview").src = result;
-            }
-
-            if ($("imageName")) {
-                $("imageName").textContent =
-                    file.name;
-            }
-
-            if ($("imageBox")) {
-                $("imageBox").hidden = false;
-            }
-
-            toast("Image ready.");
         };
 
 
-        reader.readAsDataURL(file);
-    }
-);
+        utterance.onerror = () => {
 
-
-$("removeImage")?.addEventListener(
-    "click",
-    () => {
-
-        selectedImage = null;
-
-        $("imageInput").value = "";
-
-        $("imageBox").hidden = true;
-    }
-);
-
-
-/* =========================
-   MICROPHONE
-========================= */
-
-function setupMicrophone() {
-
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-
-    if (!SpeechRecognition) {
-
-        $("micBtn")?.addEventListener(
-            "click",
-            () => {
-
-                toast(
-                    "Voice recognition is not supported by this browser."
-                );
+            if (voiceStatus) {
+                voiceStatus.textContent =
+                    "READY";
             }
-        );
+        };
 
-        return;
+
+        window.speechSynthesis
+            .speak(utterance);
     }
+        // =========================================
+    // GEMINI AI
+    // =========================================
 
+    async function askGemini(prompt) {
 
-    recognition =
-        new SpeechRecognition();
-
-
-    recognition.lang = "en-GB";
-
-    recognition.continuous = false;
-
-    recognition.interimResults = false;
-
-    recognition.maxAlternatives = 1;
-
-
-    recognition.onstart = () => {
-
-        listening = true;
-
-        $("micBtn")?.classList.add(
-            "listening"
-        );
-
-        $("micBtn").textContent =
-            "🔴";
-
-        $("voiceStatus").textContent =
-            "LISTENING";
-
-        setState("LISTENING");
-
-        toast(
-            "DISCO is listening..."
-        );
-    };
-
-
-    recognition.onresult = event => {
-
-        const transcript =
-            event.results[0][0].transcript;
-
-        $("msg").value =
-            transcript;
-    };
-
-
-    recognition.onerror = event => {
-
-        console.log(
-            "Speech recognition:",
-            event.error
-        );
-
-        toast(
-            "Microphone error: " +
-            event.error
-        );
-    };
-
-
-    recognition.onend = async () => {
-
-        listening = false;
-
-        $("micBtn")?.classList.remove(
-            "listening"
-        );
-
-        $("micBtn").textContent =
-            "🎙";
-
-        $("voiceStatus").textContent =
-            "READY";
-
-        setState("CORE READY");
-
-
-        const text =
-            $("msg").value.trim();
-
-
-        if (text) {
-
-            $("msg").value = "";
-
-            await sendMessage(text);
-        }
-    };
-
-
-    $("micBtn")?.addEventListener(
-        "click",
-        () => {
-
-            if (listening) {
-
-                recognition.stop();
-
-                return;
-            }
-
-
-            try {
-
-                recognition.start();
-
-            } catch (error) {
-
-                console.log(error);
-            }
-        }
-    );
-}
-
-
-setupMicrophone();
-
-
-/* =========================
-   SETTINGS / API KEY
-========================= */
-
-$("settingsBtn")?.addEventListener(
-    "click",
-    () => {
-
-        const modal =
-            $("settingsModal");
-
-        const input =
-            $("apiKey");
-
-        if (!modal) return;
-
-        modal.hidden = false;
-
-        if (input) {
-
-            input.value =
-                getApiKey() || "";
-
-            setTimeout(
-                () => input.focus(),
-                100
-            );
-        }
-    }
-);
-
-
-$("closeSettings")?.addEventListener(
-    "click",
-    () => {
-
-        $("settingsModal").hidden =
-            true;
-    }
-);
-
-
-$("saveKey")?.addEventListener(
-    "click",
-    () => {
-
-        const key =
-            $("apiKey").value.trim();
+        const key = getApiKey();
 
 
         if (!key) {
 
-            toast(
-                "Please enter your Gemini API key."
+            addMessage(
+                "Boss, your Gemini API key is not saved. Open ⚙ AI KEY and save it first."
             );
+
+            return null;
+        }
+
+
+        if (!navigator.onLine) {
+
+            addMessage(
+                "Boss, you are currently offline."
+            );
+
+            return null;
+        }
+
+
+        setState("PROCESSING");
+
+
+        const aiStatus =
+            $("aiStatus");
+
+        if (aiStatus) {
+            aiStatus.textContent =
+                "PROCESSING";
+        }
+
+
+        try {
+
+            const endpoint =
+                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+
+
+            const response =
+                await fetch(
+                    endpoint,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            contents: [
+
+                                {
+                                    role: "user",
+
+                                    parts: [
+                                        {
+                                            text:
+                                                `You are DISCO, a futuristic personal AI assistant.
+
+Call the user "Boss".
+
+Answer clearly and simply.
+
+Use British English.
+
+The user's preferred location is:
+${DISCO_LOCATION}
+
+Current task:
+
+${prompt}`
+                                        }
+                                    ]
+                                }
+
+                            ],
+
+                            generationConfig: {
+
+                                temperature: 0.7,
+
+                                maxOutputTokens: 1200
+                            }
+
+                        })
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                console.error(
+                    "Gemini error:",
+                    data
+                );
+
+
+                let message =
+                    "DISCO connection error.";
+
+
+                if (
+                    data &&
+                    data.error &&
+                    data.error.message
+                ) {
+
+                    message =
+                        data.error.message;
+                }
+
+
+                addMessage(
+                    message
+                );
+
+
+                setState("ERROR");
+
+                return null;
+            }
+
+
+            const text =
+                data?.candidates?.[0]
+                    ?.content?.parts
+                    ?.map(part => part.text || "")
+                    .join("")
+                    .trim();
+
+
+            if (!text) {
+
+                addMessage(
+                    "Boss, Gemini returned an empty response."
+                );
+
+                setState("READY");
+
+                return null;
+            }
+
+
+            setState("READY");
+
+
+            if (aiStatus) {
+                aiStatus.textContent =
+                    "CONNECTED";
+            }
+
+
+            return text;
+
+
+        } catch (error) {
+
+            console.error(
+                "DISCO error:",
+                error
+            );
+
+
+            addMessage(
+                "Boss, I could not connect to Gemini. Please check your internet connection and API key."
+            );
+
+
+            setState("ERROR");
+
+            return null;
+        }
+    }
+
+
+    // =========================================
+    // PLAN TODAY
+    // =========================================
+
+    function startPlanToday() {
+
+        const msg =
+            $("msg");
+
+        if (msg) {
+
+            msg.dataset.planMode =
+                "today";
+
+            msg.placeholder =
+                "Tell me everything you need to do today...";
+        }
+
+
+        addMessage(
+            "Boss, what are the works you need to do today? Tell me everything. You can type them or use the microphone."
+        );
+
+
+        setState("PLANNING");
+    }
+
+
+    async function createTodayPlan(tasks) {
+
+        const prompt = `Create a practical plan for today.
+
+These are Boss's tasks:
+
+${tasks}
+
+Organise them into:
+
+1. NOW
+2. NEXT
+3. LATER
+4. EVENING
+5. NIGHT
+6. PRIORITY
+
+Keep the plan realistic.
+
+Use simple British English.
+
+Do not invent unnecessary tasks.
+
+Make it easy to follow.`;
+
+
+        const answer =
+            await askGemini(prompt);
+
+
+        if (answer) {
+
+            addMessage(answer);
+
+            speak(answer);
+        }
+    }
+
+
+    // =========================================
+    // PLAN TOMORROW
+    // =========================================
+
+    async function planTomorrow(tasks) {
+
+        const prompt = `Create a practical plan for tomorrow.
+
+Boss's tasks:
+
+${tasks}
+
+Organise them into:
+
+1. MORNING
+2. AFTERNOON
+3. EVENING
+4. NIGHT
+5. PRIORITY
+
+Keep it realistic and simple.
+
+Use British English.
+
+Do not invent unnecessary tasks.`;
+
+
+        const answer =
+            await askGemini(prompt);
+
+
+        if (answer) {
+
+            addMessage(answer);
+
+            speak(answer);
+        }
+    }
+
+
+    // =========================================
+    // PROCESS PLAN INPUT
+    // =========================================
+
+    async function processPlanInput(text) {
+
+        const msg =
+            $("msg");
+
+        const mode =
+            msg?.dataset?.planMode;
+
+
+        if (!mode) {
+            return false;
+        }
+
+
+        if (msg) {
+
+            delete msg.dataset.planMode;
+
+            msg.placeholder =
+                "Talk to DISCO...";
+        }
+
+
+        if (mode === "today") {
+
+            await createTodayPlan(text);
+
+            return true;
+        }
+
+
+        if (mode === "tomorrow") {
+
+            await planTomorrow(text);
+
+            return true;
+        }
+
+
+        return false;
+    }
+
+
+    // =========================================
+    // LOCAL COMMANDS
+    // =========================================
+
+    async function localCommand(text) {
+
+        const command =
+            text.trim().toLowerCase();
+
+
+        // MEMORY
+
+        if (command === "memory") {
+
+            showMemory();
+
+            return true;
+        }
+
+
+        // TIME
+
+        if (command === "time") {
+
+            const now =
+                new Date();
+
+
+            const time =
+                now.toLocaleTimeString(
+                    "en-GB",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                );
+
+
+            addMessage(
+                `Boss, the current time is ${time}.`
+            );
+
+
+            return true;
+        }
+
+
+        // PLAN TODAY
+
+        if (
+            command === "plan today"
+        ) {
+
+            startPlanToday();
+
+            return true;
+        }
+
+
+        // PLAN TOMORROW
+
+        if (
+            command === "plan tomorrow"
+        ) {
+
+            const msg =
+                $("msg");
+
+
+            if (msg) {
+
+                msg.dataset.planMode =
+                    "tomorrow";
+
+                msg.placeholder =
+                    "Tell me everything you need to do tomorrow...";
+            }
+
+
+            addMessage(
+                "Boss, what do you need to do tomorrow? Tell me everything."
+            );
+
+
+            setState("PLANNING");
+
+            return true;
+        }
+
+
+        // ACTIVATE AGENTS
+
+        if (
+            command === "activate agents"
+        ) {
+
+            addMessage(
+                "Boss, agent system activated. DISCO is ready for your commands."
+            );
+
+
+            speak(
+                "Boss, agent system activated."
+            );
+
+
+            return true;
+        }
+
+
+        return false;
+    }
+
+
+    // =========================================
+    // SEND MESSAGE
+    // =========================================
+
+    async function sendMessage() {
+
+        const msg =
+            $("msg");
+
+
+        if (!msg) {
+            return;
+        }
+
+
+        const text =
+            msg.value.trim();
+
+
+        if (!text && !selectedImage) {
+            return;
+        }
+
+
+        if (text) {
+
+            addMessage(
+                text,
+                "user"
+            );
+        }
+
+
+        msg.value = "";
+
+
+        // PLAN MODE
+
+        if (text) {
+
+            const handledPlan =
+                await processPlanInput(text);
+
+
+            if (handledPlan) {
+
+                return;
+            }
+        }
+
+
+        // LOCAL COMMAND
+
+        if (text) {
+
+            const handled =
+                await localCommand(text);
+
+
+            if (handled) {
+
+                return;
+            }
+        }
+
+
+        // NORMAL AI REQUEST
+
+        let prompt = text;
+
+
+        if (selectedImage) {
+
+            prompt +=
+                "\n\nThe user has also attached an image. Analyse the image if possible.";
+
+        }
+
+
+        const answer =
+            await askGemini(prompt);
+
+
+        if (answer) {
+
+            addMessage(answer);
+
+            speak(answer);
+        }
+    }
+
+
+    // =========================================
+    // IMAGE TO BASE64
+    // =========================================
+
+    function fileToBase64(file) {
+
+        return new Promise(
+            (resolve, reject) => {
+
+                const reader =
+                    new FileReader();
+
+
+                reader.onload = () => {
+
+                    resolve(
+                        reader.result
+                    );
+                };
+
+
+                reader.onerror =
+                    reject;
+
+
+                reader.readAsDataURL(file);
+            }
+        );
+ }
+        // =========================================
+    // CHAT FORM
+    // =========================================
+
+    const chatForm =
+        $("chatForm");
+
+
+    if (chatForm) {
+
+        chatForm.addEventListener(
+            "submit",
+            async (event) => {
+
+                event.preventDefault();
+
+                await sendMessage();
+            }
+        );
+    }
+
+
+    // =========================================
+    // QUICK COMMANDS
+    // =========================================
+
+    const commandButtons =
+        document.querySelectorAll(
+            ".command-button"
+        );
+
+
+    commandButtons.forEach(
+        (button) => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const command =
+                        button.dataset.command;
+
+
+                    if (!command) {
+                        return;
+                    }
+
+
+                    if (command === "PLAN TODAY") {
+
+                        startPlanToday();
+
+                        return;
+                    }
+
+
+                    if (
+                        command ===
+                        "PLAN TOMORROW"
+                    ) {
+
+                        const msg =
+                            $("msg");
+
+
+                        if (msg) {
+
+                            msg.dataset.planMode =
+                                "tomorrow";
+
+                            msg.placeholder =
+                                "Tell me everything you need to do tomorrow...";
+                        }
+
+
+                        addMessage(
+                            "Boss, what do you need to do tomorrow? Tell me everything."
+                        );
+
+
+                        setState(
+                            "PLANNING"
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        command === "MEMORY"
+                    ) {
+
+                        showMemory();
+
+                        return;
+                    }
+
+
+                    if (
+                        command === "TIME"
+                    ) {
+
+                        await localCommand(
+                            "time"
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        command ===
+                        "ACTIVATE AGENTS"
+                    ) {
+
+                        await localCommand(
+                            "activate agents"
+                        );
+
+                        return;
+                    }
+                }
+            );
+        }
+    );
+
+
+    // =========================================
+    // CLEAR CHAT
+    // =========================================
+
+    const clearBtn =
+        $("clearBtn");
+
+
+    if (clearBtn) {
+
+        clearBtn.addEventListener(
+            "click",
+            () => {
+
+                const chat =
+                    $("chat");
+
+
+                if (!chat) {
+                    return;
+                }
+
+
+                chat.innerHTML = "";
+
+
+                addMessage(
+                    "Systems online. How may I assist you, Boss?"
+                );
+
+
+                setState(
+                    "SYSTEM READY"
+                );
+            }
+        );
+    }
+
+
+    // =========================================
+    // IMAGE UPLOAD
+    // =========================================
+
+    const imageBtn =
+        $("imageBtn");
+
+    const imageInput =
+        $("imageInput");
+
+    const imagePreview =
+        $("imagePreview");
+
+    const previewImage =
+        $("previewImage");
+
+    const removeImage =
+        $("removeImage");
+
+
+    if (imageBtn && imageInput) {
+
+        imageBtn.addEventListener(
+            "click",
+            () => {
+
+                imageInput.click();
+            }
+        );
+    }
+
+
+    if (imageInput) {
+
+        imageInput.addEventListener(
+            "change",
+            async () => {
+
+                const file =
+                    imageInput.files?.[0];
+
+
+                if (!file) {
+                    return;
+                }
+
+
+                selectedImage =
+                    await fileToBase64(file);
+
+
+                if (
+                    previewImage &&
+                    imagePreview
+                ) {
+
+                    previewImage.src =
+                        selectedImage;
+
+                    imagePreview.hidden =
+                        false;
+                }
+
+
+                toast(
+                    "Image selected."
+                );
+            }
+        );
+    }
+
+
+    if (removeImage) {
+
+        removeImage.addEventListener(
+            "click",
+            () => {
+
+                selectedImage =
+                    null;
+
+
+                if (imageInput) {
+                    imageInput.value = "";
+                }
+
+
+                if (imagePreview) {
+                    imagePreview.hidden =
+                        true;
+                }
+
+
+                if (previewImage) {
+                    previewImage.src = "";
+                }
+            }
+        );
+    }
+
+
+    // =========================================
+    // MICROPHONE
+    // =========================================
+
+    const micBtn =
+        $("micBtn");
+
+
+    function setupMicrophone() {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        if (!SpeechRecognition) {
+
+            if (micBtn) {
+
+                micBtn.addEventListener(
+                    "click",
+                    () => {
+
+                        toast(
+                            "Voice recognition is not supported by this browser."
+                        );
+                    }
+                );
+            }
 
             return;
         }
 
 
-        localStorage.setItem(
-            API_STORAGE_KEY,
-            key
+        recognition =
+            new SpeechRecognition();
+
+
+        recognition.lang =
+            "en-GB";
+
+
+        recognition.continuous =
+            false;
+
+
+        recognition.interimResults =
+            false;
+
+
+        recognition.maxAlternatives =
+            1;
+
+
+        recognition.onstart =
+            () => {
+
+                listening = true;
+
+
+                if (micBtn) {
+
+                    micBtn.classList.add(
+                        "listening"
+                    );
+
+                    micBtn.textContent =
+                        "🔴";
+                }
+
+
+                const voiceStatus =
+                    $("voiceStatus");
+
+
+                if (voiceStatus) {
+
+                    voiceStatus.textContent =
+                        "LISTENING";
+                }
+
+
+                setState(
+                    "LISTENING"
+                );
+            };
+
+
+        recognition.onresult =
+            (event) => {
+
+                const result =
+                    event.results?.[0]?.[0];
+
+
+                if (!result) {
+                    return;
+                }
+
+
+                const transcript =
+                    result.transcript.trim();
+
+
+                const msg =
+                    $("msg");
+
+
+                if (msg) {
+
+                    msg.value =
+                        transcript;
+                }
+            };
+
+
+        recognition.onerror =
+            (event) => {
+
+                console.error(
+                    "Speech recognition error:",
+                    event.error
+                );
+
+
+                toast(
+                    "Microphone error: " +
+                    event.error
+                );
+            };
+
+
+        recognition.onend =
+            async () => {
+
+                listening = false;
+
+
+                if (micBtn) {
+
+                    micBtn.classList.remove(
+                        "listening"
+                    );
+
+                    micBtn.textContent =
+                        "🎙";
+                }
+
+
+                const voiceStatus =
+                    $("voiceStatus");
+
+
+                if (voiceStatus) {
+
+                    voiceStatus.textContent =
+                        "READY";
+                }
+
+
+                setState(
+                    "READY"
+                );
+
+
+                const msg =
+                    $("msg");
+
+
+                if (
+                    msg &&
+                    msg.value.trim()
+                ) {
+
+                    await sendMessage();
+                }
+            };
+    }
+
+
+    setupMicrophone();
+
+
+    if (micBtn) {
+
+        micBtn.addEventListener(
+            "click",
+            () => {
+
+                if (!recognition) {
+
+                    toast(
+                        "Voice recognition is unavailable."
+                    );
+
+                    return;
+                }
+
+
+                if (listening) {
+
+                    recognition.stop();
+
+                    return;
+                }
+
+
+                try {
+
+                    recognition.start();
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+                }
+            }
         );
+    }
 
 
-        $("settingsModal").hidden =
+    // =========================================
+    // SETTINGS / API KEY
+    // =========================================
+
+    const settingsBtn =
+        $("settingsBtn");
+
+    const settingsModal =
+        $("settingsModal");
+
+    const closeSettings =
+        $("closeSettings");
+
+    const saveKey =
+        $("saveKey");
+
+    const removeKey =
+        $("removeKey");
+
+    const apiKeyInput =
+        $("apiKey");
+
+
+    // OPEN SETTINGS
+
+    function openSettings() {
+
+        if (!settingsModal) {
+            return;
+        }
+
+
+        const savedKey =
+            localStorage.getItem(
+                API_STORAGE_KEY
+            );
+
+
+        if (apiKeyInput) {
+
+            apiKeyInput.value =
+                savedKey || "";
+        }
+
+
+        settingsModal.hidden =
+            false;
+    }
+
+
+    // CLOSE SETTINGS
+
+    function closeSettingsModal() {
+
+        if (!settingsModal) {
+            return;
+        }
+
+
+        settingsModal.hidden =
             true;
+    }
 
 
-        updateStatus();
+    // SETTINGS BUTTON
 
-        toast(
-            "Gemini API key connected."
+    if (settingsBtn) {
+
+        settingsBtn.addEventListener(
+            "click",
+            openSettings
         );
     }
-);
 
 
-$("removeKey")?.addEventListener(
-    "click",
-    () => {
+    // X BUTTON
 
-        localStorage.removeItem(
-            API_STORAGE_KEY
-        );
+    if (closeSettings) {
 
-        $("apiKey").value = "";
-
-        updateStatus();
-
-        toast(
-            "Gemini API key removed."
+        closeSettings.addEventListener(
+            "click",
+            closeSettingsModal
         );
     }
-);
 
 
-$("settingsModal")?.addEventListener(
-    "click",
-    event => {
+    // SAVE API KEY
 
-        if (
-            event.target ===
-            $("settingsModal")
-        ) {
+    if (saveKey) {
 
-            $("settingsModal").hidden =
-                true;
+        saveKey.addEventListener(
+            "click",
+            () => {
+
+                const key =
+                    apiKeyInput?.value.trim();
+
+
+                if (!key) {
+
+                    toast(
+                        "Please enter your Gemini API key."
+                    );
+
+                    return;
+                }
+
+
+                localStorage.setItem(
+                    API_STORAGE_KEY,
+                    key
+                );
+
+
+                toast(
+                    "Gemini API key saved."
+                );
+
+
+                closeSettingsModal();
+
+                updateStatus();
+            }
+        );
+    }
+
+
+    // REMOVE API KEY
+
+    if (removeKey) {
+
+        removeKey.addEventListener(
+            "click",
+            () => {
+
+                localStorage.removeItem(
+                    API_STORAGE_KEY
+                );
+
+
+                if (apiKeyInput) {
+
+                    apiKeyInput.value =
+                        "";
+                }
+
+
+                toast(
+                    "Gemini API key removed."
+                );
+
+
+                closeSettingsModal();
+
+                updateStatus();
+            }
+        );
+    }
+
+
+    // CLOSE WHEN CLICKING OUTSIDE
+
+    if (settingsModal) {
+
+        settingsModal.addEventListener(
+            "click",
+            (event) => {
+
+                if (
+                    event.target ===
+                    settingsModal
+                ) {
+
+                    closeSettingsModal();
+                }
+            }
+        );
+    }
+
+
+    // ESCAPE KEY CLOSE
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeSettingsModal();
+            }
         }
+    );
+
+
+    // =========================================
+    // ENTER KEY
+    // =========================================
+
+    const messageInput =
+        $("msg");
+
+
+    if (messageInput) {
+
+        messageInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+
+                    if (chatForm) {
+
+                        chatForm.requestSubmit();
+                    }
+                }
+            }
+        );
     }
-);
 
 
-/* =========================
-   ENTER KEY
-========================= */
+    // =========================================
+    // NETWORK STATUS
+    // =========================================
 
-$("msg")?.addEventListener(
-    "keydown",
-    event => {
+    window.addEventListener(
+        "online",
+        () => {
 
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
+            updateStatus();
 
-            event.preventDefault();
-
-            $("commandForm").requestSubmit();
+            toast(
+                "Network online."
+            );
         }
-    }
-);
+    );
 
 
-/* =========================
-   NETWORK
-========================= */
+    window.addEventListener(
+        "offline",
+        () => {
 
-window.addEventListener(
-    "online",
-    () => {
+            updateStatus();
 
-        $("network").textContent =
-            "NETWORK READY";
-
-        toast("Network online.");
-    }
-);
+            toast(
+                "Network offline."
+            );
+        }
+    );
 
 
-window.addEventListener(
-    "offline",
-    () => {
+    // =========================================
+    // STARTUP
+    // =========================================
 
-        $("network").textContent =
-            "NETWORK OFFLINE";
+    updateStatus();
 
-        toast("Network offline.");
-    }
-);
+    loadVoices();
 
 
-/* =========================
-   STARTUP
-========================= */
-
-updateStatus();
+    console.log(
+        "DISCO AI initialised successfully."
+    );
 
 
-console.log(
-    "DISCO online // Model:",
-    MODEL
-);
-
+    // =========================================
+    // END OF DISCO
+    // =========================================
 
 })();
