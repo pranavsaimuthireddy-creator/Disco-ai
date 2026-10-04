@@ -1,364 +1,320 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <meta name="theme-color" content="#020b10">
-    <meta name="description" content="D.I.S.C.O Mobile AI Core">
-
-    <title>D.I.S.C.O - MOBILE EDITION</title>
-
-    <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050813">
+  <title>D.I.S.C.O. // Future Interface</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
+  <div class="scanlines"></div>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
 
-    <!-- BACKGROUND EFFECTS -->
-    <div class="stars"></div>
-    <div class="scanlines"></div>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#">
+        <span class="brand-mark">
+          <span></span><span></span><span></span>
+        </span>
+        <span>
+          <strong>D.I.S.C.O.</strong>
+          <small>NEURAL INTERFACE / 3000</small>
+        </span>
+      </a>
 
+      <div class="top-status">
+        <span class="live-dot"></span>
+        <span id="systemStatus">SYSTEM READY</span>
+      </div>
 
-    <!-- HEADER -->
-    <header class="top-header">
-
-        <button
-            class="menu-btn"
-            id="menuBtn"
-            type="button"
-            aria-label="Open menu"
-        >
-            ☰
-        </button>
-
-        <div class="header-logo">
-            D.I.S.C.O
-        </div>
-
-        <div class="edition">
-            <span>▯</span>
-            MOBILE EDITION
-        </div>
-
+      <button class="icon-button" id="keyBtn"
+        title="Set AI API key">⌘</button>
     </header>
 
+    <section class="hero-grid">
+      <aside class="side-panel left-panel">
+        <div class="panel-heading">
+          <span>01 / CORE STATUS</span><i></i>
+        </div>
 
-    <main>
+        <div class="metric-row">
+          <span>NEURAL LINK</span>
+          <b id="neuralStatus">STANDBY</b>
+        </div>
+        <div class="meter"><span style="width:88%"></span></div>
 
-        <!-- HERO SECTION -->
-        <section class="hero">
+        <div class="metric-row">
+          <span>AGENT NETWORK</span>
+          <b id="agentStatus">READY</b>
+        </div>
+        <div class="meter violet"><span style="width:72%"></span></div>
 
-            <div class="hero-content">
+        <div class="metric-row">
+          <span>LOCAL MEMORY</span>
+          <b id="memoryStatus">ONLINE</b>
+        </div>
 
-                <div class="main-logo">
-                    D.I.S.C.O
-                </div>
+        <div class="metric-row">
+          <span>VOICE CHANNEL</span>
+          <b id="voiceStatus">AVAILABLE</b>
+        </div>
 
-                <div class="mobile-edition">
-                    MOBILE EDITION
-                </div>
+        <div class="panel-divider"></div>
+        <div class="mini-label">ACTIVE MODULES</div>
 
-                <div class="core-active">
-                    <span>⌜</span>
-                    CORE ACTIVE
-                    <span>⌟</span>
-                </div>
+        <div class="module-list">
+          <div><span class="module-icon">◈</span>
+            <span>ORACLE</span><b>ON</b></div>
+          <div><span class="module-icon">⌁</span>
+            <span>CHRONOS</span><b>ON</b></div>
+          <div><span class="module-icon">⌬</span>
+            <span>MEMORY</span><b>ON</b></div>
+          <div><span class="module-icon">⟁</span>
+            <span>VISION</span><b id="visionStatus">READY</b></div>
+        </div>
 
+        <button class="outline-button" id="activateBtn">
+          ACTIVATE AGENTS <span>↗</span>
+        </button>
+      </aside>
+
+      <section class="core-stage">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="orbit orbit-three"></div>
+        <div class="core-halo"></div>
+
+        <div class="core" id="coreOrb"
+          role="img" aria-label="Animated D.I.S.C.O. AI core">
+          <div class="core-ring ring-outer"></div>
+          <div class="core-ring ring-inner"></div>
+
+          <div class="core-glass">
+            <div class="core-glyph">D<span>.</span></div>
+            <div class="core-glint"></div>
+          </div>
+
+          <div class="core-base"></div>
+        </div>
+
+        <div class="core-caption">
+          <span class="live-dot"></span>
+          DISCO CORE
+          <b id="coreState">AWAITING INPUT</b>
+        </div>
+
+        <div class="core-subtitle">
+          DIGITAL INTELLIGENCE / SYSTEM CONTROL / ORACLE
+        </div>
+
+        <div class="clock-block">
+          <span id="clockTime">--:--:--</span>
+          <span id="clockDate">SYNCHRONISING LOCAL TIME</span>
+        </div>
+      </section>
+
+      <aside class="side-panel right-panel">
+        <div class="panel-heading">
+          <span>02 / QUICK OPERATIONS</span><i></i>
+        </div>
+
+        <button class="action-card"
+          data-prompt="Give me a practical plan for tomorrow, including study, breaks, meals and sleep.">
+          <span class="action-symbol">▦</span>
+          <span><b>Tomorrow plan</b>
+            <small>CHRONOS / SCHEDULE</small></span>
+          <span class="action-arrow">↗</span>
+        </button>
+
+        <button class="action-card"
+          data-prompt="Tell me the current local time and date.">
+          <span class="action-symbol">◷</span>
+          <span><b>Time &amp; date</b>
+            <small>CHRONOS / CLOCK</small></span>
+          <span class="action-arrow">↗</span>
+        </button>
+
+        <button class="action-card"
+          data-prompt="Check the weather in Hyderabad.">
+          <span class="action-symbol">☼</span>
+          <span><b>Weather scan</b>
+            <small>ATMOS / FORECAST</small></span>
+          <span class="action-arrow">↗</span>
+        </button>
+
+        <button class="action-card"
+          data-prompt="Help me remember something.">
+          <span class="action-symbol">⌬</span>
+          <span><b>Memory vault</b>
+            <small>MNEMOS / LOCAL</small></span>
+          <span class="action-arrow">↗</span>
+        </button>
+
+        <button class="action-card" id="cameraBtn">
+          <span class="action-symbol">◎</span>
+          <span><b>Vision scanner</b>
+            <small>OPTIC / IMAGE INPUT</small></span>
+          <span class="action-arrow">↗</span>
+        </button>
+
+        <div class="mini-label tool-label">SYSTEM TOOLS</div>
+
+        <div class="tool-pills">
+          <button data-prompt="Start a 5 minute timer.">TIMER</button>
+          <button data-prompt="Open YouTube.">YOUTUBE</button>
+          <button data-prompt="Check my device battery if available.">BATTERY</button>
+          <button data-prompt="Activate all agents.">AGENTS</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="workspace">
+      <div class="workspace-top">
+        <div>
+          <span class="eyebrow">03 / COMMAND DECK</span>
+          <h1>What do you need, <em>Boss?</em></h1>
+        </div>
+
+        <div class="session-chip">
+          <span class="live-dot"></span>
+          ENCRYPTED LOCAL SESSION
+        </div>
+      </div>
+
+      <div class="chat-frame">
+        <div class="chat-toolbar">
+          <span>
+            <i class="toolbar-dot"></i>
+            <i class="toolbar-dot"></i>
+            <i class="toolbar-dot"></i>
+          </span>
+
+          <span>DISCO // CONVERSATION STREAM</span>
+          <button id="clearBtn" title="Clear chat">CLEAR ↺</button>
+        </div>
+
+        <div id="chat" class="chat-messages" aria-live="polite">
+          <div class="message assistant-message">
+            <div class="avatar">D</div>
+            <div class="message-content">
+              <div class="message-meta">
+                D.I.S.C.O. <span>CORE ONLINE</span>
+              </div>
+              <p>
+                Systems online, Boss. Your command deck is ready.
+                Ask a question or select an operation.
+              </p>
+              <div class="message-time">JUST NOW</div>
             </div>
+          </div>
+        </div>
+
+        <div id="imagePreviewWrap" class="image-preview-wrap" hidden>
+          <img id="imagePreview" alt="Selected image preview">
+          <span id="imageName"></span>
+          <button id="removeImageBtn" aria-label="Remove image">×</button>
+        </div>
+
+        <form id="commandForm" class="command-form">
+          <button type="button" class="attach-button"
+            id="imageBtn" title="Attach image">＋</button>
+
+          <input id="msg" name="message" autocomplete="off"
+            placeholder="Enter a command, Boss…"
+            aria-label="Message D.I.S.C.O.">
+
+          <button type="button" class="mic-button"
+            id="micBtn" title="Voice input">◉</button>
+
+          <button type="submit" class="send-button" id="sendBtn">
+            <span>TRANSMIT</span><b>➤</b>
+          </button>
+        </form>
+
+        <div class="input-foot">
+          <span><span class="live-dot"></span> COMMAND CHANNEL OPEN</span>
+          <span>ENTER ↵ TO SEND</span>
+        </div>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="info-tile">
+          <span>◈</span>
+          <div>
+            <b>LOCAL FIRST</b>
+            <small>Clock, calculator and memory run in-browser.</small>
+          </div>
+        </div>
+
+        <div class="info-tile">
+          <span>⌁</span>
+          <div>
+            <b>AGENT ROUTING</b>
+            <small>Commands are routed to matching tools.</small>
+          </div>
+        </div>
+
+        <div class="info-tile">
+          <span>⟁</span>
+          <div>
+            <b>AI CONNECTION</b>
+            <small>Add your Gemini key for AI answers.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>© D.I.S.C.O. FUTURE SYSTEMS</span>
+      <span>BUILT FOR THE NEXT CENTURY <b>◆</b></span>
+      <span id="footerNetwork">NETWORK: CHECKING</span>
+    </footer>
+  </main>
+
+  <input id="imageInput" type="file"
+    accept="image/*" capture="environment" hidden>
+
+  <div class="modal-backdrop" id="keyModal" hidden>
+    <section class="key-modal" role="dialog"
+      aria-modal="true" aria-labelledby="keyTitle">
+
+      <button class="modal-close" id="closeKeyBtn"
+        aria-label="Close">×</button>
+
+      <div class="modal-icon">⌘</div>
+      <div class="eyebrow">NEURAL LINK CONFIGURATION</div>
+      <h2 id="keyTitle">Connect your AI core</h2>
+
+      <p>
+        Enter a Gemini API key to enable AI-generated answers
+        and image analysis. Local commands work without a key.
+      </p>
+
+      <label for="apiKeyInput">GEMINI API KEY</label>
+      <input id="apiKeyInput" type="password"
+        autocomplete="off" placeholder="Paste your API key">
+
+      <div class="modal-actions">
+        <button class="outline-button" id="removeKeyBtn">
+          REMOVE KEY
+        </button>
+        <button class="send-button" id="saveKeyBtn">
+          SAVE CONNECTION ↗
+        </button>
+      </div>
+
+      <small class="security-note">
+        For a personal GitHub Pages demo, the key is stored in
+        this browser. Client-side keys are not secret if the site
+        is public. Never share your key or commit it into code.
+      </small>
+    </section>
+  </div>
 
+  <div class="toast" id="toast" role="status"></div>
 
-            <!-- AI ENERGY BALL -->
-            <!-- No external image required -->
-
-            <div class="core-area" id="coreArea">
-
-                <div class="core-ring ring1"></div>
-                <div class="core-ring ring2"></div>
-                <div class="core-ring ring3"></div>
-
-                <div class="core-glow"></div>
-
-                <div
-                    id="coreImage"
-                    role="img"
-                    aria-label="D.I.S.C.O glowing AI energy core"
-                >
-
-                    <div class="orb-inner"></div>
-
-                    <div class="orb-highlight"></div>
-
-                    <div class="orb-particles"></div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- SYSTEM STATUS PANEL -->
-        <section class="system-status">
-
-            <div class="status-heading">
-
-                <span class="heading-icon">▣</span>
-
-                <span>SYSTEM STATUS</span>
-
-            </div>
-
-
-            <!-- AI CORE -->
-            <div class="status-row">
-
-                <div class="status-label">
-
-                    <span class="status-icon cyan">▣</span>
-
-                    <span>AI CORE</span>
-
-                </div>
-
-                <div class="status-online">
-
-                    <span class="green-dot"></span>
-
-                    ONLINE
-
-                </div>
-
-            </div>
-
-
-            <!-- NETWORK -->
-            <div class="status-row">
-
-                <div class="status-label">
-
-                    <span class="status-icon cyan">⌁</span>
-
-                    <span>NETWORK</span>
-
-                </div>
-
-                <div
-                    class="status-online"
-                    id="networkStatus"
-                >
-
-                    <span class="green-dot"></span>
-
-                    ONLINE
-
-                </div>
-
-            </div>
-
-
-            <!-- VOICE -->
-            <div class="status-row">
-
-                <div class="status-label">
-
-                    <span class="status-icon red">♩</span>
-
-                    <span>VOICE</span>
-
-                </div>
-
-                <div
-                    class="status-locked"
-                    id="voiceStatus"
-                >
-
-                    <span>▣</span>
-
-                    LOCKED
-
-                </div>
-
-            </div>
-
-
-            <!-- MEMORY -->
-            <div class="status-row">
-
-                <div class="status-label">
-
-                    <span class="status-icon red">▣</span>
-
-                    <span>MEMORY</span>
-
-                </div>
-
-                <div
-                    class="status-locked"
-                    id="memoryStatus"
-                >
-
-                    <span>▣</span>
-
-                    LOCKED
-
-                </div>
-
-            </div>
-
-
-            <!-- USER STATUS -->
-            <div class="status-row">
-
-                <div class="status-label">
-
-                    <span class="status-icon cyan">♙</span>
-
-                    <span>YOU</span>
-
-                </div>
-
-                <div
-                    class="you-status"
-                    id="userStatus"
-                >
-                    Hi
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- CHAT PANEL -->
-        <section class="chat-panel">
-
-            <div
-                id="chat"
-                class="chat-box"
-                role="log"
-                aria-live="polite"
-                aria-label="D.I.S.C.O conversation"
-            >
-
-                <div class="message ai-message">
-
-                    <strong>D.I.S.C.O:</strong>
-
-                    <span>
-                        Systems online. How may I assist you, Boss?
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- COMMAND INPUT -->
-        <section class="command-area">
-
-            <div class="input-box">
-
-                <input
-                    id="msg"
-                    name="message"
-                    type="text"
-                    placeholder="Ask D.I.S.C.O..."
-                    autocomplete="off"
-                    aria-label="Enter a message"
-                >
-
-                <button
-                    id="mic"
-                    type="button"
-                    aria-label="Start voice input"
-                    title="Voice input"
-                >
-                    🎙
-                </button>
-
-            </div>
-
-
-            <button
-                id="send"
-                class="send-button"
-                type="button"
-            >
-                SEND
-            </button>
-
-        </section>
-
-
-        <!-- ADDITIONAL CONTROLS -->
-        <section class="extra-controls">
-
-            <button
-                id="clearBtn"
-                type="button"
-            >
-                CLEAR MEMORY
-            </button>
-
-            <button
-                id="keyBtn"
-                type="button"
-            >
-                API KEY
-            </button>
-
-            <label
-                class="vision-button"
-                for="imgInput"
-            >
-                VISION
-
-                <input
-                    id="imgInput"
-                    type="file"
-                    accept="image/*"
-                    aria-label="Choose an image"
-                >
-            </label>
-
-        </section>
-
-
-        <!-- FOOTER -->
-        <footer>
-
-            <div class="footer-bars">
-
-                <span></span>
-                <span></span>
-                <span></span>
-
-            </div>
-
-            <div class="footer-dots">
-                • • • • •
-            </div>
-
-            <div class="footer-title">
-                D.I.S.C.O SYSTEMS v1.0
-            </div>
-
-            <div class="footer-dots">
-                • • •
-            </div>
-
-        </footer>
-
-    </main>
-
-
-    <!-- EXISTING JAVASCRIPT -->
-    <script src="./script.js"></script>
-
+  <script src="./script.js"></script>
 </body>
-
 </html>
