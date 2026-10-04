@@ -1,33 +1,36 @@
 (() => {
+
 "use strict";
 
-/* =========================
-   DISCO CORE
-========================= */
+const MODEL = "gemini-3.8-flash";
+const API_STORAGE_KEY = "disco_gemini_key";
+const MEMORY_STORAGE_KEY = "disco_memory";
+
+const DISCO_LOCATION =
+    "Gajuwaka, Visakhapatnam, Andhra Pradesh, India";
 
 const $ = id => document.getElementById(id);
 
-const API_KEY = "disco_gemini_key";
-const MEMORY_KEY = "disco_memory";
-
 let selectedImage = null;
 let recognition = null;
-let timer = null;
+let voices = [];
+let listening = false;
 
 
 /* =========================
-   BASIC HELPERS
+   TOAST
 ========================= */
 
 function toast(message) {
     const box = $("toast");
-
     if (!box) return;
 
     box.textContent = message;
     box.classList.add("show");
 
-    setTimeout(() => {
+    clearTimeout(box._timer);
+
+    box._timer = setTimeout(() => {
         box.classList.remove("show");
     }, 2500);
 }
@@ -38,86 +41,94 @@ function toast(message) {
 ========================= */
 
 function updateClock() {
+
     const now = new Date();
 
-    const time = now.toLocaleTimeString(
-        "en-GB",
-        {
-            hour12: false,
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-        }
-    );
+    const time = now.toLocaleTimeString("en-GB", {
+        hour12: false
+    });
 
-    const date = now.toLocaleDateString(
-        "en-GB",
-        {
-            weekday: "long",
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        }
-    );
+    const date = now.toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
 
     if ($("clock")) {
         $("clock").textContent = time;
     }
 
     if ($("date")) {
-        $("date").textContent = date.toUpperCase();
+        $("date").textContent =
+            `${date} // VIZAG`;
     }
 }
 
-updateClock();
-
 setInterval(updateClock, 1000);
+updateClock();
 
 
 /* =========================
-   DISCO STATUS
+   SYSTEM STATUS
 ========================= */
 
-function setState(state) {
-    if ($("coreState")) {
-        $("coreState").textContent = state;
-    }
+function getApiKey() {
+    return localStorage.getItem(API_STORAGE_KEY);
+}
 
-    if ($("neuralStatus")) {
-        $("neuralStatus").textContent = state;
+
+function getMemory() {
+
+    try {
+        return JSON.parse(
+            localStorage.getItem(MEMORY_STORAGE_KEY) || "[]"
+        );
+    } catch {
+        return [];
     }
+}
+
+
+function saveMemory(memory) {
+
+    localStorage.setItem(
+        MEMORY_STORAGE_KEY,
+        JSON.stringify(memory)
+    );
+
+    updateStatus();
 }
 
 
 function updateStatus() {
 
-    const online = navigator.onLine;
-
-    if ($("network")) {
-        $("network").textContent =
-            online
-                ? "NETWORK ONLINE"
-                : "NETWORK OFFLINE";
-    }
-
-    if ($("agentStatus")) {
-        $("agentStatus").textContent =
-            "STANDBY";
-    }
-
-    if ($("voiceStatus")) {
-        $("voiceStatus").textContent =
-            "READY";
-    }
-
-    if ($("memoryStatus")) {
-        $("memoryStatus").textContent =
-            "LOCAL";
-    }
+    const key = getApiKey();
 
     if ($("neuralStatus")) {
         $("neuralStatus").textContent =
-            "READY";
+            key ? "CONNECTED" : "NO KEY";
+    }
+
+    if ($("network")) {
+        $("network").textContent =
+            key ? "AI CONNECTED" : "API KEY REQUIRED";
+    }
+
+    if ($("memoryStatus")) {
+
+        const memory = getMemory();
+
+        $("memoryStatus").textContent =
+            memory.length ? "ACTIVE" : "LOCAL";
+    }
+}
+
+
+function setState(text) {
+
+    if ($("coreState")) {
+        $("coreState").textContent = text;
     }
 }
 
@@ -126,36 +137,48 @@ function updateStatus() {
    CHAT
 ========================= */
 
-function addMessage(text, user = false) {
+function addMessage(sender, text) {
 
     const chat = $("chat");
 
     if (!chat) return;
 
-    const message = document.createElement("div");
+    const message =
+        document.createElement("div");
 
     message.className =
-        user
-            ? "message user-message"
-            : "message";
+        "message" +
+        (sender === "user" ? " user" : "");
 
-    message.innerHTML = `
-        <div class="avatar">
-            ${user ? "U" : "D"}
-        </div>
+    const avatar =
+        document.createElement("div");
 
-        <div class="bubble">
-            <strong>
-                ${user ? "YOU" : "DISCO"}
-            </strong>
+    avatar.className = "avatar";
 
-            <p></p>
-        </div>
-    `;
+    avatar.textContent =
+        sender === "user" ? "B" : "D";
 
-    message
-        .querySelector("p")
-        .textContent = text;
+    const bubble =
+        document.createElement("div");
+
+    bubble.className = "bubble";
+
+    const name =
+        document.createElement("strong");
+
+    name.textContent =
+        sender === "user" ? "BOSS" : "DISCO";
+
+    const paragraph =
+        document.createElement("p");
+
+    paragraph.textContent = text;
+
+    bubble.appendChild(name);
+    bubble.appendChild(paragraph);
+
+    message.appendChild(avatar);
+    message.appendChild(bubble);
 
     chat.appendChild(message);
 
@@ -167,457 +190,136 @@ function addMessage(text, user = false) {
    MEMORY
 ========================= */
 
-function getMemory() {
+function remember(text) {
 
-    try {
-        return JSON.parse(
-            localStorage.getItem(MEMORY_KEY) || "{}"
-        );
-    } catch {
-        return {};
+    const memory = getMemory();
+
+    memory.push({
+        text,
+        time: new Date().toISOString()
+    });
+
+    while (memory.length > 30) {
+        memory.shift();
     }
+
+    saveMemory(memory);
 }
 
 
-function saveMemory(memory) {
+function memoryCommand() {
 
-    localStorage.setItem(
-        MEMORY_KEY,
-        JSON.stringify(memory)
+    const memory = getMemory();
+
+    if (!memory.length) {
+        return "Boss, I don't have any saved memory yet.";
+    }
+
+    return (
+        "Boss, my saved local memory contains:\n\n" +
+        memory
+            .slice(-10)
+            .map((item, index) =>
+                `${index + 1}. ${item.text}`
+            )
+            .join("\n")
     );
-
-    if ($("memoryStatus")) {
-        $("memoryStatus").textContent = "ACTIVE";
-    }
-}
-
-
-function memoryCommand(text) {
-
-    const lower = text.toLowerCase();
-
-    if (
-        lower.startsWith("remember ") ||
-        lower.startsWith("remember that ")
-    ) {
-
-        const memory = getMemory();
-
-        const value = text
-            .replace(/^remember that\s+/i, "")
-            .replace(/^remember\s+/i, "");
-
-        memory.note = value;
-
-        saveMemory(memory);
-
-        return `Memory saved, Boss.
-
-I will keep this information in DISCO's local browser memory:
-
-${value}`;
-    }
-
-
-    if (
-        lower.includes("show memory") ||
-        lower === "memory" ||
-        lower.includes("what do you remember")
-    ) {
-
-        const memory = getMemory();
-
-        if (!memory.note) {
-            return "DISCO's memory is currently empty, Boss.";
-        }
-
-        return `DISCO MEMORY
-
-${memory.note}`;
-    }
-
-    return null;
 }
 
 
 /* =========================
-   CALCULATOR
+   VOICE SELECTION
 ========================= */
 
-function calculate(expression) {
+function loadVoices() {
 
-    try {
+    voices =
+        window.speechSynthesis
+            ? window.speechSynthesis.getVoices()
+            : [];
+}
 
-        const clean = expression
-            .replace(/^calculate\s+/i, "")
-            .trim();
+loadVoices();
 
-        if (!clean) {
-            return "Tell me what you want me to calculate, Boss.";
-        }
-
-        /*
-           Only allow basic mathematical
-           characters for safety.
-        */
-
-        if (!/^[0-9+\-*/().%\s]+$/.test(clean)) {
-            return "I can only calculate basic mathematical expressions here.";
-        }
-
-        const result = Function(
-            `"use strict"; return (${clean})`
-        )();
-
-        if (
-            typeof result !== "number" ||
-            !Number.isFinite(result)
-        ) {
-            return "I could not calculate that.";
-        }
-
-        return `RESULT
-
-${clean} = ${result}`;
-
-    } catch {
-        return "I could not understand that calculation.";
-    }
+if ("speechSynthesis" in window) {
+    speechSynthesis.onvoiceschanged = loadVoices;
 }
 
 
-/* =========================
-   ACTIVATE AGENTS
-========================= */
-
-function activateAgents() {
-
-    if ($("agentStatus")) {
-        $("agentStatus").textContent =
-            "ACTIVE";
-    }
-
-    return `AGENTS ACTIVATED
-
-Boss, DISCO's agent system is now active.
-
-Available systems:
-
-• Planning Agent
-• Weather Agent
-• Memory Agent
-• Calculation Agent
-• Voice Agent
-• Vision Agent
-• Gemini AI Agent`;
-}
-
-
-/* =========================
-   TIME
-========================= */
-
-function getTime() {
-
-    const now = new Date();
-
-    return `CURRENT TIME
-
-${now.toLocaleTimeString(
-    "en-GB",
-    {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false
-    }
-)}
-
-Location: Visakhapatnam, Vizag`;
-}
-
-
-/* =========================
-   LOCATION
-========================= */
-
-const DISCO_LOCATION =
-    "Gajuwaka, Visakhapatnam, Andhra Pradesh, India";
-
-
-/* =========================
-   WEATHER
-========================= */
-
-async function getWeather() {
-
-    try {
-
-        const geoURL =
-            "https://geocoding-api.open-meteo.com/v1/search" +
-            "?name=Gajuwaka&count=1&language=en&format=json";
-
-        const geoResponse =
-            await fetch(geoURL);
-
-        const geoData =
-            await geoResponse.json();
-
-        const place =
-            geoData.results?.[0];
-
-        if (!place) {
-            return "I could not locate Gajuwaka, Boss.";
-        }
-
-        const latitude =
-            place.latitude;
-
-        const longitude =
-            place.longitude;
-
-        const weatherURL =
-            "https://api.open-meteo.com/v1/forecast" +
-            `?latitude=${latitude}` +
-            `&longitude=${longitude}` +
-            "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m" +
-            "&timezone=Asia%2FKolkata";
-
-        const weatherResponse =
-            await fetch(weatherURL);
-
-        const weather =
-            await weatherResponse.json();
-
-        const current =
-            weather.current;
-
-        return `VISAKHAPATNAM WEATHER
-
-Location:
-Gajuwaka, Visakhapatnam
-
-Temperature:
-${current.temperature_2m} °C
-
-Humidity:
-${current.relative_humidity_2m}%
-
-Wind:
-${current.wind_speed_10m} km/h
-
-DISCO weather system online.`;
-
-    } catch (error) {
-
-        return `Weather system could not connect.
-
-${error.message}`;
-    }
-}
-
-
-/* =========================
-   TIMER
-========================= */
-
-function startTimer(seconds) {
-
-    clearInterval(timer);
-
-    let remaining = seconds;
-
-    const show = () => {
-
-        const minutes =
-            Math.floor(remaining / 60);
-
-        const secs =
-            remaining % 60;
-
-        const time =
-            `${String(minutes).padStart(2, "0")}:` +
-            `${String(secs).padStart(2, "0")}`;
-
-        toast(`DISCO TIMER: ${time}`);
-
-        if (remaining <= 0) {
-
-            clearInterval(timer);
-
-            speak(
-                "Boss, your timer is complete."
-            );
-
-            toast(
-                "DISCO TIMER COMPLETE"
-            );
-
-            return;
-        }
-
-        remaining--;
-    };
-
-    show();
-
-    timer =
-        setInterval(show, 1000);
-}
-
-
-/* =========================
-   LOCAL COMMANDS
-========================= */
-
-async function localCommand(text) {
-
-    const lower =
-        text.toLowerCase().trim();
-
-
-    /* MEMORY */
-
-    const memory =
-        memoryCommand(text);
-
-    if (memory) {
-        return memory;
-    }
-
-
-    /* AGENTS */
-
-    if (
-        lower.includes("activate agents") ||
-        lower === "activate agents"
-    ) {
-        return activateAgents();
-    }
-
-
-    /* TIME */
-
-    if (
-        lower === "time" ||
-        lower.includes("what time") ||
-        lower.includes("current time")
-    ) {
-        return getTime();
-    }
-
-
-    /* WEATHER */
-
-    if (
-        lower === "weather" ||
-        lower.includes("weather in vizag") ||
-        lower.includes("weather in visakhapatnam") ||
-        lower.includes("weather in gajuwaka")
-    ) {
-        return await getWeather();
-    }
-
-
-    /* CALCULATOR */
-
-    if (
-        lower.startsWith("calculate ")
-    ) {
-        return calculate(text);
-    }
-
-
-    /* TIMER */
-
-    const timerMatch =
-        lower.match(
-            /timer\s+(\d+)\s*(seconds?|minutes?|mins?)?/
+function findMaleEnglishVoice() {
+
+    const english =
+        voices.filter(voice =>
+            /^en(-|_)/i.test(voice.lang)
         );
 
-    if (timerMatch) {
-
-        const amount =
-            Number(timerMatch[1]);
-
-        const unit =
-            timerMatch[2] || "seconds";
-
-        const seconds =
-            unit.startsWith("min")
-                ? amount * 60
-                : amount;
-
-        startTimer(seconds);
-
-        return `Timer started, Boss.
-
-Duration:
-${amount} ${unit}`;
+    if (!english.length) {
+        return null;
     }
 
+    const preferredNames = [
+        "Daniel",
+        "George",
+        "Arthur",
+        "James",
+        "Oliver",
+        "Ryan",
+        "Alex",
+        "Thomas",
+        "Google UK English Male"
+    ];
 
-    /* HELLO */
+    for (const name of preferredNames) {
 
-    if (
-        ["hi", "hello", "hey", "hey disco"]
-            .includes(lower)
-    ) {
+        const found =
+            english.find(voice =>
+                voice.name
+                    .toLowerCase()
+                    .includes(name.toLowerCase())
+            );
 
-        return `Hello, Boss.
-
-DISCO is online and ready.`;
+        if (found) {
+            return found;
+        }
     }
 
+    const male =
+        english.find(voice =>
+            /male|man|boy/i.test(voice.name)
+        );
 
-    return null;
+    return male || english[0];
 }
-   /* =========================
-   VOICE OUTPUT
+
+
+/* =========================
+   SPEAK
 ========================= */
 
 function speak(text) {
 
     if (!("speechSynthesis" in window)) {
-        toast("Voice output is not supported.");
         return;
     }
 
-    window.speechSynthesis.cancel();
+    speechSynthesis.cancel();
 
-    /*
-       Remove simple formatting so the voice
-       sounds more natural.
-    */
-    const cleanText = text
-        .replace(/[*#_`•]/g, "")
-        .replace(/\n+/g, ". ")
-        .replace(/\s+/g, " ")
-        .trim();
+    const utterance =
+        new SpeechSynthesisUtterance(text);
 
-    if (!cleanText) return;
+    const voice =
+        findMaleEnglishVoice();
 
-    const speech =
-        new SpeechSynthesisUtterance(cleanText);
-
-    speech.lang = "en-GB";
-    speech.rate = 0.92;
-    speech.pitch = 1;
-    speech.volume = 1;
-
-    const voices =
-        window.speechSynthesis.getVoices();
-
-    const BritishVoice =
-        voices.find(voice =>
-            voice.lang === "en-GB"
-        );
-
-    if (BritishVoice) {
-        speech.voice = BritishVoice;
+    if (voice) {
+        utterance.voice = voice;
     }
 
-    speech.onstart = () => {
+    utterance.lang = "en-GB";
+    utterance.rate = 0.88;
+    utterance.pitch = 0.82;
+    utterance.volume = 1;
+
+    utterance.onstart = () => {
 
         if ($("voiceStatus")) {
             $("voiceStatus").textContent =
@@ -625,7 +327,7 @@ function speak(text) {
         }
     };
 
-    speech.onend = () => {
+    utterance.onend = () => {
 
         if ($("voiceStatus")) {
             $("voiceStatus").textContent =
@@ -633,174 +335,93 @@ function speak(text) {
         }
     };
 
-    speech.onerror = () => {
-
-        if ($("voiceStatus")) {
-            $("voiceStatus").textContent =
-                "READY";
-        }
-
-        toast("DISCO voice output failed.");
-    };
-
-    window.speechSynthesis.speak(speech);
+    speechSynthesis.speak(utterance);
 }
-
-
-/* =========================
-   LOAD VOICES
-========================= */
-
-if ("speechSynthesis" in window) {
-
-    window.speechSynthesis
-        .addEventListener(
-            "voiceschanged",
-            () => {
-                window.speechSynthesis
-                    .getVoices();
-            }
-        );
-}
-
-
-/* =========================
+   /* =========================
    GEMINI AI
 ========================= */
 
-async function askAI(text, image) {
+async function askGemini(prompt, image = null) {
 
-    const key =
-        localStorage.getItem(API_KEY);
+    const key = getApiKey();
 
     if (!key) {
-
-        return `DISCO AI is ready, Boss.
-
-But Gemini AI is not connected yet.
-
-Open ⚙ Settings and add your Gemini API key.
-
-You can still use:
-• Weather
-• Time
-• Memory
-• Calculator
-• Timers
-• Agent system`;
+        throw new Error(
+            "No Gemini API key. Open ⚙ AI KEY and add your key."
+        );
     }
 
-
-    const parts = [{
-        text:
+    const parts = [
+        {
+            text:
 `You are DISCO, a futuristic personal AI assistant.
 
-The user is called Boss.
+Address the user as "Boss".
 
 Use clear, simple British English.
 
-You are helpful, practical and organised.
-
 The user's location is:
-Gajuwaka, Visakhapatnam, Andhra Pradesh, India.
+${DISCO_LOCATION}
 
-IMPORTANT:
-If the user asks for planning, analyse the information they provide instead of giving a generic fixed plan.
+Be useful and practical.
 
-If the user gives today's activities, appointments, study tasks, travel, meals or other responsibilities:
+Do not invent information about the user's schedule.
 
-1. Understand all the information.
-2. Identify urgent tasks.
-3. Arrange tasks in a sensible order.
-4. Tell the user what to do NOW.
-5. Tell them what to do AFTER ONE HOUR when useful.
-6. Organise the afternoon/evening.
-7. Include breaks.
-8. Include meals when relevant.
-9. Suggest a reasonable bedtime based on the user's stated requirements.
-10. Do not invent college, work or other commitments that the user did not provide.
-11. If important information is missing, make a reasonable assumption and clearly label it.
-12. Keep the plan realistic rather than filling every minute.
+If the user asks for a plan, use only the tasks and times the user gives you.
 
-For a daily plan, use this structure when appropriate:
+If information is missing, ask for it.
 
-TODAY'S DISCO PLAN
+Current date and time:
+${new Date().toLocaleString("en-GB")}
 
-NOW
-...
+User request:
+${prompt}`
+        }
+    ];
 
-NEXT
-...
-
-AFTER 1 HOUR
-...
-
-LATER
-...
-
-EVENING
-...
-
-NIGHT
-...
-
-SLEEP
-...
-
-PRIORITY
-...
-
-User message:
-${text || "Analyse this image."}`
-    }];
-
-
-    /* =========================
-       IMAGE INPUT
-    ========================= */
 
     if (image) {
 
-        const match =
-            image.match(
-                /^data:(image\/[^;]+);base64,(.+)$/
-            );
-
-        if (match) {
-
-            parts.push({
-                inline_data: {
-                    mime_type: match[1],
-                    data: match[2]
-                }
-            });
-        }
+        parts.push({
+            inline_data: {
+                mime_type: image.mimeType,
+                data: image.data
+            }
+        });
     }
 
 
-    /* =========================
-       GEMINI REQUEST
-    ========================= */
+    const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`;
+
 
     const response =
-        await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
-            {
-                method: "POST",
+        await fetch(url, {
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+            method: "POST",
 
-                body: JSON.stringify({
-                    contents: [{
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify({
+
+                contents: [
+                    {
                         role: "user",
-                        parts: parts
-                    }]
-                })
-            }
-        );
+                        parts
+                    }
+                ],
+
+                generationConfig: {
+                    thinkingConfig: {
+                        thinkingLevel: "low"
+                    }
+                }
+
+            })
+        });
 
 
     const data =
@@ -810,200 +431,472 @@ ${text || "Analyse this image."}`
     if (!response.ok) {
 
         throw new Error(
-            data.error?.message ||
-            "Gemini AI request failed."
+            data?.error?.message ||
+            "Gemini connection failed."
         );
     }
 
 
     const answer =
-        data.candidates?.[0]
-            ?.content?.parts
+        data?.candidates?.[0]?.content?.parts
             ?.map(part => part.text || "")
-            .join("\n")
+            .join("")
             .trim();
 
 
-    return answer ||
-        "DISCO received no response from Gemini.";
+    if (!answer) {
+
+        throw new Error(
+            "Gemini returned an empty response."
+        );
+    }
+
+    return answer;
 }
 
 
 /* =========================
-   SMART TODAY PLANNER
+   PLAN TODAY
 ========================= */
 
-async function planToday() {
+async function startPlanToday() {
 
-    const message =
-        `I want to plan my day today.
+    const existing =
+        $("msg")?.value.trim();
 
-Please ask me for the information you need about:
-- what time it is now
-- college/work/classes
-- important tasks
-- study subjects
-- assignments
-- appointments
-- travel
-- meals
-- exercise
-- anything that must be completed today
-- what time I want to sleep
+    if (existing) {
 
-Then analyse my information and create a realistic schedule.
+        $("msg").value = "";
 
-Do not give me a generic plan.
-Use my actual information.
+        await createTodayPlan(existing);
 
-Tell me:
-what I should do now,
-what I should do after one hour,
-what I should do later,
-what I should do tonight,
-and when I should sleep.`;
+        return;
+    }
 
 
-    return await askAI(message);
+    addMessage(
+        "assistant",
+        "Boss, what are the works you need to do today? Tell me everything — college, study, assignments, exercise, travel, personal work, or anything else. I will organise it into a realistic plan."
+    );
+
+    speak(
+        "Boss, what are the works you need to do today?"
+    );
+
+    setState("WAITING FOR YOUR TASKS");
+
+    if ($("msg")) {
+
+        $("msg").placeholder =
+            "Tell DISCO everything you need to do today...";
+
+        $("msg").focus();
+    }
+
+    $("msg").dataset.planMode = "today";
 }
 
 
 /* =========================
-   PLAN COMMAND DETECTION
+   CREATE TODAY PLAN
 ========================= */
 
-function isPlanningRequest(text) {
+async function createTodayPlan(tasks) {
+
+    addMessage("user", tasks);
+
+    setState("BUILDING TODAY'S PLAN");
+
+    if ($("neuralStatus")) {
+        $("neuralStatus").textContent =
+            "THINKING";
+    }
+
+
+    try {
+
+        const answer =
+            await askGemini(
+`Create my plan for TODAY.
+
+These are the works I need to do:
+
+${tasks}
+
+Important:
+- Do not add fake tasks.
+- Use the times I give you.
+- If I did not give a time, choose a sensible time.
+- Keep enough breaks.
+- Do not overload the schedule.
+- Put urgent and important work first.
+- Give me a clear timeline.
+- Use simple English.
+- Call me Boss.
+
+Format:
+
+NOW
+NEXT
+LATER
+EVENING
+NIGHT
+PRIORITY`
+            );
+
+
+        addMessage(
+            "assistant",
+            answer
+        );
+
+        speak(answer);
+
+        remember(
+            `Today's plan: ${tasks}`
+        );
+
+    } catch (error) {
+
+        addMessage(
+            "assistant",
+            "DISCO connection error.\n\n" +
+            error.message
+        );
+
+    } finally {
+
+        setState("CORE READY");
+
+        updateStatus();
+    }
+}
+
+
+/* =========================
+   PLAN TOMORROW
+========================= */
+
+async function planTomorrow() {
+
+    addMessage(
+        "assistant",
+        "Boss, what works do you need to do tomorrow?"
+    );
+
+    speak(
+        "Boss, what works do you need to do tomorrow?"
+    );
+
+    setState("WAITING FOR TOMORROW TASKS");
+
+    if ($("msg")) {
+
+        $("msg").placeholder =
+            "Tell me your work for tomorrow...";
+
+        $("msg").focus();
+
+        $("msg").dataset.planMode =
+            "tomorrow";
+    }
+}
+
+
+/* =========================
+   PLAN INPUT
+========================= */
+
+async function processPlanInput(text) {
+
+    const input = $("msg");
+
+    const mode =
+        input?.dataset.planMode;
+
+
+    if (mode === "today") {
+
+        delete input.dataset.planMode;
+
+        await createTodayPlan(text);
+
+        return true;
+    }
+
+
+    if (mode === "tomorrow") {
+
+        delete input.dataset.planMode;
+
+        addMessage("user", text);
+
+        setState("BUILDING TOMORROW");
+
+        try {
+
+            const answer =
+                await askGemini(
+`Create a realistic plan for TOMORROW.
+
+My tasks are:
+
+${text}
+
+Use my actual tasks.
+
+If I give a time, respect it.
+
+If I don't give a time, choose a sensible time.
+
+Include breaks.
+
+Prioritise important work.
+
+Use:
+
+MORNING
+AFTERNOON
+EVENING
+NIGHT
+PRIORITY`
+                );
+
+
+            addMessage(
+                "assistant",
+                answer
+            );
+
+            speak(answer);
+
+        } catch (error) {
+
+            addMessage(
+                "assistant",
+                "DISCO connection error.\n\n" +
+                error.message
+            );
+
+        } finally {
+
+            setState("CORE READY");
+
+            updateStatus();
+        }
+
+        return true;
+    }
+
+
+    return false;
+}
+
+
+/* =========================
+   LOCAL COMMANDS
+========================= */
+
+function localCommand(text) {
 
     const lower =
-        text.toLowerCase();
+        text.toLowerCase().trim();
 
-    return (
-        lower.includes("plan today") ||
-        lower.includes("today's plan") ||
-        lower.includes("todays plan") ||
-        lower.includes("plan my day") ||
-        lower.includes("schedule today") ||
-        lower.includes("organise my day") ||
-        lower.includes("organize my day")
-    );
+
+    if (
+        lower === "plan today" ||
+        lower === "today's plan" ||
+        lower === "plan my day"
+    ) {
+
+        return {
+            type: "plan-today"
+        };
+    }
+
+
+    if (
+        lower === "plan tomorrow" ||
+        lower === "tomorrow's plan"
+    ) {
+
+        return {
+            type: "plan-tomorrow"
+        };
+    }
+
+
+    if (
+        lower === "show memory" ||
+        lower === "memory"
+    ) {
+
+        return {
+            type: "answer",
+            text: memoryCommand()
+        };
+    }
+
+
+    if (
+        lower === "activate agents"
+    ) {
+
+        return {
+            type: "answer",
+            text:
+                "Agents activated, Boss. DISCO is ready."
+        };
+    }
+
+
+    if (
+        lower === "what time is it" ||
+        lower === "time"
+    ) {
+
+        return {
+            type: "answer",
+            text:
+                `Boss, the current time is ${new Date().toLocaleTimeString("en-GB")}.`
+        };
+    }
+
+
+    if (
+        lower === "hello" ||
+        lower === "hi" ||
+        lower === "hey"
+    ) {
+
+        return {
+            type: "answer",
+            text:
+                "Hello, Boss. DISCO is online and ready."
+        };
+    }
+
+
+    return null;
 }
 
 
 /* =========================
-   SEND MESSAGE CORE
+   SEND MESSAGE
 ========================= */
 
 async function sendMessage(text) {
 
     text = text.trim();
 
-    if (!text && !selectedImage) {
+    if (!text) return;
+
+
+    if (
+        await processPlanInput(text)
+    ) {
         return;
     }
 
 
-    const image =
-        selectedImage;
+    const command =
+        localCommand(text);
 
 
-    addMessage(
-        text ||
-        "Analyse this image.",
-        true
-    );
+    if (
+        command?.type === "plan-today"
+    ) {
+
+        await startPlanToday();
+
+        return;
+    }
 
 
-    $("msg").value = "";
+    if (
+        command?.type === "plan-tomorrow"
+    ) {
 
-    selectedImage = null;
+        await planTomorrow();
 
-    $("imageBox").hidden = true;
+        return;
+    }
+
+
+    addMessage("user", text);
 
     setState("PROCESSING");
+
+    if ($("neuralStatus")) {
+        $("neuralStatus").textContent =
+            "THINKING";
+    }
 
 
     try {
 
-        /*
-           First check normal local commands.
-        */
+        if (command?.type === "answer") {
 
-        const local =
-            await localCommand(text);
+            addMessage(
+                "assistant",
+                command.text
+            );
 
-
-        if (local) {
-
-            addMessage(local);
-
-            speak(local);
+            speak(command.text);
 
             return;
         }
 
-
-        /*
-           Planning requests go directly
-           to the intelligent planner.
-        */
-
-        if (isPlanningRequest(text)) {
-
-            const answer =
-                await planToday();
-
-            addMessage(answer);
-
-            speak(answer);
-
-            return;
-        }
-
-
-        /*
-           Everything else goes to Gemini.
-        */
 
         const answer =
-            await askAI(text, image);
+            await askGemini(
+                text,
+                selectedImage
+            );
 
 
-        addMessage(answer);
+        addMessage(
+            "assistant",
+            answer
+        );
 
         speak(answer);
 
     } catch (error) {
 
-        const errorMessage =
-`DISCO connection error.
-
-${error.message}
-
-Check your Gemini API key in ⚙ Settings.`;
-
-        addMessage(errorMessage);
-
-        speak(
-            "Boss, DISCO encountered a connection error. Please check the AI key in settings."
+        addMessage(
+            "assistant",
+            "DISCO connection error.\n\n" +
+            error.message
         );
 
     } finally {
 
         setState("CORE READY");
+
+        updateStatus();
     }
-}
+       }
    /* =========================
-   FORM SUBMIT
+   COMMAND FORM
 ========================= */
 
-$("commandForm").addEventListener(
+$("commandForm")?.addEventListener(
     "submit",
-    event => {
+    async event => {
+
         event.preventDefault();
 
-        sendMessage(
-            $("msg").value
-        );
+        const input = $("msg");
+
+        const text =
+            input.value.trim();
+
+        if (!text) return;
+
+        input.value = "";
+
+        await sendMessage(text);
     }
 );
 
@@ -1018,15 +911,32 @@ document
 
         button.addEventListener(
             "click",
-            () => {
+            async () => {
 
-                sendMessage(
-                    button.dataset.command
-                );
+                const command =
+                    button.dataset.command;
 
+                if (
+                    command === "plan today"
+                ) {
+
+                    await startPlanToday();
+
+                    return;
+                }
+
+                if (
+                    command === "plan tomorrow"
+                ) {
+
+                    await planTomorrow();
+
+                    return;
+                }
+
+                await sendMessage(command);
             }
         );
-
     });
 
 
@@ -1034,39 +944,36 @@ document
    CLEAR CHAT
 ========================= */
 
-$("clearBtn").addEventListener(
+$("clearBtn")?.addEventListener(
     "click",
     () => {
 
         $("chat").innerHTML = "";
 
         addMessage(
+            "assistant",
             "Chat cleared, Boss. DISCO is ready."
         );
 
+        setState("CORE READY");
     }
 );
 
 
 /* =========================
-   IMAGE BUTTON
+   IMAGE UPLOAD
 ========================= */
 
-$("imageBtn").addEventListener(
+$("imageBtn")?.addEventListener(
     "click",
     () => {
 
-        $("imageInput").click();
-
+        $("imageInput")?.click();
     }
 );
 
 
-/* =========================
-   IMAGE SELECT
-========================= */
-
-$("imageInput").addEventListener(
+$("imageInput")?.addEventListener(
     "change",
     event => {
 
@@ -1075,15 +982,6 @@ $("imageInput").addEventListener(
 
         if (!file) return;
 
-        if (!file.type.startsWith("image/")) {
-
-            toast(
-                "Please select an image."
-            );
-
-            return;
-        }
-
 
         const reader =
             new FileReader();
@@ -1091,58 +989,50 @@ $("imageInput").addEventListener(
 
         reader.onload = () => {
 
-            selectedImage =
+            const result =
                 reader.result;
 
-
-            $("preview").src =
-                selectedImage;
-
-
-            $("imageName").textContent =
-                file.name;
+            const base64 =
+                result.split(",")[1];
 
 
-            $("imageBox").hidden =
-                false;
+            selectedImage = {
+                data: base64,
+                mimeType: file.type
+            };
 
 
-            $("msg").placeholder =
-                "Ask DISCO about this image...";
+            if ($("preview")) {
+                $("preview").src = result;
+            }
 
+            if ($("imageName")) {
+                $("imageName").textContent =
+                    file.name;
+            }
 
-            toast(
-                "VISION INPUT READY"
-            );
+            if ($("imageBox")) {
+                $("imageBox").hidden = false;
+            }
+
+            toast("Image ready.");
         };
 
 
         reader.readAsDataURL(file);
-
     }
 );
 
 
-/* =========================
-   REMOVE IMAGE
-========================= */
-
-$("removeImage").addEventListener(
+$("removeImage")?.addEventListener(
     "click",
     () => {
 
         selectedImage = null;
 
-        $("imageBox").hidden = true;
-
-        $("preview")
-            .removeAttribute("src");
-
         $("imageInput").value = "";
 
-        $("msg").placeholder =
-            "Enter command, Boss...";
-
+        $("imageBox").hidden = true;
     }
 );
 
@@ -1151,186 +1041,194 @@ $("removeImage").addEventListener(
    MICROPHONE
 ========================= */
 
-$("micBtn").addEventListener(
-    "click",
-    () => {
+function setupMicrophone() {
 
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
 
-        if (!SpeechRecognition) {
+    if (!SpeechRecognition) {
 
-            toast(
-                "Voice input is not supported by this browser."
-            );
+        $("micBtn")?.addEventListener(
+            "click",
+            () => {
 
-            return;
-        }
+                toast(
+                    "Voice recognition is not supported by this browser."
+                );
+            }
+        );
 
-
-        /*
-           If already listening,
-           stop recording.
-        */
-
-        if (recognition) {
-
-            recognition.stop();
-
-            return;
-        }
+        return;
+    }
 
 
-        recognition =
-            new SpeechRecognition();
+    recognition =
+        new SpeechRecognition();
 
 
-        recognition.lang =
-            "en-GB";
+    recognition.lang = "en-GB";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.maxAlternatives = 1;
 
 
-        recognition.continuous =
-            false;
+    recognition.onstart = () => {
 
+        listening = true;
 
-        recognition.interimResults =
-            false;
+        $("micBtn")?.classList.add(
+            "listening"
+        );
 
-
-        recognition.maxAlternatives =
-            1;
-
+        $("micBtn").textContent =
+            "🔴";
 
         $("voiceStatus").textContent =
             "LISTENING";
 
-
-        $("micBtn").classList.add(
-            "active"
-        );
-
+        setState("LISTENING");
 
         toast(
             "DISCO is listening..."
         );
+    };
 
 
-        recognition.onresult =
-            event => {
+    recognition.onresult = event => {
 
-                const spokenText =
-                    event.results[0][0]
-                        .transcript
-                        .trim();
+        const transcript =
+            event.results[0][0].transcript;
 
-
-                $("msg").value =
-                    spokenText;
+        $("msg").value =
+            transcript;
+    };
 
 
-                /*
-                   Automatically send the
-                   recognised voice command.
-                */
+    recognition.onerror = event => {
 
-                sendMessage(
-                    spokenText
-                );
+        console.log(
+            "Speech recognition:",
+            event.error
+        );
 
-            };
-
-
-        recognition.onerror =
-            event => {
-
-                console.log(
-                    "Speech error:",
-                    event.error
-                );
+        toast(
+            "Microphone error: " +
+            event.error
+        );
+    };
 
 
-                toast(
-                    "I could not hear that clearly."
-                );
+    recognition.onend = async () => {
 
-            };
+        listening = false;
 
+        $("micBtn")?.classList.remove(
+            "listening"
+        );
 
-        recognition.onend =
-            () => {
+        $("micBtn").textContent =
+            "🎙";
 
-                recognition =
-                    null;
+        $("voiceStatus").textContent =
+            "READY";
 
-
-                $("voiceStatus")
-                    .textContent =
-                    "READY";
+        setState("CORE READY");
 
 
-                $("micBtn")
-                    .classList
-                    .remove("active");
-
-            };
+        const text =
+            $("msg").value.trim();
 
 
-        recognition.start();
+        if (text) {
 
-    }
-);
+            $("msg").value = "";
+
+            await sendMessage(text);
+        }
+    };
+
+
+    $("micBtn")?.addEventListener(
+        "click",
+        () => {
+
+            if (listening) {
+
+                recognition.stop();
+
+                return;
+            }
+
+
+            try {
+
+                recognition.start();
+
+            } catch (error) {
+
+                console.log(error);
+            }
+        }
+    );
+}
+
+
+setupMicrophone();
 
 
 /* =========================
-   SETTINGS
+   SETTINGS / API KEY
 ========================= */
 
-$("settingsBtn").addEventListener(
+$("settingsBtn")?.addEventListener(
     "click",
     () => {
 
-        $("apiKey").value =
-            localStorage.getItem(
-                API_KEY
-            ) || "";
+        const modal =
+            $("settingsModal");
 
+        const input =
+            $("apiKey");
 
-        $("settingsModal").hidden =
-            false;
+        if (!modal) return;
 
+        modal.hidden = false;
+
+        if (input) {
+
+            input.value =
+                getApiKey() || "";
+
+            setTimeout(
+                () => input.focus(),
+                100
+            );
+        }
     }
 );
 
 
-/* =========================
-   CLOSE SETTINGS
-========================= */
-
-$("closeSettings").addEventListener(
+$("closeSettings")?.addEventListener(
     "click",
     () => {
 
         $("settingsModal").hidden =
             true;
-
     }
 );
 
 
-/* =========================
-   SAVE GEMINI KEY
-========================= */
-
-$("saveKey").addEventListener(
+$("saveKey")?.addEventListener(
     "click",
     () => {
 
         const key =
-            $("apiKey")
-                .value
-                .trim();
+            $("apiKey").value.trim();
 
 
         if (!key) {
@@ -1344,7 +1242,7 @@ $("saveKey").addEventListener(
 
 
         localStorage.setItem(
-            API_KEY,
+            API_STORAGE_KEY,
             key
         );
 
@@ -1355,48 +1253,33 @@ $("saveKey").addEventListener(
 
         updateStatus();
 
-
         toast(
-            "GEMINI AI CONNECTION SAVED"
+            "Gemini API key connected."
         );
-
     }
 );
 
 
-/* =========================
-   REMOVE GEMINI KEY
-========================= */
-
-$("removeKey").addEventListener(
+$("removeKey")?.addEventListener(
     "click",
     () => {
 
         localStorage.removeItem(
-            API_KEY
+            API_STORAGE_KEY
         );
 
-
-        $("apiKey").value =
-            "";
-
+        $("apiKey").value = "";
 
         updateStatus();
 
-
         toast(
-            "GEMINI KEY REMOVED"
+            "Gemini API key removed."
         );
-
     }
 );
 
 
-/* =========================
-   CLOSE MODAL BY BACKDROP
-========================= */
-
-$("settingsModal").addEventListener(
+$("settingsModal")?.addEventListener(
     "click",
     event => {
 
@@ -1407,9 +1290,7 @@ $("settingsModal").addEventListener(
 
             $("settingsModal").hidden =
                 true;
-
         }
-
     }
 );
 
@@ -1418,7 +1299,7 @@ $("settingsModal").addEventListener(
    ENTER KEY
 ========================= */
 
-$("msg").addEventListener(
+$("msg")?.addEventListener(
     "keydown",
     event => {
 
@@ -1430,27 +1311,23 @@ $("msg").addEventListener(
             event.preventDefault();
 
             $("commandForm").requestSubmit();
-
         }
-
     }
 );
 
 
 /* =========================
-   ONLINE / OFFLINE
+   NETWORK
 ========================= */
 
 window.addEventListener(
     "online",
     () => {
 
-        updateStatus();
+        $("network").textContent =
+            "NETWORK READY";
 
-        toast(
-            "NETWORK ONLINE"
-        );
-
+        toast("Network online.");
     }
 );
 
@@ -1459,31 +1336,10 @@ window.addEventListener(
     "offline",
     () => {
 
-        updateStatus();
+        $("network").textContent =
+            "NETWORK OFFLINE";
 
-        toast(
-            "NETWORK OFFLINE"
-        );
-
-    }
-);
-
-
-/* =========================
-   PAGE VISIBILITY
-========================= */
-
-document.addEventListener(
-    "visibilitychange",
-    () => {
-
-        if (
-            document.hidden &&
-            "speechSynthesis" in window
-        ) {
-            window.speechSynthesis.cancel();
-        }
-
+        toast("Network offline.");
     }
 );
 
@@ -1495,24 +1351,10 @@ document.addEventListener(
 updateStatus();
 
 
-if ($("memoryStatus")) {
-
-    const memory =
-        getMemory();
-
-    $("memoryStatus").textContent =
-        memory.note
-            ? "ACTIVE"
-            : "LOCAL";
-}
-
-
-/* =========================
-   WELCOME
-========================= */
-
 console.log(
-    "DISCO Future AI Core loaded."
+    "DISCO online // Model:",
+    MODEL
 );
+
 
 })();
