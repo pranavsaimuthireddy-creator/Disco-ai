@@ -1,1823 +1,606 @@
 (() => {
-    "use strict";
+  "use strict";
 
-    // =========================================
-    // DISCO CONFIG
-    // =========================================
+  const MODEL = "gemini-3.8-flash";
+  const KEY_NAME = "disco_gemini_key";
+  const MEMORY_NAME = "disco_memory";
+  const PLAN_PENDING = "disco_plan_pending";
 
-    const MODEL = "gemini-3.8-flash";
+  const $ = id => document.getElementById(id);
 
-    const API_STORAGE_KEY = "disco_gemini_key";
+  const chat = $("chat");
+  const input = $("messageInput");
+  const statusText = $("statusText");
+  const systemStatus = $("systemStatus");
+  const coreCaption = $("coreCaption");
 
-    const MEMORY_STORAGE_KEY = "disco_memory";
+  let selectedImage = null;
+  let listening = false;
+  let memoryItems = loadMemory();
+  let pendingTomorrowPlan =
+    localStorage.getItem(PLAN_PENDING) === "true";
 
-    const LOCATION =
-        "Gajuwaka, Visakhapatnam, Andhra Pradesh, India";
+  function setStatus(message) {
+    statusText.textContent = message;
+    systemStatus.textContent = message.toUpperCase();
+  }
 
+  function updateClock() {
+    const now = new Date();
 
-    // =========================================
-    // HELPERS
-    // =========================================
+    $("clock").textContent = now.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
 
-    const $ = (id) =>
-        document.getElementById(id);
+    $("date").textContent = now.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).toUpperCase();
+  }
 
+  updateClock();
+  setInterval(updateClock, 1000);
 
-    let selectedImage = null;
+  function addMessage(text, who = "assistant") {
+    const message = document.createElement("div");
+    message.className = "message " +
+      (who === "user" ? "user-message" : "assistant-message");
 
-    let recognition = null;
+    const tag = document.createElement("span");
+    tag.className = "message-tag";
+    tag.textContent = who === "user" ? "BOSS" : "DISCO";
 
-    let listening = false;
+    const paragraph = document.createElement("p");
+    paragraph.textContent = text;
 
-    let voices = [];
+    message.append(tag, paragraph);
+    chat.appendChild(message);
+    chat.scrollTop = chat.scrollHeight;
+    return message;
+  }
 
+  function loadMemory() {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(MEMORY_NAME) || "[]"
+      );
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  }
 
-    // =========================================
-    // TOAST
-    // =========================================
+  function saveMemory() {
+    try {
+      localStorage.setItem(
+        MEMORY_NAME,
+        JSON.stringify(memoryItems)
+      );
+      return true;
+    } catch {
+      addMessage("Browser storage is unavailable, Boss.");
+      return false;
+    }
+  }
 
-    function toast(message) {
+  function remember(text) {
+    const cleanText = text.trim();
+    if (!cleanText) return;
 
-        const element = $("toast");
+    memoryItems.push({
+      text: cleanText,
+      time: new Date().toISOString()
+    });
 
-        if (!element) return;
+    // Keep the newest 100 memories.
+    memoryItems = memoryItems.slice(-100);
+    saveMemory();
+  }
 
-        element.textContent = message;
+  function findMaleVoice() {
+    const voices = window.speechSynthesis
+      ? window.speechSynthesis.getVoices()
+      : [];
 
-        element.hidden = false;
+    const maleNames =
+      /daniel|george|james|ryan|guy|david|mark|arthur|fred|oliver|male/i;
 
-        clearTimeout(element._timer);
+    return voices.find(v =>
+      /^en-GB/i.test(v.lang) && maleNames.test(v.name)
+    ) || voices.find(v =>
+      /^en/i.test(v.lang) && maleNames.test(v.name)
+    ) || voices.find(v =>
+      /^en-GB/i.test(v.lang)
+    ) || voices.find(v =>
+      /^en/i.test(v.lang)
+    ) || null;
+  }
 
-        element._timer =
-            setTimeout(() => {
-
-                element.hidden = true;
-
-            }, 2500);
+  function speakReply(text) {
+    if (!("speechSynthesis" in window)) {
+      addMessage(
+        "Voice playback is not supported by this browser, Boss."
+      );
+      return;
     }
 
+    window.speechSynthesis.cancel();
 
-    // =========================================
-    // SYSTEM STATE
-    // =========================================
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-GB";
+    speech.rate = 0.92;
+    speech.pitch = 0.82;
 
-    function setState(text) {
+    const voice = findMaleVoice();
+    if (voice) speech.voice = voice;
 
-        const state =
-            $("systemState");
+    speech.onerror = () => {
+      setStatus("VOICE ERROR");
+    };
 
-        if (state) {
-            state.textContent = text;
-        }
+    speech.onstart = () => {
+      coreCaption.textContent = "DISCO IS SPEAKING";
+    };
+
+    speech.onend = () => {
+      coreCaption.textContent = "READY TO ASSIST, BOSS";
+      setStatus("READY");
+    };
+
+    window.speechSynthesis.speak(speech);
+  }
+
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      findMaleVoice();
+    };
+  }
+
+  function stopSpeaking() {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    coreCaption.textContent = "READY TO ASSIST, BOSS";
+  }
+
+  function openSettings() {
+    $("settingsModal").hidden = false;
+    $("apiKeyInput").value = "";
+    $("apiKeyInput").focus();
+  }
+
+  function closeSettings() {
+    $("settingsModal").hidden = true;
+  }
+
+  // Part 2 continues immediately below.
+ 
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(
+        new Error("Could not read the selected image.")
+      );
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function askGemini(text, imageFile = null) {
+    const apiKey = localStorage.getItem(KEY_NAME);
+
+    if (!apiKey) {
+      addMessage("Please save your Gemini API key first, Boss.");
+      openSettings();
+      return;
     }
 
+    setStatus("THINKING");
+    coreCaption.textContent = "PROCESSING REQUEST";
 
-    // =========================================
-    // API KEY
-    // =========================================
+    try {
+      const memoryContext = memoryItems
+        .slice(-5)
+        .map(item => item.text)
+        .join("\n");
 
-    function getApiKey() {
+      const prompt = [
+        "You are DISCO, Boss's personal AI assistant.",
+        "Address the user as Boss.",
+        "Use clear, simple British English.",
+        "Answer helpfully and concisely.",
+        memoryContext
+          ? "Relevant saved memories:\n" + memoryContext
+          : "",
+        "User's message:\n" + text
+      ].filter(Boolean).join("\n\n");
 
-        return (
-            localStorage.getItem(
-                API_STORAGE_KEY
-            ) || ""
-        );
-    }
+      const parts = [{ text: prompt }];
 
-
-    // =========================================
-    // MEMORY
-    // =========================================
-
-    function getMemory() {
-
-        try {
-
-            return JSON.parse(
-                localStorage.getItem(
-                    MEMORY_STORAGE_KEY
-                ) || "{}"
-            );
-
-        } catch {
-
-            return {};
-        }
-    }
-
-
-    function saveMemory(memory) {
-
-        localStorage.setItem(
-            MEMORY_STORAGE_KEY,
-            JSON.stringify(memory)
-        );
-    }
-
-
-    // =========================================
-    // CHAT
-    // =========================================
-
-    function addMessage(
-        text,
-        type = "ai"
-    ) {
-
-        const chat =
-            $("chat");
-
-        if (!chat) return;
-
-
-        const message =
-            document.createElement("div");
-
-        message.className =
-            type === "user"
-                ? "message user-message"
-                : "message ai-message";
-
-
-        const tag =
-            document.createElement("div");
-
-        tag.className =
-            "message-tag";
-
-        tag.textContent =
-            type === "user"
-                ? "BOSS"
-                : "DISCO";
-
-
-        const content =
-            document.createElement("div");
-
-        content.className =
-            "message-text";
-
-        content.textContent =
-            text;
-
-
-        message.appendChild(tag);
-
-        message.appendChild(content);
-
-        chat.appendChild(message);
-
-
-        chat.scrollTop =
-            chat.scrollHeight;
-    }
-
-
-    // =========================================
-    // STATUS
-    // =========================================
-
-    function updateStatus() {
-
-        const key =
-            Boolean(getApiKey());
-
-
-        const ai =
-            $("aiStatus");
-
-        const network =
-            $("networkStatus");
-
-        const memory =
-            $("memoryStatus");
-
-
-        if (ai) {
-
-            ai.textContent =
-                key
-                    ? "CONNECTED"
-                    : "KEY REQUIRED";
-        }
-
-
-        if (network) {
-
-            network.textContent =
-                navigator.onLine
-                    ? "ONLINE"
-                    : "OFFLINE";
-        }
-
-
-        if (memory) {
-
-            memory.textContent =
-                "READY";
-        }
-    }
-
-
-    // =========================================
-    // MEMORY COMMAND
-    // =========================================
-
-    function showMemory() {
-
-        const memory =
-            getMemory();
-
-        const keys =
-            Object.keys(memory);
-
-
-        if (!keys.length) {
-
-            addMessage(
-                "Boss, I don't have any saved memories yet."
-            );
-
-            return;
+      if (imageFile) {
+        if (!imageFile.type.startsWith("image/")) {
+          throw new Error("Please select an image file.");
         }
 
+        const dataURL = await fileToDataURL(imageFile);
+        const base64 = dataURL.split(",")[1];
 
-        let result =
-            "Boss, here is what I remember:\n\n";
-
-
-        keys.forEach(key => {
-
-            result +=
-                `${key}: ${memory[key]}\n`;
+        parts.push({
+          inline_data: {
+            mime_type: imageFile.type,
+            data: base64
+          }
         });
+      }
 
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 700
+            }
+          })
+        }
+      );
 
-        addMessage(result);
-    }
+      const data = await response.json().catch(() => ({}));
 
+      if (!response.ok) {
+        const message = data?.error?.message || "";
 
-    // =========================================
-    // VOICE
-    // =========================================
-
-    function loadVoices() {
-
-        if (
-            !("speechSynthesis" in window)
-        ) {
-            return;
+        if (response.status === 429) {
+          throw new Error(
+            "Gemini is busy or your API quota has been reached. " +
+            "Please wait and try again."
+          );
         }
 
+        if (response.status === 503 || response.status === 502) {
+          throw new Error(
+            "Gemini is temporarily overloaded. Please try again later."
+          );
+        }
 
-        voices =
-            window.speechSynthesis
-                .getVoices();
+        if (response.status === 400 || response.status === 404) {
+          throw new Error(
+            "The request or model was rejected. Check the configured " +
+            "Gemini model and API settings. " + message
+          );
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            "Gemini rejected the API key or its permissions. " +
+            "Check your key settings."
+          );
+        }
+
+        throw new Error(message || `Gemini error ${response.status}`);
+      }
+
+      const reply = (data.candidates?.[0]?.content?.parts || [])
+        .map(part => part.text || "")
+        .join("\n")
+        .trim();
+
+      if (!reply) {
+        throw new Error(
+          "Gemini returned no text. Please try another message."
+        );
+      }
+
+      addMessage(reply);
+      setStatus("READY");
+      speakReply(reply);
+
+    } catch (error) {
+      console.error("DISCO request failed:", error);
+
+      const message = error.message ||
+        "Something went wrong. Please try again.";
+
+      addMessage(message);
+      setStatus("ERROR");
+      coreCaption.textContent = "REQUEST FAILED";
+      speakReply(message);
+
+    } finally {
+      selectedImage = null;
+      $("cameraInput").value = "";
+      $("imagePreview").hidden = true;
+    }
+  }
+
+  async function handleUserMessage(rawText) {
+    const text = rawText.trim();
+    if (!text) return;
+
+    addMessage(text, "user");
+    input.value = "";
+    stopSpeaking();
+
+    // Save a memory when Boss says "remember that..."
+    const rememberMatch = text.match(
+      /^(?:disco[,\s]+)?remember(?:\s+that)?\s+(.+)$/i
+    );
+
+    if (rememberMatch) {
+      remember(rememberMatch[1]);
+      const reply = "Saved to memory, Boss.";
+      addMessage(reply);
+      speakReply(reply);
+      setStatus("MEMORY SAVED");
+      return;
     }
 
-
+    // Start the tomorrow-planning conversation.
     if (
-        "speechSynthesis" in window
+      /\bplan my tomorrow schedule\b/i.test(text) ||
+      /\bplan tomorrow(?:'s)? schedule\b/i.test(text) ||
+      /\bplan my schedule for tomorrow\b/i.test(text)
     ) {
+      pendingTomorrowPlan = true;
+      localStorage.setItem(PLAN_PENDING, "true");
 
-        loadVoices();
-
-        window.speechSynthesis
-            .addEventListener(
-                "voiceschanged",
-                loadVoices
-            );
+      const reply = "What are your plans for tomorrow, Boss?";
+      addMessage(reply);
+      speakReply(reply);
+      setStatus("PLANNING");
+      return;
     }
 
+    // The next message after that question becomes the plan.
+    if (pendingTomorrowPlan) {
+      remember("Tomorrow's plan: " + text);
+      pendingTomorrowPlan = false;
+      localStorage.removeItem(PLAN_PENDING);
 
-    function findMaleVoice() {
+      const reply =
+        "I've saved your plans for tomorrow, Boss. " +
+        "You can press Play Memory to hear them again.";
 
-        if (!voices.length) {
-            return null;
-        }
-
-
-        const preferred = [
-            "Google UK English Male",
-            "Daniel",
-            "George",
-            "Arthur",
-            "James",
-            "Oliver",
-            "Ryan",
-            "Thomas",
-            "Alex"
-        ];
-
-
-        for (
-            const preferredName
-            of preferred
-        ) {
-
-            const voice =
-                voices.find(v =>
-                    v.name
-                        .toLowerCase()
-                        .includes(
-                            preferredName
-                                .toLowerCase()
-                        )
-                );
-
-
-            if (voice) {
-                return voice;
-            }
-        }
-
-
-        const male =
-            voices.find(v => {
-
-                const name =
-                    v.name.toLowerCase();
-
-                return (
-                    name.includes("male") ||
-                    name.includes("man") ||
-                    name.includes("boy")
-                );
-            });
-
-
-        if (male) {
-            return male;
-        }
-
-
-        return (
-            voices.find(v =>
-                v.lang &&
-                v.lang
-                    .toLowerCase()
-                    .startsWith("en")
-            ) || null
-        );
+      addMessage(reply);
+      speakReply(reply);
+      setStatus("PLAN SAVED");
+      return;
     }
 
-
-    function speak(text) {
-
-        if (
-            !("speechSynthesis" in window)
-        ) {
-            return;
-        }
-
-
-        window.speechSynthesis.cancel();
-
-
-        const utterance =
-            new SpeechSynthesisUtterance(
-                text
-            );
-
-
-        const voice =
-            findMaleVoice();
-
-
-        if (voice) {
-
-            utterance.voice =
-                voice;
-        }
-
-
-        utterance.lang =
-            "en-GB";
-
-        utterance.rate =
-            0.88;
-
-        utterance.pitch =
-            0.78;
-
-
-        const voiceStatus =
-            $("voiceStatus");
-
-
-        if (voiceStatus) {
-
-            voiceStatus.textContent =
-                "SPEAKING";
-        }
-
-
-        utterance.onend =
-            () => {
-
-                if (voiceStatus) {
-
-                    voiceStatus.textContent =
-                        "READY";
-                }
-            };
-
-
-        utterance.onerror =
-            () => {
-
-                if (voiceStatus) {
-
-                    voiceStatus.textContent =
-                        "READY";
-                }
-            };
-
-
-        window.speechSynthesis
-            .speak(utterance);
-    }
-
-
-    // =========================================
-    // GEMINI API
-    // =========================================
-
-    async function askGemini(
-        prompt,
-        imageData = null
-    ) {
-
-        const key =
-            getApiKey();
-
-
-        if (!key) {
-
-            openSettings();
-
-            return null;
-        }
-
-
-        if (!navigator.onLine) {
-
-            addMessage(
-                "Boss, the device is offline."
-            );
-
-            return null;
-        }
-
-
-        setState(
-            "PROCESSING"
-        );
-
-
-        const aiStatus =
-            $("aiStatus");
-
-
-        if (aiStatus) {
-
-            aiStatus.textContent =
-                "PROCESSING";
-        }
-
-
-        try {
-
-            const url =
-                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-
-
-            const parts = [];
-
-
-            parts.push({
-                text:
-                    `You are DISCO, a futuristic personal AI assistant.
-
-Call the user "Boss".
-
-Use simple British English.
-
-Be helpful, clear and concise.
-
-The user's preferred location is:
-${LOCATION}
-
-User request:
-${prompt}`
-            });
-
-
-            if (imageData) {
-
-                const match =
-                    imageData.match(
-                        /^data:(.*?);base64,(.*)$/
-                    );
-
-
-                if (match) {
-
-                    parts.push({
-
-                        inline_data: {
-
-                            mime_type:
-                                match[1],
-
-                            data:
-                                match[2]
-                        }
-                    });
-                }
-            }
-
-
-            const response =
-                await fetch(url, {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json",
-
-                        "x-goog-api-key":
-                            key
-                    },
-
-                    body: JSON.stringify({
-
-                        contents: [
-
-                            {
-                                role: "user",
-
-                                parts
-                            }
-
-                        ],
-
-                        generationConfig: {
-
-                            temperature: 0.7,
-
-                            maxOutputTokens: 1200
-                        }
-
-                    })
-                });
-
-
-            const data =
-                await response.json();
-
-
-            if (!response.ok) {
-
-                console.error(
-                    "Gemini API error:",
-                    data
-                );
-
-
-                const errorText =
-                    data?.error?.message ||
-                    "Gemini returned an error.";
-
-
-                addMessage(
-                    "Boss, Gemini returned an error:\n" +
-                    errorText
-                );
-
-
-                setState(
-                    "API ERROR"
-                );
-
-
-                if (aiStatus) {
-
-                    aiStatus.textContent =
-                        "ERROR";
-                }
-
-
-                return null;
-            }
-
-
-            const answer =
-                data
-                    ?.candidates?.[0]
-                    ?.content?.parts
-                    ?.map(
-                        part =>
-                            part.text || ""
-                    )
-                    .join("")
-                    .trim();
-
-
-            if (!answer) {
-
-                addMessage(
-                    "Boss, Gemini did not return a response."
-                );
-
-                setState(
-                    "READY"
-                );
-
-                return null;
-            }
-
-
-            setState(
-                "READY"
-            );
-
-
-            if (aiStatus) {
-
-                aiStatus.textContent =
-                    "CONNECTED";
-            }
-
-
-            return answer;
-
-
-        } catch (error) {
-
-            console.error(
-                "DISCO error:",
-                error
-            );
-
-
-            addMessage(
-                "Boss, I couldn't connect to Gemini. Check your internet connection and API key."
-            );
-
-
-            setState(
-                "CONNECTION ERROR"
-            );
-
-
-            return null;
-        }
-    }
-        // =========================================
-    // SETTINGS MODAL
-    // =========================================
-
-    const settingsBtn =
-        $("settingsBtn");
-
-    const settingsModal =
-        $("settingsModal");
-
-    const closeSettings =
-        $("closeSettings");
-
-    const saveKey =
-        $("saveKey");
-
-    const removeKey =
-        $("removeKey");
-
-    const apiKeyInput =
-        $("apiKey");
-
-
-    function openSettings() {
-
-        if (!settingsModal) {
-            return;
-        }
-
-
-        const saved =
-            getApiKey();
-
-
-        if (apiKeyInput) {
-
-            apiKeyInput.value =
-                saved;
-        }
-
-
-        settingsModal.hidden =
-            false;
-
-
-        setTimeout(() => {
-
-            if (apiKeyInput) {
-
-                apiKeyInput.focus();
-            }
-
-        }, 50);
-    }
-
-
-    function closeSettingsModal() {
-
-        if (!settingsModal) {
-            return;
-        }
-
-
-        settingsModal.hidden =
-            true;
-    }
-
-
-    if (settingsBtn) {
-
-        settingsBtn.addEventListener(
-            "click",
-            openSettings
-        );
-    }
-
-
-    if (closeSettings) {
-
-        closeSettings.addEventListener(
-            "click",
-            closeSettingsModal
-        );
-    }
-
-
-    if (saveKey) {
-
-        saveKey.addEventListener(
-            "click",
-            () => {
-
-                const key =
-                    apiKeyInput
-                        ?.value
-                        .trim();
-
-
-                if (!key) {
-
-                    toast(
-                        "Enter your Gemini API key first."
-                    );
-
-                    return;
-                }
-
-
-                localStorage.setItem(
-                    API_STORAGE_KEY,
-                    key
-                );
-
-
-                closeSettingsModal();
-
-
-                updateStatus();
-
-
-                toast(
-                    "API key saved. DISCO is ready."
-                );
-            }
-        );
-    }
-
-
-    if (removeKey) {
-
-        removeKey.addEventListener(
-            "click",
-            () => {
-
-                localStorage.removeItem(
-                    API_STORAGE_KEY
-                );
-
-
-                if (apiKeyInput) {
-
-                    apiKeyInput.value =
-                        "";
-                }
-
-
-                closeSettingsModal();
-
-
-                updateStatus();
-
-
-                toast(
-                    "API key removed."
-                );
-            }
-        );
-    }
-
-
-    if (settingsModal) {
-
-        settingsModal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    settingsModal
-                ) {
-
-                    closeSettingsModal();
-                }
-            }
-        );
-    }
-
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Escape"
-            ) {
-
-                closeSettingsModal();
-            }
-        }
+    const imageToSend = selectedImage;
+    await askGemini(
+      text || (imageToSend ? "Describe this image, Boss." : ""),
+      imageToSend
     );
-
-
-    // =========================================
-    // SEND MESSAGE
-    // =========================================
-
-    async function sendMessage() {
-
-        const input =
-            $("msg");
-
-
-        if (!input) {
-            return;
-        }
-
-
-        const text =
-            input.value.trim();
-
-
-        if (
-            !text &&
-            !selectedImage
-        ) {
-            return;
-        }
-
-
-        if (text) {
-
-            addMessage(
-                text,
-                "user"
-            );
-        }
-
-
-        input.value = "";
-
-
-        const planMode =
-            input.dataset.planMode;
-
-
-        if (planMode) {
-
-            delete input.dataset.planMode;
-
-
-            input.placeholder =
-                "Talk to DISCO...";
-
-
-            if (
-                planMode === "today"
-            ) {
-
-                await createPlan(
-                    text,
-                    "today"
-                );
-
-                return;
-            }
-
-
-            if (
-                planMode === "tomorrow"
-            ) {
-
-                await createPlan(
-                    text,
-                    "tomorrow"
-                );
-
-                return;
-            }
-        }
-
-
-        // LOCAL COMMANDS
-
-        const command =
-            text.toLowerCase();
-
-
-        if (
-            command === "memory"
-        ) {
-
-            showMemory();
-
-            return;
-        }
-
-
-        if (
-            command === "time"
-        ) {
-
-            const now =
-                new Date();
-
-
-            const time =
-                now.toLocaleTimeString(
-                    "en-GB",
-                    {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                    }
-                );
-
-
-            const reply =
-                `Boss, the current time is ${time}.`;
-
-
-            addMessage(reply);
-
-            speak(reply);
-
-            return;
-        }
-
-
-        if (
-            command ===
-            "activate agents"
-        ) {
-
-            const reply =
-                "Boss, agent system activated. DISCO is ready.";
-
-
-            addMessage(reply);
-
-            speak(reply);
-
-            return;
-        }
-
-
-        const image =
-            selectedImage;
-
-
-        selectedImage =
-            null;
-
-
-        const preview =
-            $("imagePreview");
-
-
-        if (preview) {
-
-            preview.hidden =
-                true;
-        }
-
-
-        const imageInput =
-            $("imageInput");
-
-
-        if (imageInput) {
-
-            imageInput.value =
-                "";
-        }
-
-
-        const answer =
-            await askGemini(
-                text ||
-                "Analyse the attached image.",
-                image
-            );
-
-
-        if (answer) {
-
-            addMessage(
-                answer
-            );
-
-
-            speak(
-                answer
-            );
-        }
+  }
+
+  async function sendMessage() {
+    const text = input.value.trim();
+
+    if (!text && !selectedImage) return;
+
+    await handleUserMessage(
+      text || "Describe this image, Boss."
+    );
+  }
+
+  // Part 3 continues immediately below.
+ 
+  // API key settings
+  $("apiBtn").addEventListener("click", openSettings);
+  $("closeSettings").addEventListener("click", closeSettings);
+
+  $("settingsModal").addEventListener("click", event => {
+    if (event.target === $("settingsModal")) {
+      closeSettings();
+    }
+  });
+
+  $("saveKeyBtn").addEventListener("click", () => {
+    const key = $("apiKeyInput").value.trim();
+
+    if (!key) {
+      addMessage("Enter your Gemini API key first, Boss.");
+      $("apiKeyInput").focus();
+      return;
     }
 
+    try {
+      localStorage.setItem(KEY_NAME, key);
+      closeSettings();
+      setStatus("KEY SAVED");
+      coreCaption.textContent = "AI CORE READY";
 
-    // =========================================
-    // PLAN SYSTEM
-    // =========================================
+      addMessage(
+        "API key saved in this browser, Boss. " +
+        "Send a message to test the Gemini connection."
+      );
+    } catch {
+      addMessage(
+        "Could not save the key in this browser, Boss."
+      );
+    }
+  });
 
-    function startPlanToday() {
+  $("removeKeyBtn").addEventListener("click", () => {
+    localStorage.removeItem(KEY_NAME);
+    closeSettings();
+    setStatus("KEY REMOVED");
+    addMessage("The saved API key has been removed, Boss.");
+  });
 
-        const input =
-            $("msg");
+  // Send button and message form
+  $("chatForm").addEventListener("submit", event => {
+    event.preventDefault();
+    sendMessage();
+  });
 
+  // Camera button
+  $("cameraBtn").addEventListener("click", () => {
+    $("cameraInput").click();
+  });
 
-        if (input) {
+  $("cameraInput").addEventListener("change", event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-            input.dataset.planMode =
-                "today";
+    if (!file.type.startsWith("image/")) {
+      addMessage("Please choose an image, Boss.");
+      return;
+    }
 
-            input.placeholder =
-                "Tell me everything you need to do today...";
-        }
+    selectedImage = file;
+    $("imageName").textContent = file.name;
+    $("imagePreview").hidden = false;
+    input.value = "Describe this image";
+    input.focus();
+  });
 
+  $("removeImage").addEventListener("click", () => {
+    selectedImage = null;
+    $("cameraInput").value = "";
+    $("imagePreview").hidden = true;
+    input.value = "";
+  });
 
+  // Microphone button
+  $("micBtn").addEventListener("click", () => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      addMessage(
+        "Voice recognition is unavailable in this browser, Boss. " +
+        "Try opening DISCO in Chrome."
+      );
+      return;
+    }
+
+    if (listening) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-GB";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      listening = true;
+      setStatus("LISTENING");
+      coreCaption.textContent = "I'M LISTENING, BOSS";
+      $("micBtn").style.background = "#125b70";
+    };
+
+    recognition.onresult = event => {
+      const transcript =
+        event.results[0][0].transcript.trim();
+
+      if (transcript) {
+        input.value = transcript;
+        handleUserMessage(transcript);
+      }
+    };
+
+    recognition.onerror = event => {
+      console.error("Microphone error:", event.error);
+      addMessage(
+        "I couldn't recognise that speech, Boss. " +
+        "Please check microphone permission and try again."
+      );
+      setStatus("MIC ERROR");
+    };
+
+    recognition.onend = () => {
+      listening = false;
+      $("micBtn").style.background = "";
+      coreCaption.textContent = "READY TO ASSIST, BOSS";
+      if (statusText.textContent === "LISTENING") {
+        setStatus("READY");
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error(error);
+      addMessage("The microphone could not start. Try again, Boss.");
+    }
+  });
+
+  // Memory button: show memories or save the first one.
+  $("memoryBtn").addEventListener("click", () => {
+    memoryItems = loadMemory();
+
+    if (memoryItems.length === 0) {
+      const text = window.prompt(
+        "Boss, what would you like DISCO to remember?"
+      );
+
+      if (text && text.trim()) {
+        remember(text);
+        addMessage("I've saved that memory, Boss.");
+        setStatus("MEMORY SAVED");
+      } else {
         addMessage(
-            "Boss, tell me everything you need to do today. You can type it or use the microphone."
+          "No memories saved yet. Say 'Remember that...' " +
+          "or use the Memory button to add one."
         );
+      }
 
-
-        setState(
-            "PLANNING TODAY"
-        );
+      return;
     }
 
+    const summary = memoryItems
+      .slice(-10)
+      .map((item, index) => `${index + 1}. ${item.text}`)
+      .join("\n");
 
-    function startPlanTomorrow() {
+    addMessage("YOUR SAVED MEMORIES\n" + summary);
+    setStatus("MEMORY LOADED");
+  });
 
-        const input =
-            $("msg");
+  // Play Memory button
+  $("playMemoryBtn").addEventListener("click", () => {
+    memoryItems = loadMemory();
 
-
-        if (input) {
-
-            input.dataset.planMode =
-                "tomorrow";
-
-            input.placeholder =
-                "Tell me everything you need to do tomorrow...";
-        }
-
-
-        addMessage(
-            "Boss, tell me everything you need to do tomorrow. You can type it or use the microphone."
-        );
-
-
-        setState(
-            "PLANNING TOMORROW"
-        );
+    if (memoryItems.length === 0) {
+      speakReply("There are no saved memories yet, Boss.");
+      return;
     }
 
+    const summary = memoryItems
+      .slice(-10)
+      .map((item, index) => `${index + 1}. ${item.text}`)
+      .join(". ");
 
-    async function createPlan(
-        tasks,
-        day
-    ) {
+    speakReply("Here are your saved memories, Boss. " + summary);
+  });
 
-        const prompt =
-            day === "today"
-
-                ? `Create a practical plan for today.
-
-Boss's tasks:
-${tasks}
-
-Organise the answer into:
-
-NOW
-NEXT
-LATER
-EVENING
-NIGHT
-PRIORITY
-
-Keep it realistic and simple.`
-
-                : `Create a practical plan for tomorrow.
-
-Boss's tasks:
-${tasks}
-
-Organise the answer into:
-
-MORNING
-AFTERNOON
-EVENING
-NIGHT
-PRIORITY
-
-Keep it realistic and simple.`;
-
-
-        const answer =
-            await askGemini(
-                prompt
-            );
-
-
-        if (answer) {
-
-            addMessage(
-                answer
-            );
-
-            speak(
-                answer
-            );
-        }
-
-
-        setState(
-            "READY"
-        );
+  // Keyboard shortcut for closing settings.
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeSettings();
     }
-
-
-    // =========================================
-    // CHAT FORM
-    // =========================================
-
-    const chatForm =
-        $("chatForm");
-
-
-    if (chatForm) {
-
-        chatForm.addEventListener(
-            "submit",
-            event => {
-
-                event.preventDefault();
-
-                sendMessage();
-            }
-        );
-    }
-
-
-    // =========================================
-    // ENTER KEY
-    // =========================================
-
-    const msg =
-        $("msg");
-
-
-    if (msg) {
-
-        msg.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key === "Enter" &&
-                    !event.shiftKey
-                ) {
-
-                    event.preventDefault();
-
-                    sendMessage();
-                }
-            }
-        );
-    }
-
-
-    // =========================================
-    // QUICK COMMANDS
-    // =========================================
-
-    document
-        .querySelectorAll(
-            ".command-button"
-        )
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const command =
-                        button.dataset.command;
-
-
-                    if (
-                        command ===
-                        "PLAN TODAY"
-                    ) {
-
-                        startPlanToday();
-
-                        return;
-                    }
-
-
-                    if (
-                        command ===
-                        "PLAN TOMORROW"
-                    ) {
-
-                        startPlanTomorrow();
-
-                        return;
-                    }
-
-
-                    if (
-                        command ===
-                        "MEMORY"
-                    ) {
-
-                        showMemory();
-
-                        return;
-                    }
-
-
-                    if (
-                        command ===
-                        "TIME"
-                    ) {
-
-                        const now =
-                            new Date();
-
-
-                        const time =
-                            now.toLocaleTimeString(
-                                "en-GB",
-                                {
-                                    hour:
-                                        "2-digit",
-                                    minute:
-                                        "2-digit"
-                                }
-                            );
-
-
-                        const reply =
-                            `Boss, the current time is ${time}.`;
-
-
-                        addMessage(
-                            reply
-                        );
-
-                        speak(
-                            reply
-                        );
-
-                        return;
-                    }
-
-
-                    if (
-                        command ===
-                        "ACTIVATE AGENTS"
-                    ) {
-
-                        const reply =
-                            "Boss, agent system activated. DISCO is ready.";
-
-
-                        addMessage(
-                            reply
-                        );
-
-                        speak(
-                            reply
-                        );
-                    }
-                }
-            );
-        });
-
-
-    // =========================================
-    // CLEAR CHAT
-    // =========================================
-
-    const clearBtn =
-        $("clearBtn");
-
-
-    if (clearBtn) {
-
-        clearBtn.addEventListener(
-            "click",
-            () => {
-
-                const chat =
-                    $("chat");
-
-
-                if (!chat) {
-                    return;
-                }
-
-
-                chat.innerHTML =
-                    "";
-
-
-                addMessage(
-                    "Systems online. How may I assist you, Boss?"
-                );
-
-
-                setState(
-                    "SYSTEM READY"
-                );
-            }
-        );
-    }
-
-
-    // =========================================
-    // IMAGE UPLOAD
-    // =========================================
-
-    const imageBtn =
-        $("imageBtn");
-
-    const imageInput =
-        $("imageInput");
-
-    const imagePreview =
-        $("imagePreview");
-
-    const previewImage =
-        $("previewImage");
-
-    const removeImage =
-        $("removeImage");
-
-
-    if (imageBtn) {
-
-        imageBtn.addEventListener(
-            "click",
-            () => {
-
-                imageInput?.click();
-            }
-        );
-    }
-
-
-    if (imageInput) {
-
-        imageInput.addEventListener(
-            "change",
-            event => {
-
-                const file =
-                    event.target.files?.[0];
-
-
-                if (!file) {
-                    return;
-                }
-
-
-                if (
-                    !file.type
-                        .startsWith(
-                            "image/"
-                        )
-                ) {
-
-                    toast(
-                        "Please select an image."
-                    );
-
-                    return;
-                }
-
-
-                const reader =
-                    new FileReader();
-
-
-                reader.onload =
-                    () => {
-
-                        selectedImage =
-                            reader.result;
-
-
-                        if (
-                            previewImage
-                        ) {
-
-                            previewImage.src =
-                                selectedImage;
-                        }
-
-
-                        if (
-                            imagePreview
-                        ) {
-
-                            imagePreview.hidden =
-                                false;
-                        }
-
-
-                        toast(
-                            "Image ready."
-                        );
-                    };
-
-
-                reader.readAsDataURL(
-                    file
-                );
-            }
-        );
-    }
-
-
-    if (removeImage) {
-
-        removeImage.addEventListener(
-            "click",
-            () => {
-
-                selectedImage =
-                    null;
-
-
-                if (imageInput) {
-
-                    imageInput.value =
-                        "";
-                }
-
-
-                if (previewImage) {
-
-                    previewImage.src =
-                        "";
-                }
-
-
-                if (imagePreview) {
-
-                    imagePreview.hidden =
-                        true;
-                }
-            }
-        );
-                   }
-        // =========================================
-    // MICROPHONE
-    // =========================================
-
-    const micBtn =
-        $("micBtn");
-
-
-    function setupMicrophone() {
-
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-
-        if (!SpeechRecognition) {
-
-            if (micBtn) {
-
-                micBtn.addEventListener(
-                    "click",
-                    () => {
-
-                        toast(
-                            "Voice recognition is not supported in this browser."
-                        );
-                    }
-                );
-            }
-
-
-            return;
-        }
-
-
-        recognition =
-            new SpeechRecognition();
-
-
-        recognition.lang =
-            "en-GB";
-
-
-        recognition.continuous =
-            false;
-
-
-        recognition.interimResults =
-            false;
-
-
-        recognition.maxAlternatives =
-            1;
-
-
-        recognition.onstart =
-            () => {
-
-                listening =
-                    true;
-
-
-                if (micBtn) {
-
-                    micBtn.classList.add(
-                        "listening"
-                    );
-
-                    micBtn.textContent =
-                        "🔴";
-                }
-
-
-                const status =
-                    $("voiceStatus");
-
-
-                if (status) {
-
-                    status.textContent =
-                        "LISTENING";
-                }
-
-
-                setState(
-                    "LISTENING"
-                );
-            };
-
-
-        recognition.onresult =
-            event => {
-
-                const result =
-                    event.results
-                        ?. [0]
-                        ?. [0];
-
-
-                if (!result) {
-                    return;
-                }
-
-
-                const transcript =
-                    result.transcript
-                        .trim();
-
-
-                const input =
-                    $("msg");
-
-
-                if (input) {
-
-                    input.value =
-                        transcript;
-                }
-            };
-
-
-        recognition.onerror =
-            event => {
-
-                console.error(
-                    "Microphone error:",
-                    event.error
-                );
-
-
-                toast(
-                    "Microphone error: " +
-                    event.error
-                );
-            };
-
-
-        recognition.onend =
-            () => {
-
-                listening =
-                    false;
-
-
-                if (micBtn) {
-
-                    micBtn.classList.remove(
-                        "listening"
-                    );
-
-                    micBtn.textContent =
-                        "🎙";
-                }
-
-
-                const status =
-                    $("voiceStatus");
-
-
-                if (status) {
-
-                    status.textContent =
-                        "READY";
-                }
-
-
-                setState(
-                    "READY"
-                );
-
-
-                const input =
-                    $("msg");
-
-
-                if (
-                    input &&
-                    input.value.trim()
-                ) {
-
-                    sendMessage();
-                }
-            };
-    }
-
-
-    setupMicrophone();
-
-
-    if (micBtn) {
-
-        micBtn.addEventListener(
-            "click",
-            () => {
-
-                if (!recognition) {
-
-                    toast(
-                        "Voice recognition is unavailable."
-                    );
-
-                    return;
-                }
-
-
-                if (listening) {
-
-                    recognition.stop();
-
-                    return;
-                }
-
-
-                try {
-
-                    recognition.start();
-
-                } catch (error) {
-
-                    console.error(
-                        error
-                    );
-                }
-            }
-        );
-    }
-
-
-    // =========================================
-    // NETWORK
-    // =========================================
-
-    window.addEventListener(
-        "online",
-        () => {
-
-            updateStatus();
-
-            toast(
-                "Network online."
-            );
-        }
-    );
-
-
-    window.addEventListener(
-        "offline",
-        () => {
-
-            updateStatus();
-
-            toast(
-                "Network offline."
-            );
-        }
-    );
-
-
-    // =========================================
-    // VOICE INITIALISATION
-    // =========================================
-
-    if (
-        "speechSynthesis" in window
-    ) {
-
-        loadVoices();
-
-
-        setTimeout(
-            loadVoices,
-            500
-        );
-
-
-        setTimeout(
-            loadVoices,
-            1500
-        );
-    }
-
-
-    // =========================================
-    // STARTUP
-    // =========================================
-
-    updateStatus();
-
-
-    console.log(
-        "DISCO AI loaded successfully."
-    );
-
-
-    // =========================================
-    // END
-    // =========================================
-
+  });
+
+  // Start the interface.
+  if (localStorage.getItem(KEY_NAME)) {
+    setStatus("KEY SAVED");
+    coreCaption.textContent = "AI CORE READY";
+  } else {
+    setStatus("SETUP REQUIRED");
+    coreCaption.textContent = "ADD YOUR GEMINI API KEY";
+  }
+
+  console.log("DISCO initialised.");
 })();
