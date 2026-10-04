@@ -3,547 +3,382 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="theme-color"
-        content="#05070a"
-    >
+    <meta name="theme-color"
+          content="#02060a">
 
     <title>DISCO AI</title>
 
-    <!-- Fonts -->
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
 
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
 
-    <!-- Main CSS -->
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet"
+          href="style.css">
 </head>
 
 <body>
 
-    <!-- =========================================
-         BACKGROUND
-    ========================================== -->
+<div class="scanlines"></div>
 
-    <div class="background-grid"></div>
-    <div class="background-glow"></div>
+<div class="page-glow glow-one"></div>
+<div class="page-glow glow-two"></div>
 
-    <!-- =========================================
-         MAIN APP
-    ========================================== -->
+<main class="app">
 
-    <main class="app">
+    <!-- TOP BAR -->
 
-        <!-- =====================================
-             TOP BAR
-        ====================================== -->
+    <header class="topbar">
 
-        <header class="topbar">
+        <div class="brand">
 
-            <div class="brand">
-
-                <div class="brand-logo">
-                    D
-                </div>
-
-                <div class="brand-text">
-                    <div class="brand-name">
-                        DISCO
-                    </div>
-
-                    <div class="brand-subtitle">
-                        AI SYSTEM
-                    </div>
-                </div>
-
+            <div class="brand-core">
+                D
             </div>
 
-
-            <button
-                id="settingsBtn"
-                class="settings"
-                type="button"
-            >
-                ⚙ AI KEY
-            </button>
-
-        </header>
-
-
-        <!-- =====================================
-             HERO
-        ====================================== -->
-
-        <section class="hero">
-
-            <div class="core">
-
-                <div class="core-ring ring-one"></div>
-                <div class="core-ring ring-two"></div>
-                <div class="core-ring ring-three"></div>
-
-                <div class="core-centre">
-                    <span>DISCO</span>
-                </div>
-
-            </div>
-
-
-            <div class="hero-text">
-
-                <div class="system-label">
-                    ADVANCED AI INTERFACE
-                </div>
-
-                <h1>
+            <div>
+                <div class="brand-name">
                     DISCO
-                </h1>
-
-                <p>
-                    Your futuristic personal AI assistant.
-                </p>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             STATUS
-        ====================================== -->
-
-        <section class="status-grid">
-
-            <div class="status-card">
-
-                <span class="status-dot"></span>
-
-                <div>
-                    <small>AI CORE</small>
-                    <strong id="aiStatus">
-                        READY
-                    </strong>
                 </div>
 
-            </div>
-
-
-            <div class="status-card">
-
-                <span class="status-dot"></span>
-
-                <div>
-                    <small>NETWORK</small>
-                    <strong id="networkStatus">
-                        ONLINE
-                    </strong>
+                <div class="brand-sub">
+                    PERSONAL AI SYSTEM
                 </div>
-
-            </div>
-
-
-            <div class="status-card">
-
-                <span class="status-dot"></span>
-
-                <div>
-                    <small>VOICE</small>
-                    <strong id="voiceStatus">
-                        READY
-                    </strong>
-                </div>
-
-            </div>
-
-
-            <div class="status-card">
-
-                <span class="status-dot"></span>
-
-                <div>
-                    <small>MEMORY</small>
-                    <strong id="memoryStatus">
-                        READY
-                    </strong>
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             CHAT
-        ====================================== -->
-
-        <section class="chat-panel">
-
-            <div class="chat-header">
-
-                <div>
-                    <span class="chat-title">
-                        DISCO TERMINAL
-                    </span>
-
-                    <span
-                        id="systemState"
-                        class="chat-state"
-                    >
-                        SYSTEM READY
-                    </span>
-                </div>
-
-                <button
-                    id="clearBtn"
-                    class="clear-button"
-                    type="button"
-                >
-                    CLEAR
-                </button>
-
-            </div>
-
-
-            <div
-                id="chat"
-                class="chat"
-            >
-
-                <div class="message ai-message">
-
-                    <div class="message-label">
-                        DISCO
-                    </div>
-
-                    <div class="message-content">
-                        Systems online. How may I assist you, Boss?
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- IMAGE PREVIEW -->
-
-            <div
-                id="imagePreview"
-                class="image-preview"
-                hidden
-            >
-
-                <img
-                    id="previewImage"
-                    src=""
-                    alt="Selected image"
-                >
-
-                <button
-                    id="removeImage"
-                    type="button"
-                    class="remove-image"
-                >
-                    ✕
-                </button>
-
-            </div>
-
-
-            <!-- =================================
-                 MESSAGE INPUT
-            ================================== -->
-
-            <form
-                id="chatForm"
-                class="input-area"
-            >
-
-                <input
-                    id="msg"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="Talk to DISCO..."
-                >
-
-
-                <!-- IMAGE -->
-
-                <button
-                    id="imageBtn"
-                    class="input-button"
-                    type="button"
-                    title="Upload image"
-                >
-                    ◈
-                </button>
-
-
-                <!-- MICROPHONE -->
-
-                <button
-                    id="micBtn"
-                    class="input-button mic-button"
-                    type="button"
-                    title="Voice input"
-                >
-                    🎙
-                </button>
-
-
-                <!-- SEND -->
-
-                <button
-                    id="send"
-                    class="send-button"
-                    type="submit"
-                >
-                    SEND
-                </button>
-
-            </form>
-
-
-            <!-- Hidden image input -->
-
-            <input
-                id="imageInput"
-                type="file"
-                accept="image/*"
-                hidden
-            >
-
-        </section>
-
-
-        <!-- =====================================
-             QUICK COMMANDS
-        ====================================== -->
-
-        <section class="commands">
-
-            <div class="section-title">
-                QUICK COMMANDS
-            </div>
-
-
-            <div class="command-grid">
-
-                <button
-                    class="command-button"
-                    data-command="PLAN TODAY"
-                    type="button"
-                >
-                    <span class="command-icon">
-                        ◷
-                    </span>
-
-                    <span>
-                        PLAN TODAY
-                    </span>
-                </button>
-
-
-                <button
-                    class="command-button"
-                    data-command="PLAN TOMORROW"
-                    type="button"
-                >
-                    <span class="command-icon">
-                        ◫
-                    </span>
-
-                    <span>
-                        PLAN TOMORROW
-                    </span>
-                </button>
-
-
-                <button
-                    class="command-button"
-                    data-command="ACTIVATE AGENTS"
-                    type="button"
-                >
-                    <span class="command-icon">
-                        ◈
-                    </span>
-
-                    <span>
-                        ACTIVATE AGENTS
-                    </span>
-                </button>
-
-
-                <button
-                    class="command-button"
-                    data-command="MEMORY"
-                    type="button"
-                >
-                    <span class="command-icon">
-                        ◎
-                    </span>
-
-                    <span>
-                        MEMORY
-                    </span>
-                </button>
-
-
-                <button
-                    class="command-button"
-                    data-command="TIME"
-                    type="button"
-                >
-                    <span class="command-icon">
-                        ◴
-                    </span>
-
-                    <span>
-                        TIME
-                    </span>
-                </button>
-
-            </div>
-
-        </section>
-
-
-        <!-- =====================================
-             FOOTER
-        ====================================== -->
-
-        <footer class="footer">
-
-            <div>
-                DISCO AI
-            </div>
-
-            <div>
-                FUTURE INTERFACE • 3000
-            </div>
-
-        </footer>
-
-    </main>
-
-
-    <!-- =========================================
-         API KEY MODAL
-    ========================================== -->
-
-    <div
-        id="settingsModal"
-        class="modal"
-        hidden
-    >
-
-        <div class="modal-box">
-
-            <!-- CLOSE BUTTON -->
-
-            <button
-                id="closeSettings"
-                class="modal-close"
-                type="button"
-                aria-label="Close"
-            >
-                ✕
-            </button>
-
-
-            <div class="modal-icon">
-                ◈
-            </div>
-
-
-            <h2>
-                DISCO AI KEY
-            </h2>
-
-
-            <p>
-                Enter your Gemini API key to connect DISCO to Gemini AI.
-            </p>
-
-
-            <!-- API KEY -->
-
-            <input
-                id="apiKey"
-                type="password"
-                placeholder="Paste your Gemini API key"
-                autocomplete="off"
-            >
-
-
-            <!-- BUTTONS -->
-
-            <div class="modal-actions">
-
-                <button
-                    id="saveKey"
-                    type="button"
-                >
-                    SAVE KEY
-                </button>
-
-
-                <button
-                    id="removeKey"
-                    type="button"
-                >
-                    REMOVE
-                </button>
-
-            </div>
-
-
-            <div class="modal-note">
-                Your key is stored locally in this browser.
             </div>
 
         </div>
 
+        <button id="settingsBtn"
+                class="key-button"
+                type="button">
+            ⚙ AI KEY
+        </button>
+
+    </header>
+
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="orbital-system">
+
+            <div class="orbit orbit-a"></div>
+            <div class="orbit orbit-b"></div>
+            <div class="orbit orbit-c"></div>
+
+            <div class="core-glow"></div>
+
+            <div class="core">
+                <span>DISCO</span>
+                <small>ONLINE</small>
+            </div>
+
+        </div>
+
+        <div class="hero-copy">
+
+            <div class="eyebrow">
+                ADVANCED PERSONAL INTELLIGENCE
+            </div>
+
+            <h1>
+                DISCO
+            </h1>
+
+            <p>
+                Your futuristic AI assistant.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- STATUS -->
+
+    <section class="status-grid">
+
+        <div class="status-card">
+            <span class="status-light"></span>
+
+            <div>
+                <small>AI CORE</small>
+                <strong id="aiStatus">
+                    KEY REQUIRED
+                </strong>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <span class="status-light"></span>
+
+            <div>
+                <small>NETWORK</small>
+                <strong id="networkStatus">
+                    ONLINE
+                </strong>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <span class="status-light"></span>
+
+            <div>
+                <small>VOICE</small>
+                <strong id="voiceStatus">
+                    READY
+                </strong>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <span class="status-light"></span>
+
+            <div>
+                <small>MEMORY</small>
+                <strong id="memoryStatus">
+                    READY
+                </strong>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- CHAT -->
+
+    <section class="terminal">
+
+        <div class="terminal-head">
+
+            <div>
+                <span class="terminal-title">
+                    DISCO TERMINAL
+                </span>
+
+                <span id="systemState"
+                      class="terminal-state">
+                    SYSTEM READY
+                </span>
+            </div>
+
+            <button id="clearBtn"
+                    class="clear-btn"
+                    type="button">
+                CLEAR
+            </button>
+
+        </div>
+
+
+        <div id="chat"
+             class="chat">
+
+            <div class="message ai-message">
+
+                <div class="message-tag">
+                    DISCO
+                </div>
+
+                <div class="message-text">
+                    Systems online. How may I assist you, Boss?
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- IMAGE PREVIEW -->
+
+        <div id="imagePreview"
+             class="image-preview"
+             hidden>
+
+            <img id="previewImage"
+                 src=""
+                 alt="Selected image">
+
+            <button id="removeImage"
+                    class="remove-image"
+                    type="button">
+                ✕
+            </button>
+
+        </div>
+
+
+        <!-- INPUT -->
+
+        <form id="chatForm"
+              class="input-row">
+
+            <input id="msg"
+                   type="text"
+                   placeholder="Talk to DISCO..."
+                   autocomplete="off">
+
+            <button id="imageBtn"
+                    class="tool-btn"
+                    type="button"
+                    title="Image">
+                ◈
+            </button>
+
+            <button id="micBtn"
+                    class="tool-btn mic-button"
+                    type="button"
+                    title="Microphone">
+                🎙
+            </button>
+
+            <button id="send"
+                    class="send-btn"
+                    type="submit">
+                SEND
+            </button>
+
+        </form>
+
+        <input id="imageInput"
+               type="file"
+               accept="image/*"
+               hidden>
+
+    </section>
+
+
+    <!-- QUICK COMMANDS -->
+
+    <section class="commands">
+
+        <div class="section-heading">
+            QUICK COMMANDS
+        </div>
+
+        <div class="command-grid">
+
+            <button class="command-button"
+                    data-command="PLAN TODAY"
+                    type="button">
+                <span>◷</span>
+                PLAN TODAY
+            </button>
+
+            <button class="command-button"
+                    data-command="PLAN TOMORROW"
+                    type="button">
+                <span>◫</span>
+                PLAN TOMORROW
+            </button>
+
+            <button class="command-button"
+                    data-command="ACTIVATE AGENTS"
+                    type="button">
+                <span>◈</span>
+                ACTIVATE AGENTS
+            </button>
+
+            <button class="command-button"
+                    data-command="MEMORY"
+                    type="button">
+                <span>◎</span>
+                MEMORY
+            </button>
+
+            <button class="command-button"
+                    data-command="TIME"
+                    type="button">
+                <span>◴</span>
+                TIME
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <footer class="footer">
+        <span>DISCO AI</span>
+        <span>FUTURE INTERFACE • 3000</span>
+    </footer>
+
+</main>
+
+
+<!-- API KEY MODAL -->
+
+<div id="settingsModal"
+     class="modal"
+     hidden>
+
+    <div class="modal-box">
+
+        <button id="closeSettings"
+                class="modal-close"
+                type="button"
+                aria-label="Close">
+            ✕
+        </button>
+
+        <div class="modal-symbol">
+            ◈
+        </div>
+
+        <h2>
+            DISCO AI KEY
+        </h2>
+
+        <p>
+            Enter your Gemini API key to connect DISCO to Gemini.
+        </p>
+
+        <input id="apiKey"
+               type="password"
+               placeholder="Paste your Gemini API key"
+               autocomplete="off">
+
+        <div class="modal-buttons">
+
+            <button id="saveKey"
+                    type="button">
+                SAVE KEY
+            </button>
+
+            <button id="removeKey"
+                    type="button">
+                REMOVE
+            </button>
+
+        </div>
+
+        <div class="modal-note">
+            The key is stored locally in this browser.
+        </div>
+
     </div>
 
-
-    <!-- =========================================
-         TOAST
-    ========================================== -->
-
-    <div
-        id="toast"
-        class="toast"
-        hidden
-    >
-        Ready.
-    </div>
+</div>
 
 
-    <!-- =========================================
-         JAVASCRIPT
-    ========================================== -->
+<!-- TOAST -->
 
-    <script src="script.js"></script>
+<div id="toast"
+     class="toast"
+     hidden>
+</div>
+
+
+<script src="script.js"></script>
 
 </body>
 </html>
