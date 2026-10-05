@@ -1,171 +1,192 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#030812">
-  <title>DISCO | AI Core</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>DISCO — AI CORE</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark">D</span>
-        <div>
-          <h1>DISCO</h1>
-          <p>PERSONAL AI SYSTEM</p>
-        </div>
+
+  <div class="stars"></div>
+
+  <main class="app">
+
+    <!-- HEADER -->
+    <header class="top">
+      <div>
+        <div class="brand">DISCO</div>
+        <div class="subtitle">AI CORE • YEAR 3000</div>
       </div>
-      <div class="clock-box">
-        <span id="clock">--:--:--</span>
-        <small id="date">INITIALISING</small>
+
+      <div class="status">
+        <span class="status-dot"></span>
+        ONLINE
       </div>
     </header>
 
-    <main class="workspace">
-      <section class="globe-panel">
-        <div class="system-label">
-          <span class="live-dot"></span>
-          AI CORE <span id="systemStatus">INITIALISING</span>
-        </div>
 
-        <div class="globe-stage" aria-label="Animated digital globe">
-          <div class="orbit orbit-one"></div>
-          <div class="orbit orbit-two"></div>
-          <div class="globe">
-            <div class="globe-grid"></div>
-            <div class="globe-shine"></div>
-          </div>
-          <div class="globe-crosshair"></div>
-        </div>
+    <!-- GLOBE -->
+    <section class="globe-area">
 
-        <div class="core-name">GLOBAL INTELLIGENCE</div>
-        <div class="core-caption" id="coreCaption">
-          READY TO ASSIST, BOSS
-        </div>
-        <div class="system-metrics">
-          <span><i></i> VOICE SYSTEM</span>
-          <span><i></i> MEMORY CORE</span>
-          <span><i></i> NETWORK</span>
-        </div>
-      </section>
+      <div class="globe-ring ring-one"></div>
+      <div class="globe-ring ring-two"></div>
 
-      <section class="assistant-panel">
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">COMMUNICATION LINK</p>
-            <h2>AI Assistant</h2>
-          </div>
-          <span class="online-badge">ONLINE</span>
-        </div>
+      <div class="globe">
+        <div class="latitude lat1"></div>
+        <div class="latitude lat2"></div>
+        <div class="latitude lat3"></div>
+        <div class="longitude lon1"></div>
+        <div class="longitude lon2"></div>
+        <div class="longitude lon3"></div>
+        <div class="globe-light"></div>
+      </div>
 
-        <div id="chat" class="chat" aria-live="polite">
-          <div class="message assistant-message">
-            <span class="message-tag">DISCO</span>
-            <p>Systems online, Boss. How may I assist you?</p>
-          </div>
-        </div>
+      <div class="core-text">
+        <strong>CORE</strong>
+        <span>ACTIVE</span>
+      </div>
 
-        <div id="imagePreview" class="image-preview" hidden>
-          <span id="imageName"></span>
-          <button id="removeImage" class="tiny-button" type="button"
-                  aria-label="Remove selected image">×</button>
-        </div>
-
-        <form id="chatForm" class="composer">
-          <input id="messageInput" type="text"
-                 placeholder="Message DISCO, Boss..."
-                 autocomplete="off" aria-label="Your message">
-          <button id="sendBtn" class="control send-control" type="submit"
-                  aria-label="Send message" title="Send">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 11.5 21 3l-6.5 18-3.3-7.2L3 11.5Z"/>
-              <path d="m11.2 13.8 4.6-4.6"/>
-            </svg>
-          </button>
-        </form>
-
-        <div class="control-dock">
-          <button id="cameraBtn" class="control" type="button"
-                  aria-label="Camera" title="Camera">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 7h4l2-3h6l2 3h4v13H3z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </button>
-
-          <button id="micBtn" class="control" type="button"
-                  aria-label="Microphone" title="Speak">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="9" y="2" width="6" height="13" rx="3"/>
-              <path d="M5 11a7 7 0 0 0 14 0M12 18v4m-4 0h8"/>
-            </svg>
-          </button>
-
-          <button id="apiBtn" class="control" type="button"
-                  aria-label="API key settings" title="API key">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="8" cy="15" r="5"/>
-              <path d="m12 11 8-8m-3 3 3 3m-6 0 3 3"/>
-            </svg>
-          </button>
-
-          <button id="memoryBtn" class="control" type="button"
-                  aria-label="Memory" title="Memory">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 4h14v16H5zM9 8h6m-6 4h6m-6 4h4"/>
-            </svg>
-          </button>
-
-          <button id="playMemoryBtn" class="control" type="button"
-                  aria-label="Play memory" title="Play memory">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 10v4h4l5 4V6l-5 4z"/>
-              <path d="M17 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="bottom-status">
-          <span id="statusText">READY</span>
-          <span>DISCO CORE <b>01</b></span>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <input id="cameraInput" type="file" accept="image/*"
-         capture="environment" hidden>
-
-  <div id="settingsModal" class="modal" hidden>
-    <section class="modal-card" role="dialog" aria-modal="true"
-             aria-labelledby="settingsTitle">
-      <button id="closeSettings" class="modal-close" type="button"
-              aria-label="Close settings">×</button>
-      <p class="eyebrow">SECURE CONNECTION</p>
-      <h2 id="settingsTitle">Gemini API</h2>
-      <p class="modal-description">
-        Enter your Gemini API key to activate AI replies.
-      </p>
-      <label for="apiKeyInput">API KEY</label>
-      <input id="apiKeyInput" type="password"
-             placeholder="Paste your API key"
-             autocomplete="off">
-      <button id="saveKeyBtn" class="primary-button" type="button">
-        SAVE KEY
-      </button>
-      <button id="removeKeyBtn" class="secondary-button" type="button">
-        REMOVE SAVED KEY
-      </button>
-      <small class="security-note">
-        The key is stored in this browser. A public website can expose
-        browser-side keys; do not use a sensitive or shared key.
-      </small>
     </section>
+
+
+    <!-- LIVE INFORMATION -->
+    <section class="info-panel">
+
+      <div class="info-box">
+        <small>TIME</small>
+        <strong id="clock">--:--:--</strong>
+      </div>
+
+      <div class="info-box">
+        <small>DATE</small>
+        <strong id="date">--/--/----</strong>
+      </div>
+
+    </section>
+
+
+    <!-- CHAT -->
+    <section class="chat-box" id="chat">
+
+      <div class="message disco-message">
+        <div class="message-name">DISCO</div>
+        <div>
+          Systems online, Boss. How may I assist you?
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- INPUT -->
+    <section class="input-area">
+
+      <input
+        id="msg"
+        type="text"
+        autocomplete="off"
+        placeholder="Talk to DISCO..."
+      >
+
+      <button id="mic" class="round-btn" title="Microphone">
+        🎤
+      </button>
+
+      <button id="send" class="send-btn">
+        SEND
+      </button>
+
+    </section>
+
+
+    <!-- CONTROLS -->
+    <section class="controls">
+
+      <button id="cameraBtn" class="control-btn">
+        📷
+        <span>CAMERA</span>
+      </button>
+
+      <button id="memoryBtn" class="control-btn">
+        🧠
+        <span>MEMORY</span>
+      </button>
+
+      <button id="playMemoryBtn" class="control-btn">
+        🔊
+        <span>PLAY</span>
+      </button>
+
+      <button id="keyBtn" class="control-btn">
+        🔑
+        <span>API KEY</span>
+      </button>
+
+    </section>
+
+
+    <div class="footer">
+      DISCO AI CORE
+    </div>
+
+  </main>
+
+
+  <!-- API KEY MODAL -->
+  <div id="keyModal" class="modal hidden">
+
+    <div class="modal-card">
+
+      <h2>GEMINI API KEY</h2>
+
+      <p>
+        Enter your Gemini API key. It will be saved only in this browser.
+      </p>
+
+      <input
+        id="apiKeyInput"
+        type="password"
+        placeholder="Paste API key here"
+      >
+
+      <div class="modal-buttons">
+
+        <button id="saveKeyBtn">
+          SAVE
+        </button>
+
+        <button id="closeKeyBtn">
+          CLOSE
+        </button>
+
+      </div>
+
+    </div>
+
   </div>
+
+
+  <!-- CAMERA -->
+  <input
+    id="cameraInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+    hidden
+  >
+
 
   <script src="script.js"></script>
+
 </body>
-</html>
+  </html>
