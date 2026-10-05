@@ -1,606 +1,1719 @@
-(() => {
-  "use strict";
+/* =========================================================
+   DISCO AI
+   SCRIPT.JS — PART 1 OF 3
+========================================================= */
 
-  const MODEL = "gemini-3.8-flash";
-  const KEY_NAME = "disco_gemini_key";
-  const MEMORY_NAME = "disco_memory";
-  const PLAN_PENDING = "disco_plan_pending";
 
-  const $ = id => document.getElementById(id);
+/* =========================
+   CONFIGURATION
+========================= */
 
-  const chat = $("chat");
-  const input = $("messageInput");
-  const statusText = $("statusText");
-  const systemStatus = $("systemStatus");
-  const coreCaption = $("coreCaption");
+const DISCO_NAME = "DISCO";
 
-  let selectedImage = null;
-  let listening = false;
-  let memoryItems = loadMemory();
-  let pendingTomorrowPlan =
-    localStorage.getItem(PLAN_PENDING) === "true";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
-  function setStatus(message) {
-    statusText.textContent = message;
-    systemStatus.textContent = message.toUpperCase();
-  }
+const API_KEY_STORAGE = "disco_gemini_key";
 
-  function updateClock() {
-    const now = new Date();
+const MEMORY_STORAGE = "disco_memory";
 
-    $("clock").textContent = now.toLocaleTimeString("en-GB", {
+const TOMORROW_STORAGE = "disco_tomorrow_plan";
+
+let recognition = null;
+
+let isListening = false;
+
+let cameraImage = null;
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const msgInput = document.getElementById("msg");
+
+const sendBtn = document.getElementById("send");
+
+const micBtn = document.getElementById("mic");
+
+const chat = document.getElementById("chat");
+
+const clock = document.getElementById("clock");
+
+const dateElement = document.getElementById("date");
+
+const cameraBtn = document.getElementById("cameraBtn");
+
+const cameraInput = document.getElementById("cameraInput");
+
+const memoryBtn = document.getElementById("memoryBtn");
+
+const playMemoryBtn = document.getElementById("playMemoryBtn");
+
+const keyBtn = document.getElementById("keyBtn");
+
+const keyModal = document.getElementById("keyModal");
+
+const apiKeyInput = document.getElementById("apiKeyInput");
+
+const saveKeyBtn = document.getElementById("saveKeyBtn");
+
+const closeKeyBtn = document.getElementById("closeKeyBtn");
+
+
+/* =========================
+   CLOCK
+========================= */
+
+function updateClock() {
+
+  const now = new Date();
+
+  clock.textContent =
+    now.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
-      hour12: false
+      second: "2-digit"
     });
 
-    $("date").textContent = now.toLocaleDateString("en-GB", {
+  dateElement.textContent =
+    now.toLocaleDateString([], {
       day: "2-digit",
-      month: "short",
+      month: "2-digit",
       year: "numeric"
-    }).toUpperCase();
-  }
-
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  function addMessage(text, who = "assistant") {
-    const message = document.createElement("div");
-    message.className = "message " +
-      (who === "user" ? "user-message" : "assistant-message");
-
-    const tag = document.createElement("span");
-    tag.className = "message-tag";
-    tag.textContent = who === "user" ? "BOSS" : "DISCO";
-
-    const paragraph = document.createElement("p");
-    paragraph.textContent = text;
-
-    message.append(tag, paragraph);
-    chat.appendChild(message);
-    chat.scrollTop = chat.scrollHeight;
-    return message;
-  }
-
-  function loadMemory() {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem(MEMORY_NAME) || "[]"
-      );
-      return Array.isArray(saved) ? saved : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveMemory() {
-    try {
-      localStorage.setItem(
-        MEMORY_NAME,
-        JSON.stringify(memoryItems)
-      );
-      return true;
-    } catch {
-      addMessage("Browser storage is unavailable, Boss.");
-      return false;
-    }
-  }
-
-  function remember(text) {
-    const cleanText = text.trim();
-    if (!cleanText) return;
-
-    memoryItems.push({
-      text: cleanText,
-      time: new Date().toISOString()
     });
+}
 
-    // Keep the newest 100 memories.
-    memoryItems = memoryItems.slice(-100);
-    saveMemory();
+updateClock();
+
+setInterval(updateClock, 1000);
+
+
+/* =========================
+   CHAT MESSAGE
+========================= */
+
+function addMessage(text, sender = "disco") {
+
+  const box = document.createElement("div");
+
+  box.className =
+    sender === "user"
+      ? "message user-message"
+      : "message disco-message";
+
+  const name =
+    sender === "user"
+      ? "YOU"
+      : "DISCO";
+
+  box.innerHTML = `
+    <div class="message-name">${name}</div>
+    <div>${escapeHTML(text).replace(/\n/g, "<br>")}</div>
+  `;
+
+  chat.appendChild(box);
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+
+/* =========================
+   HTML SAFETY
+========================= */
+
+function escapeHTML(text) {
+
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* =========================
+   API KEY
+========================= */
+
+function getApiKey() {
+
+  return localStorage.getItem(API_KEY_STORAGE) || "";
+}
+
+
+function saveApiKey(key) {
+
+  localStorage.setItem(API_KEY_STORAGE, key.trim());
+}
+
+
+function openKeyModal() {
+
+  apiKeyInput.value = getApiKey();
+
+  keyModal.classList.remove("hidden");
+
+  setTimeout(() => {
+    apiKeyInput.focus();
+  }, 100);
+}
+
+
+function closeKeyModal() {
+
+  keyModal.classList.add("hidden");
+}
+
+
+keyBtn.addEventListener("click", openKeyModal);
+
+
+closeKeyBtn.addEventListener("click", closeKeyModal);
+
+
+saveKeyBtn.addEventListener("click", () => {
+
+  const key = apiKeyInput.value.trim();
+
+  if (!key) {
+
+    addMessage(
+      "Please enter your Gemini API key, Boss."
+    );
+
+    return;
   }
 
-  function findMaleVoice() {
-    const voices = window.speechSynthesis
-      ? window.speechSynthesis.getVoices()
-      : [];
+  saveApiKey(key);
 
-    const maleNames =
-      /daniel|george|james|ryan|guy|david|mark|arthur|fred|oliver|male/i;
+  closeKeyModal();
 
-    return voices.find(v =>
-      /^en-GB/i.test(v.lang) && maleNames.test(v.name)
-    ) || voices.find(v =>
-      /^en/i.test(v.lang) && maleNames.test(v.name)
-    ) || voices.find(v =>
-      /^en-GB/i.test(v.lang)
-    ) || voices.find(v =>
+  addMessage(
+    "Gemini API key saved successfully, Boss."
+  );
+
+  speak(
+    "Gemini API key saved successfully, Boss."
+  );
+});
+
+
+/* =========================
+   SPEECH
+========================= */
+
+function findMaleVoice() {
+
+  const voices = speechSynthesis.getVoices();
+
+  const preferredNames = [
+    "Google UK English Male",
+    "Microsoft George",
+    "Microsoft Ryan",
+    "Microsoft Guy",
+    "Daniel",
+    "Alex"
+  ];
+
+  for (const name of preferredNames) {
+
+    const found = voices.find(v =>
+      v.name.toLowerCase().includes(name.toLowerCase())
+    );
+
+    if (found) {
+      return found;
+    }
+  }
+
+  const englishVoice =
+    voices.find(v =>
       /^en/i.test(v.lang)
-    ) || null;
+    );
+
+  return englishVoice || voices[0];
+}
+
+
+function speak(text) {
+
+  if (!("speechSynthesis" in window)) {
+    return;
   }
 
-  function speakReply(text) {
-    if (!("speechSynthesis" in window)) {
-      addMessage(
-        "Voice playback is not supported by this browser, Boss."
-      );
-      return;
-    }
+  speechSynthesis.cancel();
 
-    window.speechSynthesis.cancel();
+  const cleanText =
+    String(text)
+      .replace(/[*_#`]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.lang = "en-GB";
-    speech.rate = 0.92;
-    speech.pitch = 0.82;
-
-    const voice = findMaleVoice();
-    if (voice) speech.voice = voice;
-
-    speech.onerror = () => {
-      setStatus("VOICE ERROR");
-    };
-
-    speech.onstart = () => {
-      coreCaption.textContent = "DISCO IS SPEAKING";
-    };
-
-    speech.onend = () => {
-      coreCaption.textContent = "READY TO ASSIST, BOSS";
-      setStatus("READY");
-    };
-
-    window.speechSynthesis.speak(speech);
+  if (!cleanText) {
+    return;
   }
 
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      findMaleVoice();
-    };
+  const utterance =
+    new SpeechSynthesisUtterance(cleanText);
+
+  const voice = findMaleVoice();
+
+  if (voice) {
+    utterance.voice = voice;
   }
 
-  function stopSpeaking() {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    coreCaption.textContent = "READY TO ASSIST, BOSS";
+  utterance.lang = "en-GB";
+
+  utterance.rate = 0.95;
+
+  utterance.pitch = 0.75;
+
+  utterance.volume = 1;
+
+  speechSynthesis.speak(utterance);
+}
+
+
+speechSynthesis.onvoiceschanged = () => {
+  speechSynthesis.getVoices();
+};
+
+
+/* =========================
+   MEMORY
+========================= */
+
+function getMemory() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(MEMORY_STORAGE) || "[]"
+    );
+
+  } catch {
+
+    return [];
   }
+}
 
-  function openSettings() {
-    $("settingsModal").hidden = false;
-    $("apiKeyInput").value = "";
-    $("apiKeyInput").focus();
-  }
 
-  function closeSettings() {
-    $("settingsModal").hidden = true;
-  }
+function saveMemory(text) {
 
-  // Part 2 continues immediately below.
- 
-  function fileToDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(
-        new Error("Could not read the selected image.")
-      );
-      reader.readAsDataURL(file);
-    });
-  }
+  const memory = getMemory();
 
-  async function askGemini(text, imageFile = null) {
-    const apiKey = localStorage.getItem(KEY_NAME);
+  memory.push({
+    text: text,
+    time: new Date().toISOString()
+  });
 
-    if (!apiKey) {
-      addMessage("Please save your Gemini API key first, Boss.");
-      openSettings();
-      return;
-    }
+  localStorage.setItem(
+    MEMORY_STORAGE,
+    JSON.stringify(memory)
+  );
+}
 
-    setStatus("THINKING");
-    coreCaption.textContent = "PROCESSING REQUEST";
 
-    try {
-      const memoryContext = memoryItems
-        .slice(-5)
-        .map(item => item.text)
-        .join("\n");
+function clearMemory() {
 
-      const prompt = [
-        "You are DISCO, Boss's personal AI assistant.",
-        "Address the user as Boss.",
-        "Use clear, simple British English.",
-        "Answer helpfully and concisely.",
-        memoryContext
-          ? "Relevant saved memories:\n" + memoryContext
-          : "",
-        "User's message:\n" + text
-      ].filter(Boolean).join("\n\n");
+  localStorage.removeItem(MEMORY_STORAGE);
 
-      const parts = [{ text: prompt }];
+  addMessage(
+    "Memory cleared, Boss."
+  );
 
-      if (imageFile) {
-        if (!imageFile.type.startsWith("image/")) {
-          throw new Error("Please select an image file.");
-        }
+  speak(
+    "Memory cleared, Boss."
+  );
+}
 
-        const dataURL = await fileToDataURL(imageFile);
-        const base64 = dataURL.split(",")[1];
 
-        parts.push({
-          inline_data: {
-            mime_type: imageFile.type,
-            data: base64
-          }
-        });
-      }
+function memoryCommand(text) {
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey
-          },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 700
-            }
-          })
-        }
-      );
+  const q = text.toLowerCase().trim();
 
-      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        const message = data?.error?.message || "";
+  /* REMEMBER */
 
-        if (response.status === 429) {
-          throw new Error(
-            "Gemini is busy or your API quota has been reached. " +
-            "Please wait and try again."
-          );
-        }
+  if (
+    /^(remember|save|memorise|memorize)\b/.test(q)
+  ) {
 
-        if (response.status === 503 || response.status === 502) {
-          throw new Error(
-            "Gemini is temporarily overloaded. Please try again later."
-          );
-        }
-
-        if (response.status === 400 || response.status === 404) {
-          throw new Error(
-            "The request or model was rejected. Check the configured " +
-            "Gemini model and API settings. " + message
-          );
-        }
-
-        if (response.status === 401 || response.status === 403) {
-          throw new Error(
-            "Gemini rejected the API key or its permissions. " +
-            "Check your key settings."
-          );
-        }
-
-        throw new Error(message || `Gemini error ${response.status}`);
-      }
-
-      const reply = (data.candidates?.[0]?.content?.parts || [])
-        .map(part => part.text || "")
-        .join("\n")
+    const value =
+      text
+        .replace(
+          /^(remember|save|memorise|memorize)\s*(that\s*)?/i,
+          ""
+        )
         .trim();
 
-      if (!reply) {
-        throw new Error(
-          "Gemini returned no text. Please try another message."
-        );
-      }
+    if (!value) {
 
-      addMessage(reply);
-      setStatus("READY");
-      speakReply(reply);
-
-    } catch (error) {
-      console.error("DISCO request failed:", error);
-
-      const message = error.message ||
-        "Something went wrong. Please try again.";
-
-      addMessage(message);
-      setStatus("ERROR");
-      coreCaption.textContent = "REQUEST FAILED";
-      speakReply(message);
-
-    } finally {
-      selectedImage = null;
-      $("cameraInput").value = "";
-      $("imagePreview").hidden = true;
+      return "What should I remember, Boss?";
     }
+
+    saveMemory(value);
+
+    return `I remembered that, Boss: ${value}`;
   }
 
-  async function handleUserMessage(rawText) {
-    const text = rawText.trim();
-    if (!text) return;
 
-    addMessage(text, "user");
-    input.value = "";
-    stopSpeaking();
+  /* SHOW MEMORY */
 
-    // Save a memory when Boss says "remember that..."
-    const rememberMatch = text.match(
-      /^(?:disco[,\s]+)?remember(?:\s+that)?\s+(.+)$/i
-    );
+  if (
+    /^(show|read|tell me|what is in)\b.*\bmemory\b/i.test(q) ||
+    /what do you remember/i.test(q)
+  ) {
 
-    if (rememberMatch) {
-      remember(rememberMatch[1]);
-      const reply = "Saved to memory, Boss.";
-      addMessage(reply);
-      speakReply(reply);
-      setStatus("MEMORY SAVED");
-      return;
+    const memory = getMemory();
+
+    if (!memory.length) {
+
+      return "My memory is empty, Boss.";
     }
 
-    // Start the tomorrow-planning conversation.
+    return (
+      "Here is what I remember, Boss:\n" +
+      memory
+        .map((item, index) =>
+          `${index + 1}. ${item.text}`
+        )
+        .join("\n")
+    );
+  }
+
+
+  /* CLEAR MEMORY */
+
+  if (
+    /^(forget everything|clear memory|erase memory|delete memory)$/i
+      .test(q)
+  ) {
+
+    clearMemory();
+
+    return null;
+  }
+
+
+  return undefined;
+}
+
+
+/* =========================
+   TOMORROW PLAN
+========================= */
+
+function saveTomorrowPlan(plan) {
+
+  localStorage.setItem(
+    TOMORROW_STORAGE,
+    JSON.stringify({
+      plan: plan,
+      savedAt: new Date().toISOString()
+    })
+  );
+}
+
+
+function getTomorrowPlan() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(TOMORROW_STORAGE)
+    );
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+/* =========================
+   TOOL: CURRENT TIME
+========================= */
+
+function getCurrentTime() {
+
+  const now = new Date();
+
+  return `The current time is ${now.toLocaleTimeString(
+    "en-GB",
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    }
+  )}, Boss.`;
+}
+
+
+/* =========================
+   TOOL: CURRENT DATE
+========================= */
+
+function getCurrentDate() {
+
+  const now = new Date();
+
+  return `Today is ${now.toLocaleDateString(
+    "en-GB",
+    {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }
+  )}, Boss.`;
+}
+
+
+/* =========================
+   TOOL: CALCULATOR
+========================= */
+
+function calculate(expression) {
+
+  let clean =
+    expression
+      .replace(/,/g, "")
+      .replace(/\^/g, "**")
+      .trim();
+
+  if (
+    !/^[0-9+\-*/().%\s*]+$/.test(clean)
+  ) {
+    return null;
+  }
+
+  try {
+
+    const result = Function(
+      `"use strict"; return (${clean})`
+    )();
+
+    if (!Number.isFinite(result)) {
+      return null;
+    }
+
+    return `The answer is ${result}, Boss.`;
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+/* =========================
+   TOOL: YOUTUBE
+========================= */
+
+function openYouTubeSearch(query) {
+
+  const url =
+    "https://www.youtube.com/results?search_query=" +
+    encodeURIComponent(query);
+
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+  return `I opened YouTube and searched for "${query}", Boss.`;
+}
+
+
+function openYouTube() {
+
+  window.open(
+    "https://www.youtube.com/",
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+  return "YouTube is open, Boss.";
+}
+/* =========================================================
+   DISCO AI
+   SCRIPT.JS — PART 2 OF 3
+========================================================= */
+
+
+/* =========================
+   WEATHER
+========================= */
+
+async function getWeather(place = "Visakhapatnam") {
+
+  try {
+
+    const geoURL =
+      "https://geocoding-api.open-meteo.com/v1/search" +
+      `?name=${encodeURIComponent(place)}` +
+      "&count=1" +
+      "&language=en" +
+      "&format=json";
+
+    const geoResponse =
+      await fetch(geoURL);
+
+    const geoData =
+      await geoResponse.json();
+
     if (
-      /\bplan my tomorrow schedule\b/i.test(text) ||
-      /\bplan tomorrow(?:'s)? schedule\b/i.test(text) ||
-      /\bplan my schedule for tomorrow\b/i.test(text)
+      !geoData.results ||
+      !geoData.results.length
     ) {
-      pendingTomorrowPlan = true;
-      localStorage.setItem(PLAN_PENDING, "true");
 
-      const reply = "What are your plans for tomorrow, Boss?";
-      addMessage(reply);
-      speakReply(reply);
-      setStatus("PLANNING");
+      return `I couldn't find ${place}, Boss.`;
+    }
+
+    const location =
+      geoData.results[0];
+
+    const latitude =
+      location.latitude;
+
+    const longitude =
+      location.longitude;
+
+    const forecastURL =
+      "https://api.open-meteo.com/v1/forecast" +
+      `?latitude=${latitude}` +
+      `&longitude=${longitude}` +
+      "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m" +
+      "&timezone=auto";
+
+    const response =
+      await fetch(forecastURL);
+
+    const data =
+      await response.json();
+
+    const current =
+      data.current;
+
+    return (
+      `Weather in ${location.name}, Boss:\n` +
+      `Temperature: ${current.temperature_2m}°C\n` +
+      `Feels like: ${current.apparent_temperature}°C\n` +
+      `Humidity: ${current.relative_humidity_2m}%\n` +
+      `Wind: ${current.wind_speed_10m} km/h`
+    );
+
+  } catch {
+
+    return "I couldn't get the weather right now, Boss.";
+  }
+}
+
+
+/* =========================
+   LOCATION
+========================= */
+
+function getMyLocation() {
+
+  return new Promise(resolve => {
+
+    if (!navigator.geolocation) {
+
+      resolve(
+        "Your browser does not support location, Boss."
+      );
+
       return;
     }
 
-    // The next message after that question becomes the plan.
-    if (pendingTomorrowPlan) {
-      remember("Tomorrow's plan: " + text);
-      pendingTomorrowPlan = false;
-      localStorage.removeItem(PLAN_PENDING);
 
-      const reply =
-        "I've saved your plans for tomorrow, Boss. " +
-        "You can press Play Memory to hear them again.";
+    navigator.geolocation.getCurrentPosition(
 
-      addMessage(reply);
-      speakReply(reply);
-      setStatus("PLAN SAVED");
-      return;
-    }
+      position => {
 
-    const imageToSend = selectedImage;
-    await askGemini(
-      text || (imageToSend ? "Describe this image, Boss." : ""),
-      imageToSend
+        const latitude =
+          position.coords.latitude;
+
+        const longitude =
+          position.coords.longitude;
+
+        resolve(
+          `Your approximate coordinates are ${latitude.toFixed(4)}, ${longitude.toFixed(4)}, Boss.`
+        );
+      },
+
+      error => {
+
+        if (error.code === 1) {
+
+          resolve(
+            "Location permission was denied, Boss. Please allow location access in your browser if you want DISCO to use your location."
+          );
+
+        } else {
+
+          resolve(
+            "I couldn't access your location right now, Boss."
+          );
+        }
+      },
+
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  });
+}
+
+
+/* =========================
+   OPEN WEBSITE
+========================= */
+
+function openWebsite(name) {
+
+  const sites = {
+
+    google:
+      "https://www.google.com/",
+
+    youtube:
+      "https://www.youtube.com/",
+
+    github:
+      "https://github.com/",
+
+    instagram:
+      "https://www.instagram.com/"
+  };
+
+
+  const url =
+    sites[name];
+
+  if (!url) {
+
+    return null;
+  }
+
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+  return `${name} is open, Boss.`;
+}
+
+
+/* =========================
+   GOOGLE SEARCH
+========================= */
+
+function googleSearch(query) {
+
+  const url =
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(query);
+
+  window.open(
+    url,
+    "_blank",
+    "noopener,noreferrer"
+  );
+
+  return `I searched Google for "${query}", Boss.`;
+}
+
+
+/* =========================
+   TOMORROW SCHEDULE
+========================= */
+
+let waitingForTomorrowPlan = false;
+
+
+function startTomorrowPlanning() {
+
+  waitingForTomorrowPlan = true;
+
+  return (
+    "Of course, Boss. What are your plans for tomorrow?"
+  );
+}
+
+
+function handleTomorrowPlan(text) {
+
+  if (!waitingForTomorrowPlan) {
+    return null;
+  }
+
+  waitingForTomorrowPlan = false;
+
+  saveTomorrowPlan(text);
+
+  return (
+    `Got it, Boss. I saved your plan for tomorrow:\n${text}`
+  );
+}
+
+
+function showTomorrowPlan() {
+
+  const data =
+    getTomorrowPlan();
+
+  if (!data) {
+
+    return (
+      "You don't have a tomorrow plan saved yet, Boss."
     );
   }
 
-  async function sendMessage() {
-    const text = input.value.trim();
+  return (
+    `Your saved plan for tomorrow is:\n${data.plan}`
+  );
+}
 
-    if (!text && !selectedImage) return;
 
-    await handleUserMessage(
-      text || "Describe this image, Boss."
+/* =========================
+   GEMINI
+========================= */
+
+async function askGemini(prompt, imageData = null) {
+
+  const apiKey =
+    getApiKey();
+
+  if (!apiKey) {
+
+    return (
+      "I need your Gemini API key before I can answer that, Boss. Tap the API KEY button and save it."
     );
   }
 
-  // Part 3 continues immediately below.
- 
-  // API key settings
-  $("apiBtn").addEventListener("click", openSettings);
-  $("closeSettings").addEventListener("click", closeSettings);
 
-  $("settingsModal").addEventListener("click", event => {
-    if (event.target === $("settingsModal")) {
-      closeSettings();
-    }
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+
+  const parts = [];
+
+
+  parts.push({
+    text:
+      `You are DISCO, a helpful futuristic AI assistant.
+
+Call the user Boss.
+
+Use clear and simple English.
+
+Do not claim to know the user's current time or GPS location unless that information is supplied by a tool.
+
+If a tool result is supplied in the prompt, use it accurately.
+
+Do not pretend that you performed an action when you did not.
+
+User request:
+${prompt}`
   });
 
-  $("saveKeyBtn").addEventListener("click", () => {
-    const key = $("apiKeyInput").value.trim();
 
-    if (!key) {
-      addMessage("Enter your Gemini API key first, Boss.");
-      $("apiKeyInput").focus();
-      return;
-    }
+  if (imageData) {
 
-    try {
-      localStorage.setItem(KEY_NAME, key);
-      closeSettings();
-      setStatus("KEY SAVED");
-      coreCaption.textContent = "AI CORE READY";
+    parts.push({
 
-      addMessage(
-        "API key saved in this browser, Boss. " +
-        "Send a message to test the Gemini connection."
-      );
-    } catch {
-      addMessage(
-        "Could not save the key in this browser, Boss."
-      );
-    }
-  });
+      inline_data: {
 
-  $("removeKeyBtn").addEventListener("click", () => {
-    localStorage.removeItem(KEY_NAME);
-    closeSettings();
-    setStatus("KEY REMOVED");
-    addMessage("The saved API key has been removed, Boss.");
-  });
+        mime_type:
+          imageData.mimeType,
 
-  // Send button and message form
-  $("chatForm").addEventListener("submit", event => {
-    event.preventDefault();
-    sendMessage();
-  });
-
-  // Camera button
-  $("cameraBtn").addEventListener("click", () => {
-    $("cameraInput").click();
-  });
-
-  $("cameraInput").addEventListener("change", event => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      addMessage("Please choose an image, Boss.");
-      return;
-    }
-
-    selectedImage = file;
-    $("imageName").textContent = file.name;
-    $("imagePreview").hidden = false;
-    input.value = "Describe this image";
-    input.focus();
-  });
-
-  $("removeImage").addEventListener("click", () => {
-    selectedImage = null;
-    $("cameraInput").value = "";
-    $("imagePreview").hidden = true;
-    input.value = "";
-  });
-
-  // Microphone button
-  $("micBtn").addEventListener("click", () => {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      addMessage(
-        "Voice recognition is unavailable in this browser, Boss. " +
-        "Try opening DISCO in Chrome."
-      );
-      return;
-    }
-
-    if (listening) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-GB";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      listening = true;
-      setStatus("LISTENING");
-      coreCaption.textContent = "I'M LISTENING, BOSS";
-      $("micBtn").style.background = "#125b70";
-    };
-
-    recognition.onresult = event => {
-      const transcript =
-        event.results[0][0].transcript.trim();
-
-      if (transcript) {
-        input.value = transcript;
-        handleUserMessage(transcript);
+        data:
+          imageData.base64
       }
-    };
+    });
+  }
 
-    recognition.onerror = event => {
-      console.error("Microphone error:", event.error);
-      addMessage(
-        "I couldn't recognise that speech, Boss. " +
-        "Please check microphone permission and try again."
-      );
-      setStatus("MIC ERROR");
-    };
 
-    recognition.onend = () => {
-      listening = false;
-      $("micBtn").style.background = "";
-      coreCaption.textContent = "READY TO ASSIST, BOSS";
-      if (statusText.textContent === "LISTENING") {
-        setStatus("READY");
-      }
-    };
+  try {
 
-    try {
-      recognition.start();
-    } catch (error) {
-      console.error(error);
-      addMessage("The microphone could not start. Try again, Boss.");
-    }
-  });
+    const response =
+      await fetch(endpoint, {
 
-  // Memory button: show memories or save the first one.
-  $("memoryBtn").addEventListener("click", () => {
-    memoryItems = loadMemory();
+        method: "POST",
 
-    if (memoryItems.length === 0) {
-      const text = window.prompt(
-        "Boss, what would you like DISCO to remember?"
-      );
+        headers: {
+          "Content-Type":
+            "application/json",
 
-      if (text && text.trim()) {
-        remember(text);
-        addMessage("I've saved that memory, Boss.");
-        setStatus("MEMORY SAVED");
-      } else {
-        addMessage(
-          "No memories saved yet. Say 'Remember that...' " +
-          "or use the Memory button to add one."
+          "x-goog-api-key":
+            apiKey
+        },
+
+        body: JSON.stringify({
+
+          contents: [
+            {
+              parts: parts
+            }
+          ],
+
+          generationConfig: {
+
+            temperature: 0.7,
+
+            maxOutputTokens: 800
+          }
+        })
+      });
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      if (
+        response.status === 429 ||
+        response.status === 503
+      ) {
+
+        return (
+          "Gemini is temporarily busy, Boss. Your local DISCO tools are still working."
         );
       }
 
-      return;
+      return (
+        data?.error?.message ||
+        "Gemini returned an error, Boss."
+      );
     }
 
-    const summary = memoryItems
-      .slice(-10)
-      .map((item, index) => `${index + 1}. ${item.text}`)
-      .join("\n");
 
-    addMessage("YOUR SAVED MEMORIES\n" + summary);
-    setStatus("MEMORY LOADED");
-  });
+    const answer =
+      data?.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("")
+        .trim();
 
-  // Play Memory button
-  $("playMemoryBtn").addEventListener("click", () => {
-    memoryItems = loadMemory();
 
-    if (memoryItems.length === 0) {
-      speakReply("There are no saved memories yet, Boss.");
-      return;
+    if (!answer) {
+
+      return (
+        "Gemini did not return an answer, Boss."
+      );
     }
 
-    const summary = memoryItems
-      .slice(-10)
-      .map((item, index) => `${index + 1}. ${item.text}`)
-      .join(". ");
 
-    speakReply("Here are your saved memories, Boss. " + summary);
-  });
+    return answer;
 
-  // Keyboard shortcut for closing settings.
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape") {
-      closeSettings();
-    }
-  });
+  } catch {
 
-  // Start the interface.
-  if (localStorage.getItem(KEY_NAME)) {
-    setStatus("KEY SAVED");
-    coreCaption.textContent = "AI CORE READY";
-  } else {
-    setStatus("SETUP REQUIRED");
-    coreCaption.textContent = "ADD YOUR GEMINI API KEY";
+    return (
+      "I couldn't connect to Gemini right now, Boss."
+    );
+  }
+}
+
+
+/* =========================
+   COMMAND ROUTER
+========================= */
+
+async function routeCommand(text) {
+
+  const original =
+    text.trim();
+
+  const q =
+    original.toLowerCase().trim();
+
+
+  /* --------------------------------
+     TOMORROW PLAN RESPONSE
+  -------------------------------- */
+
+  const tomorrowAnswer =
+    handleTomorrowPlan(original);
+
+  if (tomorrowAnswer) {
+
+    return tomorrowAnswer;
   }
 
-  console.log("DISCO initialised.");
-})();
+
+  /* --------------------------------
+     TOMORROW PLAN START
+  -------------------------------- */
+
+  if (
+    /\b(plan|schedule|organize)\b.*\b(tomorrow)\b/i.test(q) ||
+    /\btomorrow\b.*\b(schedule|plan)\b/i.test(q)
+  ) {
+
+    return startTomorrowPlanning();
+  }
+
+
+  /* --------------------------------
+     SHOW TOMORROW PLAN
+  -------------------------------- */
+
+  if (
+    /\b(show|read|tell me|what is)\b.*\b(tomorrow)\b.*\b(plan|schedule)\b/i.test(q)
+  ) {
+
+    return showTomorrowPlan();
+  }
+
+
+  /* --------------------------------
+     TIME
+  -------------------------------- */
+
+  if (
+    /\b(what(?:'s| is) the time|what time is it|time now|current time|tell me the time)\b/i
+      .test(q)
+  ) {
+
+    return getCurrentTime();
+  }
+
+
+  /* --------------------------------
+     DATE
+  -------------------------------- */
+
+  if (
+    /\b(what(?:'s| is) the date|today(?:'s| is the) date|current date|what day is it)\b/i
+      .test(q)
+  ) {
+
+    return getCurrentDate();
+  }
+
+
+  /* --------------------------------
+     LOCATION
+  -------------------------------- */
+
+  if (
+    /\b(where am i|my location|current location|where are we)\b/i
+      .test(q)
+  ) {
+
+    return await getMyLocation();
+  }
+
+
+  /* --------------------------------
+     MEMORY
+  -------------------------------- */
+
+  const memoryResult =
+    memoryCommand(original);
+
+  if (memoryResult !== undefined) {
+
+    return memoryResult;
+  }
+
+
+  /* --------------------------------
+     WEATHER
+  -------------------------------- */
+
+  if (
+    /\b(weather|temperature|forecast)\b/i.test(q)
+  ) {
+
+    let place =
+      "Visakhapatnam";
+
+    const match =
+      original.match(
+        /\b(?:in|at|for|near)\s+(.+)$/i
+      );
+
+    if (match && match[1]) {
+
+      place =
+        match[1]
+          .replace(/[?.!]+$/, "")
+          .trim();
+    }
+
+    return await getWeather(place);
+  }
+
+
+  /* --------------------------------
+     OPEN YOUTUBE
+  -------------------------------- */
+
+  if (
+    /\bopen\s+(youtube|yt)\b/i.test(q) &&
+    !/\bplay\b/i.test(q)
+  ) {
+
+    return openYouTube();
+  }
+
+
+  /* --------------------------------
+     PLAY SONG
+  -------------------------------- */
+
+  if (
+    /\bplay\b/i.test(q) &&
+    (
+      /\bsong\b/i.test(q) ||
+      /\bmusic\b/i.test(q) ||
+      /\btrack\b/i.test(q) ||
+      /\bvideo\b/i.test(q)
+    )
+  ) {
+
+    let song =
+      original
+        .replace(
+          /\b(open|youtube|yt|and|please|play|song|music|track|video)\b/gi,
+          " "
+        )
+        .replace(/\s+/g, " ")
+        .trim();
+
+
+    if (!song) {
+
+      return (
+        "Which song should I search for, Boss?"
+      );
+    }
+
+
+    return openYouTubeSearch(song);
+  }
+
+
+  /* --------------------------------
+     YOUTUBE SEARCH
+  -------------------------------- */
+
+  if (
+    /\b(youtube|yt)\b/i.test(q) &&
+    /\b(search|find)\b/i.test(q)
+  ) {
+
+    let query =
+      original
+        .replace(
+          /\b(youtube|yt|search|find|for)\b/gi,
+          " "
+        )
+        .replace(/\s+/g, " ")
+        .trim();
+
+
+    if (!query) {
+
+      return (
+        "What should I search for on YouTube, Boss?"
+      );
+    }
+
+
+    return openYouTubeSearch(query);
+  }
+
+
+  /* --------------------------------
+     OPEN WEBSITES
+  -------------------------------- */
+
+  const openMatch =
+    q.match(
+      /^open\s+(google|youtube|github|instagram)\s*$/
+    );
+
+  if (openMatch) {
+
+    return openWebsite(
+      openMatch[1]
+    );
+  }
+
+
+  /* --------------------------------
+     GOOGLE SEARCH
+  -------------------------------- */
+
+  if (
+    /\b(search|google)\b/i.test(q)
+  ) {
+
+    let query =
+      original
+        .replace(
+          /\b(search|google|on google|for)\b/gi,
+          " "
+        )
+        .replace(/\s+/g, " ")
+        .trim();
+
+
+    if (query) {
+
+      return googleSearch(query);
+    }
+  }
+
+
+  /* --------------------------------
+     CALCULATOR
+  -------------------------------- */
+
+  if (
+    /^(calculate|solve|what is)\s+/i.test(original)
+  ) {
+
+    const expression =
+      original
+        .replace(
+          /^(calculate|solve|what is)\s+/i,
+          ""
+        )
+        .trim();
+
+
+    const result =
+      calculate(expression);
+
+    if (result) {
+
+      return result;
+    }
+  }
+
+
+  /* --------------------------------
+     GREETING
+  -------------------------------- */
+
+  if (
+    /^(hi|hello|hey|good morning|good afternoon|good evening)\b/i
+      .test(q)
+  ) {
+
+    return (
+      "Hello, Boss. DISCO is online and ready."
+    );
+  }
+
+
+  /* --------------------------------
+     CLEAR CHAT
+  -------------------------------- */
+
+  if (
+    /^(clear chat|clear conversation)$/i.test(q)
+  ) {
+
+    clearChat();
+
+    return null;
+  }
+
+
+  /* --------------------------------
+     GEMINI FALLBACK
+  -------------------------------- */
+
+  return await askGemini(
+    original,
+    cameraImage
+  );
+    }
+/* =========================================================
+   DISCO AI
+   SCRIPT.JS — PART 3 OF 3
+========================================================= */
+
+
+/* =========================
+   SEND MESSAGE
+========================= */
+
+let processing = false;
+
+
+async function sendMessage() {
+
+  if (processing) {
+    return;
+  }
+
+
+  const text =
+    msgInput.value.trim();
+
+
+  if (!text) {
+    return;
+  }
+
+
+  processing = true;
+
+  msgInput.value = "";
+
+  addMessage(
+    text,
+    "user"
+  );
+
+
+  try {
+
+    const answer =
+      await routeCommand(text);
+
+
+    if (answer) {
+
+      addMessage(
+        answer,
+        "disco"
+      );
+
+      speak(answer);
+    }
+
+  } catch (error) {
+
+    const message =
+      "Something went wrong, Boss.";
+
+    addMessage(
+      message,
+      "disco"
+    );
+
+    speak(message);
+
+    console.error(
+      "DISCO error:",
+      error
+    );
+
+  } finally {
+
+    processing = false;
+
+    msgInput.focus();
+  }
+}
+
+
+/* =========================
+   SEND BUTTON
+========================= */
+
+sendBtn.addEventListener(
+  "click",
+  sendMessage
+);
+
+
+/* =========================
+   ENTER KEY
+========================= */
+
+msgInput.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      event.preventDefault();
+
+      sendMessage();
+    }
+  }
+);
+
+
+/* =========================
+   CLEAR CHAT
+========================= */
+
+function clearChat() {
+
+  chat.innerHTML = "";
+
+  addMessage(
+    "Conversation cleared, Boss."
+  );
+}
+
+
+/* =========================
+   MICROPHONE
+========================= */
+
+function setupSpeechRecognition() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+  if (!SpeechRecognition) {
+
+    return false;
+  }
+
+
+  recognition =
+    new SpeechRecognition();
+
+
+  recognition.lang =
+    "en-IN";
+
+
+  recognition.continuous =
+    false;
+
+
+  recognition.interimResults =
+    false;
+
+
+  recognition.onstart =
+    () => {
+
+      isListening = true;
+
+      micBtn.textContent = "🔴";
+    };
+
+
+  recognition.onend =
+    () => {
+
+      isListening = false;
+
+      micBtn.textContent = "🎤";
+    };
+
+
+  recognition.onerror =
+    event => {
+
+      console.log(
+        "Speech recognition:",
+        event.error
+      );
+
+      isListening = false;
+
+      micBtn.textContent = "🎤";
+    };
+
+
+  recognition.onresult =
+    event => {
+
+      const transcript =
+        event.results[0][0].transcript;
+
+      msgInput.value =
+        transcript;
+
+      sendMessage();
+    };
+
+
+  return true;
+}
+
+
+setupSpeechRecognition();
+
+
+micBtn.addEventListener(
+  "click",
+  () => {
+
+    if (!recognition) {
+
+      addMessage(
+        "Voice input is not supported by this browser, Boss."
+      );
+
+      return;
+    }
+
+
+    if (isListening) {
+
+      recognition.stop();
+
+      return;
+    }
+
+
+    try {
+
+      recognition.start();
+
+    } catch (error) {
+
+      console.log(error);
+    }
+  }
+);
+
+
+/* =========================
+   CAMERA
+========================= */
+
+cameraBtn.addEventListener(
+  "click",
+  () => {
+
+    cameraInput.click();
+  }
+);
+
+
+cameraInput.addEventListener(
+  "change",
+  event => {
+
+    const file =
+      event.target.files?.[0];
+
+
+    if (!file) {
+      return;
+    }
+
+
+    const reader =
+      new FileReader();
+
+
+    reader.onload =
+      () => {
+
+        const result =
+          reader.result;
+
+
+        const base64 =
+          result.split(",")[1];
+
+
+        cameraImage = {
+
+          mimeType:
+            file.type || "image/jpeg",
+
+          base64:
+            base64
+        };
+
+
+        addMessage(
+          "Image captured, Boss. Ask me what you want to know about it."
+        );
+
+
+        speak(
+          "Image captured, Boss. Ask me what you want to know about it."
+        );
+      };
+
+
+    reader.readAsDataURL(file);
+  }
+);
+
+
+/* =========================
+   MEMORY BUTTON
+========================= */
+
+memoryBtn.addEventListener(
+  "click",
+  () => {
+
+    const memory =
+      getMemory();
+
+
+    if (!memory.length) {
+
+      const text =
+        "My memory is empty, Boss.";
+
+      addMessage(text);
+
+      speak(text);
+
+      return;
+    }
+
+
+    const text =
+      "I remember:\n" +
+      memory
+        .map(
+          (item, index) =>
+            `${index + 1}. ${item.text}`
+        )
+        .join("\n");
+
+
+    addMessage(text);
+
+    speak(
+      "I remember " +
+      memory.map(
+        item => item.text
+      ).join(". ")
+    );
+  }
+);
+
+
+/* =========================
+   PLAY MEMORY
+========================= */
+
+playMemoryBtn.addEventListener(
+  "click",
+  () => {
+
+    const memory =
+      getMemory();
+
+
+    if (!memory.length) {
+
+      speak(
+        "My memory is empty, Boss."
+      );
+
+      return;
+    }
+
+
+    const text =
+      memory
+        .map(
+          item => item.text
+        )
+        .join(". ");
+
+
+    speak(
+      "Boss, here is what I remember. " +
+      text
+    );
+  }
+);
+
+
+/* =========================
+   API KEY SHORTCUT
+========================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Escape" &&
+      !keyModal.classList.contains("hidden")
+    ) {
+
+      closeKeyModal();
+    }
+  }
+);
+
+
+/* =========================
+   FIRST LOAD
+========================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    updateClock();
+
+    msgInput.focus();
+
+    if (!getApiKey()) {
+
+      setTimeout(
+        () => {
+
+          openKeyModal();
+
+        },
+        700
+      );
+    }
+  }
+);
+
+
+/* =========================
+   GLOBAL DEBUG
+========================= */
+
+window.DISCO = {
+
+  send:
+    sendMessage,
+
+  memory:
+    getMemory,
+
+  tomorrow:
+    getTomorrowPlan,
+
+  time:
+    getCurrentTime,
+
+  date:
+    getCurrentDate,
+
+  weather:
+    getWeather,
+
+  location:
+    getMyLocation
+
+};
+
+
+console.log(
+  "DISCO AI CORE ONLINE."
+);
