@@ -1,169 +1,563 @@
-<!doctype html>
-<html lang="en" data-theme="dark">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <link rel="manifest" href="./manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0d12">
-  <meta name="description" content="D.I.S.C.O personal AI assistant">
-  <title>D.I.S.C.O — Personal AI</title>
-  
-  <!-- Existing CSS -->
-  <link rel="stylesheet" href="style.css?v=jarvis-stage-grid-scroll-v8-20260930-final">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#050713">
 
-  <!-- 👇 ORBS LIBRARY ADDED HERE 👇 -->
-  <script src="https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.css">
-  
-  <!-- 👇 INLINE STYLE FOR THE NEW ORB CONTAINER 👇 -->
-  <style>
-    /* Container for the live Orb */
-    #disco-core-container {
-      width: 150px;       /* Size of the orb */
-      height: 150px;
-      margin: 0 auto 20px auto; /* Center it horizontally */
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    /* Ensure canvas inside looks good */
-    #disco-core-container canvas {
-      border-radius: 50%;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.4); /* Cyan Glow */
-      filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
-    }
-  </style>
+    <title>D.I.S.C.O. // 3000</title>
+
+    <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
-      <div class="sidebar-top">
-        <a class="brand" href="./" aria-label="D.I.S.C.O home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15"/><path d="M18 7v22M7 18h22M10.2 10.2l15.6 15.6M25.8 10.2 10.2 25.8"/><circle cx="18" cy="18" r="4"/></svg>
-          </span>
-          <span class="brand-copy"><strong>D.I.S.C.O</strong><small>PERSONAL AI</small></span>
-        </a>
-        <button class="icon-button sidebar-collapse" id="sidebar-toggle" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-      </div>
 
-      <button class="new-chat" id="new-chat" type="button">
-        <span class="new-chat-icon" aria-hidden="true">+</span><span>New chat</span>
-      </button>
+    <div class="scanlines"></div>
+    <div class="nebula n1"></div>
+    <div class="nebula n2"></div>
 
-      <div class="history-heading"><span>RECENT</span><span class="history-count" id="history-count"></span></div>
-      <div class="history-list" id="history-list" role="group" aria-label="Conversation history"></div>
-      <div class="sidebar-spacer"></div>
+    <main class="shell">
 
-      <div class="sidebar-footer">
-        <button class="sidebar-link" id="settings-open" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg>
-          <span>Settings</span>
-        </button>
-        <div class="profile-row"><span class="profile-avatar">V</span><span class="profile-name">Vamshi</span><span class="profile-label">PERSONAL</span></div>
-      </div>
-    </aside>
+        <!-- HEADER -->
+        <header class="top">
 
-    <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Close navigation" hidden></button>
+            <a class="brand" href="#">
+                <span class="mark">D</span>
 
-    <main class="main-area">
-      <header class="topbar">
-        <button class="icon-button menu-button" id="menu-btn" type="button" aria-label="Open navigation" title="Open navigation">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <div class="topbar-title"><span>D.I.S.C.O</span><span class="topbar-divider">/</span><span class="topbar-subtitle">Personal assistant</span></div>
-        <div class="topbar-actions">
-          <span class="ready-badge"><span class="ready-dot"></span> READY</span>
-          
-            <!-- 👇 NEW WAKE WORD BUTTON ADDED HERE 👇 -->
-          <button class="icon-button wake-button" id="wake-btn" type="button" aria-label="Toggle Wake Word" title="Listen for 'Hey Disco'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="22"/>
-            </svg>
-          </button>
-          
-          <!-- Status Text for Wake Mode (Optional but good for UX) -->
-          <span id="wake-status" style="font-size: 0.7rem; color: #888; margin-right: 5px;">WAKE: OFF</span>
+                <span>
+                    <b>D.I.S.C.O.</b>
+                    <small>NEURAL INTERFACE // 3000</small>
+                </span>
+            </a>
 
-          <!-- Existing Clear Button -->
-          <button class="icon-button clear-button" id="clear-btn" type="button" aria-label="Clear current conversation" title="Clear current conversation">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 3v6m4-6v6"/></svg>
-          </button>
-        </div>
-      </header>
+            <div class="status">
+                <i></i>
+                <span id="systemStatus">SYSTEM READY</span>
+            </div>
 
-      <section class="conversation-stage" id="conversation-stage" aria-label="Conversation" tabindex="0">
-        <div class="welcome" id="welcome">
-          
-          <!-- 👇 OLD STATIC HERO-ORB REPLACED BY LIVE CANVAS CONTAINER 👇 -->
-          <div id="disco-core-container" aria-hidden="true">
-             <!-- JavaScript will inject the <canvas> here automatically -->
-          </div>
-          
-          <div class="welcome-copy">
-            <p class="eyebrow"><span></span> YOUR PERSONAL AI</p>
-            <h1>How can I help today?</h1>
-            <p class="welcome-subtitle">A thoughtful assistant for ideas, answers and everyday tasks.</p>
-          </div>
-          <div class="prompt-grid" aria-label="Suggested prompts">
-            <button class="prompt-card" type="button" data-prompt="Disco, give me my morning briefing">
-              <span class="prompt-icon">✦</span><span><strong>Morning briefing</strong><small>Start your day informed</small></span><span class="prompt-arrow">↗</span>
-            </button>
-            <button class="prompt-card" type="button" data-prompt="What is the weather today?">
-              <span class="prompt-icon">◌</span><span><strong>Check the weather</strong><small>Get a local forecast</small></span><span class="prompt-arrow">↗</span>
-            </button>
-            <button class="prompt-card" type="button" data-prompt="What is the current Bitcoin price?">
-              <span class="prompt-icon">◇</span><span><strong>Market snapshot</strong><small>Check Bitcoin today</small></span><span class="prompt-arrow">↗</span>
-            </button>
-            <button class="prompt-card" type="button" data-prompt="Tell me a useful idea for today">
-              <span class="prompt-icon">⌁</span><span><strong>Explore an idea</strong><small>Think something through</small></span><span class="prompt-arrow">↗</span>
-            </button>
-          </div>
-        </div>
-        <div class="chat" id="chat" role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions text" tabindex="0"></div>
-      </section>
+            <button
+                type="button"
+                id="keyBtn"
+                class="key-btn"
+                title="AI connection settings"
+                aria-label="AI connection settings"
+            >⌘</button>
 
-      <footer class="composer-dock">
-        <div class="thinking-status" id="thinking-status" aria-live="polite" hidden>
-          <span class="thinking-orb" aria-hidden="true"><i class="thinking-ring"></i><i class="thinking-core"></i></span>
-          <span id="thinking-label">D.I.S.C.O is thinking</span><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        </div>
-        <div class="composer-shell">
-          <button class="composer-tool" id="cam-btn" type="button" aria-label="Analyze image" title="Attach an image">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.4-2h7.2l1.4 2h3v10H4z"/><circle cx="12" cy="13.5" r="3.2"/></svg>
-          </button>
-          <textarea id="msg" rows="1" placeholder="Message D.I.S.C.O..." aria-label="Message D.I.S.C.O"></textarea>
-          <input id="img-input" type="file" accept="image/*" hidden>
-          <div class="composer-actions">
-            <button class="composer-tool voice-button" id="mic-btn" type="button" aria-label="Activate voice input" title="Voice input">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8"/></svg>
-            </button>
-            <button class="send-button" id="send" type="button" aria-label="Send message" title="Send message">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>
-            </button>
-          </div>
-        </div>
-        <p class="composer-note">ENTER TO SEND <span>·</span> SHIFT + ENTER FOR A NEW LINE <span class="note-separator">·</span> D.I.S.C.O can make mistakes</p>
-      </footer>
+        </header>
+
+
+        <!-- MAIN INTERFACE -->
+        <section class="hero">
+
+            <!-- LEFT STATUS PANEL -->
+            <aside class="panel status-panel">
+
+                <div class="section-title">
+                    01 / CORE STATUS
+                    <span>◈</span>
+                </div>
+
+                <div class="stat">
+                    <span>NEURAL LINK</span>
+                    <b id="neuralStatus">LOCAL MODE</b>
+                </div>
+
+                <div class="bar">
+                    <i></i>
+                </div>
+
+                <div class="stat">
+                    <span>AGENT NETWORK</span>
+                    <b id="agentStatus">ACTIVE</b>
+                </div>
+
+                <div class="bar purple">
+                    <i></i>
+                </div>
+
+                <div class="stat">
+                    <span>LOCAL MEMORY</span>
+                    <b>ONLINE</b>
+                </div>
+
+                <div class="stat">
+                    <span>VOICE CHANNEL</span>
+                    <b id="voiceStatus">READY</b>
+                </div>
+
+                <div class="line"></div>
+
+                <p class="micro">AVAILABLE MODULES</p>
+
+                <div class="module">
+                    ◈ ORACLE
+                    <b>ON</b>
+                </div>
+
+                <div class="module">
+                    ⌁ CHRONOS
+                    <b>ON</b>
+                </div>
+
+                <div class="module">
+                    ⌬ MEMORY
+                    <b>ON</b>
+                </div>
+
+                <div class="module">
+                    ⟁ VISION
+                    <b>READY</b>
+                </div>
+
+                <button
+                    type="button"
+                    id="activateBtn"
+                    class="outline"
+                >
+                    ACTIVATE AGENTS ↗
+                </button>
+
+            </aside>
+
+
+            <!-- CENTRAL CORE -->
+            <div class="core-area">
+
+                <div class="orbit o1"></div>
+                <div class="orbit o2"></div>
+                <div class="orbit o3"></div>
+                <div class="halo"></div>
+
+                <button
+                    type="button"
+                    id="coreOrb"
+                    class="core"
+                    aria-label="D.I.S.C.O. core"
+                    title="D.I.S.C.O. core"
+                >
+                    <span class="core-ring"></span>
+                    <span class="core-ring inner"></span>
+
+                    <span class="core-ball">
+                        <b>D<span>.</span></b>
+                        <i></i>
+                    </span>
+                </button>
+
+                <div class="core-label">
+                    <i></i>
+                    DISCO CORE
+                    <b id="coreState">AWAITING INPUT</b>
+                </div>
+
+                <p class="subline">
+                    DIGITAL INTELLIGENCE / SYSTEM CONTROL
+                </p>
+
+                <div class="clock">
+                    <b id="clockTime">--:--:--</b>
+                    <span id="clockDate">SYNCING LOCAL TIME</span>
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT OPERATIONS PANEL -->
+            <aside class="panel tools-panel">
+
+                <div class="section-title">
+                    02 / QUICK OPERATIONS
+                    <span>⌁</span>
+                </div>
+
+                <button
+                    type="button"
+                    class="action"
+                    data-prompt="plan tomorrow"
+                >
+                    <span>▦</span>
+
+                    <label>
+                        <b>Tomorrow plan</b>
+                        <small>CHRONOS / SCHEDULE</small>
+                    </label>
+
+                    <em>↗</em>
+                </button>
+
+                <button
+                    type="button"
+                    class="action"
+                    data-prompt="what time is it"
+                >
+                    <span>◷</span>
+
+                    <label>
+                        <b>Time &amp; date</b>
+                        <small>CHRONOS / CLOCK</small>
+                    </label>
+
+                    <em>↗</em>
+                </button>
+
+                <button
+                    type="button"
+                    class="action"
+                    data-prompt="weather in Hyderabad"
+                >
+                    <span>☼</span>
+
+                    <label>
+                        <b>Weather scan</b>
+                        <small>ATMOS / FORECAST</small>
+                    </label>
+
+                    <em>↗</em>
+                </button>
+
+                <button
+                    type="button"
+                    class="action"
+                    data-prompt="show my memory"
+                >
+                    <span>⌬</span>
+
+                    <label>
+                        <b>Memory vault</b>
+                        <small>MNEMOS / LOCAL</small>
+                    </label>
+
+                    <em>↗</em>
+                </button>
+
+                <!-- CAMERA BUTTON -->
+                <button
+                    type="button"
+                    id="cameraBtn"
+                    class="action"
+                    aria-label="Open camera or select an image"
+                >
+                    <span>◎</span>
+
+                    <label>
+                        <b>Vision scanner</b>
+                        <small>OPTIC / IMAGE INPUT</small>
+                    </label>
+
+                    <em>↗</em>
+                </button>
+
+                <div class="micro tool-label">SYSTEM TOOLS</div>
+
+                <div class="pills">
+
+                    <button
+                        type="button"
+                        data-prompt="set a timer for 5 minutes"
+                    >TIMER</button>
+
+                    <button
+                        type="button"
+                        data-prompt="open YouTube"
+                    >YOUTUBE</button>
+
+                    <button
+                        type="button"
+                        data-prompt="check battery"
+                    >BATTERY</button>
+
+                    <button
+                        type="button"
+                        data-prompt="activate agents"
+                    >AGENTS</button>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+
+        <!-- CHAT WORKSPACE -->
+        <section class="workspace">
+
+            <div class="workspace-head">
+
+                <div>
+                    <span class="eyebrow">03 / COMMAND DECK</span>
+
+                    <h1>
+                        What do you need, <em>Boss?</em>
+                    </h1>
+                </div>
+
+                <span class="session">
+                    <i></i>
+                    LOCAL SESSION
+                </span>
+
+            </div>
+
+
+            <!-- CHAT WINDOW -->
+            <div class="chat-frame">
+
+                <div class="chat-top">
+                    <span>● ● ●</span>
+
+                    <b>D.I.S.C.O. // CONVERSATION STREAM</b>
+
+                    <button
+                        type="button"
+                        id="clearBtn"
+                    >CLEAR ↺</button>
+                </div>
+
+
+                <!-- MESSAGES -->
+                <div
+                    id="chat"
+                    class="messages"
+                    aria-live="polite"
+                    aria-label="Conversation"
+                >
+
+                    <div class="message">
+
+                        <div class="avatar">D</div>
+
+                        <div class="bubble">
+
+                            <div class="meta">
+                                D.I.S.C.O.
+                                <span>CORE ONLINE</span>
+                            </div>
+
+                            <p>
+                                Systems online, Boss.
+                                Your command deck is ready.
+                                Ask a question or select an operation.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SELECTED IMAGE PREVIEW -->
+                <div
+                    id="imageWrap"
+                    class="image-wrap"
+                    hidden
+                >
+
+                    <img
+                        id="imagePreview"
+                        alt="Selected image preview"
+                    >
+
+                    <span id="imageName"></span>
+
+                    <button
+                        type="button"
+                        id="removeImageBtn"
+                        aria-label="Remove selected image"
+                    >×</button>
+
+                </div>
+
+
+                <!-- COMMAND INPUT -->
+                <form id="commandForm" class="composer">
+
+                    <!-- IMAGE ATTACHMENT BUTTON -->
+                    <button
+                        type="button"
+                        id="imageBtn"
+                        class="attach"
+                        title="Attach an image"
+                        aria-label="Attach an image"
+                    >＋</button>
+
+
+                    <!-- MESSAGE INPUT -->
+                    <input
+                        type="text"
+                        id="msg"
+                        name="message"
+                        autocomplete="off"
+                        placeholder="Enter a command, Boss…"
+                        aria-label="Message D.I.S.C.O."
+                    >
+
+
+                    <!-- MICROPHONE BUTTON -->
+                    <button
+                        type="button"
+                        id="micBtn"
+                        class="mic"
+                        title="Voice input"
+                        aria-label="Start voice input"
+                    >◉</button>
+
+
+                    <!-- SEND BUTTON -->
+                    <button
+                        type="submit"
+                        id="sendBtn"
+                        class="send"
+                    >
+                        <span>TRANSMIT</span>
+                        <b>➤</b>
+                    </button>
+
+                </form>
+
+
+                <div class="input-foot">
+                    <span>
+                        <i></i>
+                        COMMAND CHANNEL OPEN
+                    </span>
+
+                    <span>ENTER ↵ TO SEND</span>
+                </div>
+
+            </div>
+
+
+            <!-- FEATURE INFORMATION -->
+            <div class="feature-row">
+
+                <div>
+                    <b>◈ LOCAL FIRST</b>
+                    <small>Clock, memory and calculator run locally.</small>
+                </div>
+
+                <div>
+                    <b>⌁ AGENT ROUTING</b>
+                    <small>Commands are sent to matching tools.</small>
+                </div>
+
+                <div>
+                    <b>⟁ AI CONNECTION</b>
+                    <small>Add a Gemini key for AI answers.</small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FOOTER -->
+        <footer>
+
+            <span>© D.I.S.C.O. FUTURE SYSTEMS</span>
+
+            <span>
+                BUILT FOR THE NEXT CENTURY
+                <b>◆</b>
+            </span>
+
+            <span id="networkStatus">NETWORK: CHECKING</span>
+
+        </footer>
+
     </main>
 
-    <div class="settings-scrim" id="settings-scrim" hidden></div>
-    <aside class="settings-panel" id="settings-panel" aria-labelledby="settings-title" aria-modal="true" role="dialog" hidden>
-      <div class="settings-header"><div><p class="eyebrow">PREFERENCES</p><h2 id="settings-title">Settings</h2></div><button class="icon-button" id="settings-close" type="button" aria-label="Close settings">×</button></div>
-      <div class="settings-group"><label for="theme-select">Appearance</label><p>Set the tone of your workspace.</p><select id="theme-select"><option value="dark">Midnight · dark</option><option value="light">Silver · light</option></select></div>
-      <div class="settings-group"><strong>Conversation history</strong><p>Your conversations are saved in this browser profile.</p></div>
-      <div class="settings-bottom"><button class="danger-button" id="clear-memory-setting" type="button">Clear current conversation</button><p>D.I.S.C.O · Personal AI</p></div>
-    </aside>
-  </div>
 
-  <script src="script.js?v=gemini38-wake-loop-20261007-r5"></script>
+    <!-- IMAGE INPUT -->
+    <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+        capture="environment"
+        hidden
+    >
+
+
+    <!-- AI CONNECTION MODAL -->
+    <div
+        id="keyModal"
+        class="modal-backdrop"
+        hidden
+    >
+
+        <section
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalTitle"
+        >
+
+            <button
+                type="button"
+                id="closeKeyBtn"
+                class="close"
+                aria-label="Close settings"
+            >×</button>
+
+            <div class="modal-symbol">⌘</div>
+
+            <span class="eyebrow">
+                NEURAL LINK CONFIGURATION
+            </span>
+
+            <h2 id="modalTitle">Connect your AI core</h2>
+
+            <p>
+                Local commands work without a key.
+                Add a Gemini API key for AI chat and image analysis.
+            </p>
+
+            <label for="apiKeyInput">GEMINI API KEY</label>
+
+            <input
+                type="password"
+                id="apiKeyInput"
+                placeholder="Paste API key"
+                autocomplete="off"
+            >
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="removeKeyBtn"
+                    class="outline"
+                >REMOVE KEY</button>
+
+                <button
+                    type="button"
+                    id="saveKeyBtn"
+                    class="send"
+                >SAVE CONNECTION ↗</button>
+
+            </div>
+
+            <small>
+                A key stored in your browser is not secret.
+                Never publish your API key in public code.
+            </small>
+
+        </section>
+
+    </div>
+
+
+    <!-- STATUS NOTIFICATION -->
+    <div
+        id="toast"
+        class="toast"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="./script.js"></script>
+
 </body>
 </html>
