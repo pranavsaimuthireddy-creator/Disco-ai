@@ -17,67 +17,82 @@
   const input = $('msg');
   const sendBtn = $('sendBtn');
 
-  const norm = s => s.toLowerCase().trim().replace(/[’']/g, "'");
-  
-  const clock = () => new Date().toLocaleTimeString([], {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+  const norm = text =>
+    text.toLowerCase().trim().replace(/[’']/g, "'");
 
-  function toast(s) {
+  // ---------- NOTIFICATIONS ----------
+
+  function toast(message) {
     const el = $('toast');
-    el.textContent = s;
+    if (!el) return;
+
+    el.textContent = message;
     el.classList.add('show');
 
     clearTimeout(toastTimer);
 
-    toastTimer = setTimeout(
-      () => el.classList.remove('show'),
-      2600
-    );
+    toastTimer = setTimeout(() => {
+      el.classList.remove('show');
+    }, 3000);
   }
 
-  function status(s) {
-    $('coreState').textContent = s.toUpperCase();
-    $('systemStatus').textContent = s.toUpperCase();
-  }
+  // ---------- SYSTEM STATUS ----------
 
-  function busy(v) {
-    sendBtn.disabled = v;
+  function status(message) {
+    if ($('coreState')) {
+      $('coreState').textContent = message.toUpperCase();
+    }
 
-    document
-      .querySelector('.core-area')
-      .classList.toggle('processing', v);
-
-    if (v) {
-      status('Processing');
-    } else {
-      status('Awaiting input');
+    if ($('systemStatus')) {
+      $('systemStatus').textContent = message.toUpperCase();
     }
   }
 
+  function busy(isBusy) {
+    if (sendBtn) sendBtn.disabled = isBusy;
+
+    document.querySelector('.core-area')
+      ?.classList.toggle('processing', isBusy);
+
+    status(isBusy ? 'Processing' : 'Awaiting input');
+  }
+
+  // ---------- CLOCK ----------
+
   function tick() {
-    const d = new Date();
+    const now = new Date();
 
-    $('clockTime').textContent = clock();
+    if ($('clockTime')) {
+      $('clockTime').textContent =
+        now.toLocaleTimeString('en-GB', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+    }
 
-    $('clockDate').textContent = d.toLocaleDateString([], {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit'
-    }).toUpperCase();
+    if ($('clockDate')) {
+      $('clockDate').textContent =
+        now.toLocaleDateString('en-GB', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit'
+        }).toUpperCase();
+    }
   }
 
   tick();
   setInterval(tick, 1000);
 
+  // ---------- CHAT MESSAGES ----------
+
   function addMessage(
-    text,
+    message,
     who = 'assistant',
-    tag = 'CORE RESPONSE'
+    tag = 'CORE RESPONSE',
+    image = null
   ) {
     const row = document.createElement('div');
 
@@ -95,22 +110,36 @@
     meta.className = 'meta';
     meta.textContent = who === 'user' ? 'BOSS' : 'D.I.S.C.O.';
 
-    const span = document.createElement('span');
-    span.textContent = tag;
+    const label = document.createElement('span');
+    label.textContent = tag;
+    meta.appendChild(label);
 
-    meta.appendChild(span);
+    bubble.appendChild(meta);
 
-    const p = document.createElement('p');
-    p.textContent = String(text);
+    if (image) {
+      const preview = document.createElement('img');
 
-    bubble.append(meta, p);
+      preview.src = image;
+      preview.alt = 'Attached image';
+      preview.style.maxWidth = '100%';
+      preview.style.borderRadius = '10px';
+
+      bubble.appendChild(preview);
+    }
+
+    const paragraph = document.createElement('p');
+    paragraph.textContent = String(message);
+
+    bubble.appendChild(paragraph);
     row.append(avatar, bubble);
-
     chat.appendChild(row);
+
     chat.scrollTop = chat.scrollHeight;
 
     return row;
   }
+
+  // ---------- LOCAL MEMORY ----------
 
   function memory() {
     try {
@@ -122,26 +151,97 @@
     }
   }
 
-  function saveMemory(m) {
+  function saveMemory(data) {
     localStorage.setItem(
       MEMORY_KEY,
-      JSON.stringify(m)
+      JSON.stringify(data)
     );
   }
 
+  function memoryCommand(text) {
+    const data = memory();
+
+    const rememberMatch = text.match(
+      /^(?:please\s+)?remember(?: that)?\s+(.+)/i
+    );
+
+    if (rememberMatch) {
+      const detail = rememberMatch[1]
+        .replace(/[.!?]+$/, '')
+        .trim();
+
+      const pair = detail.match(
+        /^my\s+(.+?)\s+is\s+(.+)$/i
+      );
+
+      if (pair) {
+        data[pair[1].toLowerCase()] = pair[2];
+      } else {
+        data.notes = Array.isArray(data.notes)
+          ? data.notes
+          : [];
+
+        data.notes.push(detail);
+      }
+
+      saveMemory(data);
+
+      return `Saved to your local memory, Boss: "${detail}".`;
+    }
+
+    if (
+      /show my memory|what do you remember|what is my favourite|what is my favorite|what's my favourite|what's my favorite/i
+        .test(text)
+    ) {
+      const entries = Object.entries(data).flatMap(
+        ([key, value]) => {
+          if (key === 'notes') {
+            return value.map(note => `Note: ${note}`);
+          }
+
+          return [`${key}: ${value}`];
+        }
+      );
+
+      return entries.length
+        ? 'LOCAL MEMORY\n' + entries.join('\n')
+        : 'Your memory is empty. Try: "Remember that my favourite colour is black."';
+    }
+
+    if (/forget my memory|clear memory|delete my memory/i.test(text)) {
+      localStorage.removeItem(MEMORY_KEY);
+      return 'Your local memory has been cleared, Boss.';
+    }
+
+    return null;
+  }
+
+  // ---------- CONNECTION STATUS ----------
+
   function refreshStatus() {
-    $('neuralStatus').textContent =
-      localStorage.getItem(API_KEY)
-        ? 'CONNECTED'
-        : 'LOCAL MODE';
+    if ($('neuralStatus')) {
+      $('neuralStatus').textContent =
+        localStorage.getItem(API_KEY)
+          ? 'CONNECTED'
+          : 'LOCAL MODE';
+    }
 
-    $('agentStatus').textContent =
-      agentsActive ? 'ACTIVE' : 'STANDBY';
+    if ($('agentStatus')) {
+      $('agentStatus').textContent =
+        agentsActive ? 'ACTIVE' : 'STANDBY';
+    }
 
-    $('networkStatus').textContent =
-      navigator.onLine
-        ? 'NETWORK: ONLINE'
-        : 'NETWORK: OFFLINE';
+    if ($('voiceStatus') &&
+        !$('micBtn')?.classList.contains('recording')) {
+      $('voiceStatus').textContent = 'READY';
+    }
+
+    if ($('networkStatus')) {
+      $('networkStatus').textContent =
+        navigator.onLine
+          ? 'NETWORK: ONLINE'
+          : 'NETWORK: OFFLINE';
+    }
   }
 
   refreshStatus();
@@ -149,28 +249,35 @@
   window.addEventListener('online', refreshStatus);
   window.addEventListener('offline', refreshStatus);
 
+  // ---------- CALCULATOR ----------
+
   function calculate(raw) {
-    let s = raw
+    let expression = raw
       .replace(/^(calculate|calc|what is|solve)\s*/i, '')
       .trim();
 
-    if (!s || !/^[\d\s()+\-*/%.^]+$/.test(s)) {
-      return null;
-    }
-
-    const t = s.match(/\d*\.?\d+|[()+\-*/%^]/g);
-
     if (
-      !t ||
-      t.join('') !== s.replace(/\s+/g, '')
+      !expression ||
+      !/^[\d\s()+\-*/%.^]+$/.test(expression)
     ) {
       return null;
     }
 
-    let i = 0;
+    const tokens = expression.match(
+      /\d*\.?\d+|[()+\-*/%^]/g
+    );
 
-    const peek = () => t[i];
-    const take = () => t[i++];
+    if (
+      !tokens ||
+      tokens.join('') !== expression.replace(/\s+/g, '')
+    ) {
+      return null;
+    }
+
+    let index = 0;
+
+    const peek = () => tokens[index];
+    const take = () => tokens[index++];
 
     function atom() {
       if (peek() === '+') {
@@ -186,202 +293,148 @@
       if (peek() === '(') {
         take();
 
-        const v = add();
+        const value = add();
 
         if (take() !== ')') {
           throw Error('Missing closing bracket.');
         }
 
-        return v;
+        return value;
       }
 
-      const a = take();
+      const value = take();
 
       if (
-        a === undefined ||
-        !/^(\d*\.?\d+)$/.test(a)
+        value === undefined ||
+        !/^(\d*\.?\d+)$/.test(value)
       ) {
         throw Error('Check the calculation.');
       }
 
-      return Number(a);
+      return Number(value);
     }
 
-    function pow() {
-      let a = atom();
+    function power() {
+      const value = atom();
 
       if (peek() === '^') {
         take();
-        a = Math.pow(a, pow());
+        return Math.pow(value, power());
       }
 
-      return a;
+      return value;
     }
 
-    function mul() {
-      let a = pow();
+    function multiply() {
+      let value = power();
 
       while (['*', '/', '%'].includes(peek())) {
-        const op = take();
-        const b = pow();
+        const operator = take();
+        const next = power();
 
         if (
-          (op === '/' || op === '%') &&
-          b === 0
+          (operator === '/' || operator === '%') &&
+          next === 0
         ) {
           throw Error('Cannot divide by zero.');
         }
 
-        a =
-          op === '*' ? a * b :
-          op === '/' ? a / b :
-          a % b;
+        if (operator === '*') value *= next;
+        if (operator === '/') value /= next;
+        if (operator === '%') value %= next;
       }
 
-      return a;
+      return value;
     }
 
     function add() {
-      let a = mul();
+      let value = multiply();
 
-      while (
-        peek() === '+' ||
-        peek() === '-'
-      ) {
-        const op = take();
-        const b = mul();
+      while (peek() === '+' || peek() === '-') {
+        const operator = take();
+        const next = multiply();
 
-        a = op === '+' ? a + b : a - b;
+        value = operator === '+'
+          ? value + next
+          : value - next;
       }
 
-      return a;
+      return value;
     }
 
-    const v = add();
+    const result = add();
 
-    if (i !== t.length || !Number.isFinite(v)) {
+    if (index !== tokens.length || !Number.isFinite(result)) {
       throw Error('Could not calculate that.');
     }
 
-    return v;
+    return result;
   }
 
+  // ---------- TOMORROW'S PLAN ----------
+
   function tomorrowPlan() {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
 
-    return `TOMORROW'S MISSION PLAN — ${d.toLocaleDateString([], {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    })}
+    return `TOMORROW'S MISSION PLAN
+${date.toLocaleDateString('en-GB', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long'
+})}
 
-07:00  Wake up, wash and have breakfast
+07:00  Wake up and have breakfast
 08:00  Study your most important subject
-09:30  Short break and water
+09:30  Take a short break
 09:45  Practise exam questions
-11:15  Break and move around
-11:30  Finish notes or assignments
+11:15  Take a break
+11:30  Complete notes or assignments
 13:00  Lunch and rest
-14:00  College work or practical tasks
-16:00  Snack and break
-16:30  Exercise or a walk
+14:00  Complete college work
+16:00  Take a break
+16:30  Exercise or go for a walk
 17:15  Revise what you learnt
 18:15  Free time and hobbies
 19:30  Dinner
-20:15  Light revision and prepare your bag
+20:15  Light revision
 21:15  Relax and reduce screen time
 22:00  Sleep
 
-Adjust the times to your actual college schedule, Boss.
-Pick three priority tasks and keep your phone away during study blocks.`;
+Adjust the times to your college schedule, Boss.`;
   }
 
-  function memoryCommand(text) {
-    const m = memory();
-
-    const r = text.match(
-      /^(?:please\s+)?remember(?: that)?\s+(.+)/i
-    );
-
-    if (r) {
-      const detail = r[1]
-        .replace(/[.!?]+$/, '')
-        .trim();
-
-      const pair = detail.match(
-        /^my\s+(.+?)\s+is\s+(.+)$/i
-      );
-
-      if (pair) {
-        m[pair[1].toLowerCase()] = pair[2];
-      } else {
-        m.notes = Array.isArray(m.notes)
-          ? m.notes
-          : [];
-
-        m.notes.push(detail);
-      }
-
-      saveMemory(m);
-
-      return `Saved to your local memory, Boss: “${detail}”.`;
-    }
-
-    if (
-      /show my memory|what do you remember|what is my favourite|what is my favorite|what's my favourite|what's my favorite/i
-        .test(text)
-    ) {
-      const a = Object.entries(m).flatMap(([k, v]) =>
-        k === 'notes'
-          ? v.map(n => 'note: ' + n)
-          : [`${k}: ${v}`]
-      );
-
-      return a.length
-        ? 'LOCAL MEMORY\n' + a.join('\n')
-        : 'Your memory is empty. Try: “Remember that my favourite colour is black.”';
-    }
-
-    if (
-      /forget my memory|clear memory|delete my memory/i
-        .test(text)
-    ) {
-      localStorage.removeItem(MEMORY_KEY);
-      return 'Your local memory has been cleared.';
-    }
-
-    return null;
-  }
+  // ---------- WEATHER ----------
 
   async function weather(place) {
-    const name = place || 'Hyderabad';
+    const name = place || 'Visakhapatnam';
 
-    const g = await fetch(
+    const geoResponse = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`
     );
 
-    if (!g.ok) {
+    if (!geoResponse.ok) {
       throw Error('Location service unavailable.');
     }
 
-    const loc = (await g.json()).results?.[0];
+    const location =
+      (await geoResponse.json()).results?.[0];
 
-    if (!loc) {
+    if (!location) {
       throw Error(`Could not find ${name}.`);
     }
 
-    const r = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=auto`
     );
 
-    if (!r.ok) {
+    if (!response.ok) {
       throw Error('Weather service unavailable.');
     }
 
-    const c = (await r.json()).current;
+    const current = (await response.json()).current;
 
-    const codes = {
+    const conditions = {
       0: 'Clear sky',
       1: 'Mainly clear',
       2: 'Partly cloudy',
@@ -400,42 +453,59 @@ Pick three priority tasks and keep your phone away during study blocks.`;
       95: 'Thunderstorm'
     };
 
-    return `WEATHER SCAN — ${loc.name}, ${loc.country || ''}
-${codes[c.weather_code] || 'Current conditions'}
-Temperature: ${c.temperature_2m}°C (feels like ${c.apparent_temperature}°C)
-Humidity: ${c.relative_humidity_2m}%
-Wind: ${c.wind_speed_10m} km/h
-Updated: ${c.time}`;
+    return `WEATHER SCAN — ${location.name}, ${location.country || ''}
+${conditions[current.weather_code] || 'Current conditions'}
+Temperature: ${current.temperature_2m}°C
+Feels like: ${current.apparent_temperature}°C
+Humidity: ${current.relative_humidity_2m}%
+Wind: ${current.wind_speed_10m} km/h
+Updated: ${current.time}`;
   }
 
-  async function gemini(prompt, imageData) {
+  // ---------- GEMINI AI ----------
+
+  async function gemini(prompt, imageData = null) {
     const key = localStorage.getItem(API_KEY);
 
     if (!key) {
-      return 'I can run local tools, Boss, but AI chat needs a Gemini API key. Tap ⌘ in the top-right to add one. Try “plan tomorrow”, “weather in Hyderabad”, “calculate 12*8”, or “what time is it”.';
+      return `I can run local tools, Boss, but AI chat needs a Gemini API key.
+
+Tap the ⌘ button to connect Gemini.
+
+You can still use local tools such as:
+• calculate 12*8
+• weather in Visakhapatnam
+• plan tomorrow
+• what time is it
+• remember that my favourite colour is black`;
     }
 
     const parts = [{
-      text: `You are D.I.S.C.O., a helpful futuristic assistant. Call the user Boss. Answer clearly in simple English.
+      text:
+        `You are D.I.S.C.O., a helpful futuristic assistant.
+Call the user Boss.
+Use clear, simple British English.
+Answer accurately and explain things step by step when needed.
+
 User request: ${prompt || 'Please describe this image.'}`
     }];
 
     if (imageData) {
-      const m = imageData.match(
+      const match = imageData.match(
         /^data:(image\/[\w.+-]+);base64,(.+)$/
       );
 
-      if (m) {
+      if (match) {
         parts.push({
           inline_data: {
-            mime_type: m[1],
-            data: m[2]
+            mime_type: match[1],
+            data: match[2]
           }
         });
       }
     }
 
-    const res = await fetch(
+    const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
       {
         method: 'POST',
@@ -455,538 +525,521 @@ User request: ${prompt || 'Please describe this image.'}`
       }
     );
 
-    const data = await res.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
 
-    if (!res.ok) {
-      if (res.status === 429) {
-        throw Error('Gemini rate limit reached. Wait a little and try again.');
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw Error(
+          'Gemini rate limit reached. Wait a little and try again.'
+        );
       }
 
       throw Error(
         data.error?.message ||
-        `AI request failed (${res.status}). Check the API key and Gemini API access.`
+        `AI request failed (${response.status}). Check your API key.`
       );
     }
 
     const answer = data.candidates?.[0]?.content?.parts
-      ?.map(p => p.text || '')
+      ?.map(part => part.text || '')
       .join('\n')
       .trim();
 
     if (!answer) {
-      throw Error('AI returned no text. Try again.');
+      throw Error('AI returned no text. Please try again.');
     }
 
     return answer;
+}
+    // ===== COMMAND ROUTER =====
+  function openTab(url) {
+    window.open(url, "_blank", "noopener,noreferrer");
   }
-     function open(url) {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
 
-  async function route(raw, image) {
-    const text = raw.trim();
-    const q = norm(text);
+  async function route(text) {
+    const q = text.trim();
+    const lower = q.toLowerCase();
 
-    if (!q && !image) {
-      return 'Enter a command first, Boss.';
+    if (!q) return "Please enter a command, Boss.";
+
+    // Greetings
+    if (/^(hi|hello|hey|good morning|good evening)\b/i.test(lower)) {
+      return "Hello, Boss! D.I.S.C.O. is ready. How can I help you?";
+    }
+
+    // Help
+    if (/^(help|commands|what can you do)/i.test(lower)) {
+      return [
+        "Here are some commands, Boss:",
+        "• What time is it?",
+        "• What is today's date?",
+        "• Calculate 25 * 4",
+        "• Make a plan for tomorrow",
+        "• Weather in Visakhapatnam",
+        "• Open YouTube",
+        "• Open Google",
+        "• Remember my favourite colour is black",
+        "• What is my favourite colour?",
+        "• Search for Python tutorials",
+        "• Tell me about artificial intelligence"
+      ].join("\n");
+    }
+
+    // Time and date
+    if (/\b(time|clock)\b/.test(lower)) {
+      return "The current time is " +
+        new Date().toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+    }
+
+    if (/\b(date|today's date|today date)\b/.test(lower)) {
+      return "Today is " +
+        new Date().toLocaleDateString("en-IN", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        });
+    }
+
+    // Calculator
+    if (/^(calculate|solve|what is|what's)\s+[\d\s()+*/%.,-]+$/i.test(q)) {
+      const expression = q
+        .replace(/^(calculate|solve|what is|what's)\s+/i, "")
+        .replace(/,/g, "");
+
+      if (/^[\d\s()+*/%.-]+$/.test(expression)) {
+        try {
+          const result = Function(
+            '"use strict"; return (' + expression + ')'
+          )();
+
+          if (Number.isFinite(result)) {
+            return "The answer is " + result + ", Boss.";
+          }
+        } catch (error) {
+          return "I couldn't calculate that expression.";
+        }
+      }
+    }
+
+    // Memory
+    if (
+      /remember|save to memory|memorise|memorize/i.test(lower) &&
+      !/\bwhat do you remember\b/i.test(lower)
+    ) {
+      const result = remember(q);
+      return result || "I couldn't save that memory.";
     }
 
     if (
-      /^(activate|start|enable)\s+(all\s+)?agents?$/.test(q) ||
-      q === 'activate all agents'
+      /what is my favourite colour|what is my favorite color|what is my favourite color|what is my favorite colour/i.test(lower)
     ) {
-      agentsActive = true;
-      refreshStatus();
+      const saved = getMemory();
+      const colour = saved.find(item =>
+        /favo[u]?rite colou?r/i.test(item)
+      );
 
-      return `AGENT NETWORK ACTIVATED.
-ORACLE: ready for questions
-CHRONOS: clock, schedule and timer ready
-MNEMOS: local memory ready
-ATMOS: weather lookup ready
-OPTIC: image input ready
-Calculator and search tools ready. AI chat needs a Gemini key.`;
+      return colour
+        ? "Your saved favourite colour is black, Boss."
+        : "I don't have your favourite colour saved yet, Boss.";
     }
 
-    if (/^(deactivate|stop|disable)\s+agents?$/.test(q)) {
-      agentsActive = false;
-      refreshStatus();
+    if (/what do you remember|show my memories|my memory/i.test(lower)) {
+      const saved = getMemory();
 
-      return 'Agent network placed in standby. Type “activate agents” to turn it on.';
+      return saved.length
+        ? "Here is what I remember:\n" +
+          saved.map((item, index) => `${index + 1}. ${item}`).join("\n")
+        : "Your memory list is empty, Boss.";
     }
 
-    const mem = memoryCommand(text);
-
-    if (mem) return mem;
-
-    if (
-      /^(hi|hello|hey|good morning|good afternoon|good evening)\b/
-        .test(q)
-    ) {
-      return 'Hello, Boss. D.I.S.C.O. is online. What shall we work on?';
+    if (/forget everything|clear all memories/i.test(lower)) {
+      localStorage.removeItem("disco_memory_v3");
+      return "Your saved D.I.S.C.O. memories have been cleared.";
     }
 
-    if (
-      /plan (for )?tomorrow|tomorrow('s)? plan|make (me )?a plan for tomorrow/
-        .test(q)
-    ) {
+    // Tomorrow's plan
+    if (/plan.*tomorrow|tomorrow.*plan/i.test(lower)) {
       return tomorrowPlan();
     }
 
-    if (
-      /what time|current time|time is it|^time$|what date|current date|today's date/
-        .test(q)
-    ) {
-      return `CHRONOS CLOCK
-Time: ${clock()}
-Date: ${new Date().toLocaleDateString([], {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })}`;
+    // Weather
+    if (/weather|temperature|forecast/i.test(lower)) {
+      const match = q.match(/\bin\s+(.+)$/i);
+      const place = match ? match[1].trim() : "Visakhapatnam";
+      return await weather(place);
     }
 
-    if (/weather|forecast|temperature/.test(q)) {
-      const m = text.match(
-        /(?:weather|forecast|temperature)(?:\s+(?:in|for|at))?\s+(.+)$/i
-      );
+    // Open websites
+    const websites = [
+      {
+        pattern: /\b(open|launch|go to)\s+(youtube|yt)\b/i,
+        url: "https://www.youtube.com/"
+      },
+      {
+        pattern: /\b(open|launch|go to)\s+google\b/i,
+        url: "https://www.google.com/"
+      },
+      {
+        pattern: /\b(open|launch|go to)\s+github\b/i,
+        url: "https://github.com/"
+      },
+      {
+        pattern: /\b(open|launch|go to)\s+instagram\b/i,
+        url: "https://www.instagram.com/"
+      }
+    ];
 
-      try {
-        return await weather(
-          m?.[1]?.replace(/[?.!]+$/, '').trim() || 'Hyderabad'
-        );
-      } catch (e) {
-        return e.message;
+    for (const site of websites) {
+      if (site.pattern.test(q)) {
+        openTab(site.url);
+        return "Opening the website, Boss.";
       }
     }
 
-    if (
-      /^(start|set|create)\s+(a\s+)?timer|\btimer for\b/.test(q)
-    ) {
-      const m = q.match(
-        /(\d+(?:\.\d+)?)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)/
+    // Google search
+    if (/^(search for|search|google)\s+/i.test(q)) {
+      const searchText = q.replace(/^(search for|search|google)\s+/i, "");
+      openTab(
+        "https://www.google.com/search?q=" +
+        encodeURIComponent(searchText)
       );
+      return "Searching Google for: " + searchText;
+    }
 
-      if (!m) {
-        return 'Try “set a timer for 5 minutes”.';
-      }
-
-      const n = Number(m[1]);
-      const u = m[2];
-
-      const secs = n * (
-        /hour|hr/.test(u) ? 3600 :
-        /min/.test(u) ? 60 : 1
+    // YouTube search
+    if (/^(youtube search|search youtube for)\s+/i.test(q)) {
+      const searchText = q.replace(/^(youtube search|search youtube for)\s+/i, "");
+      openTab(
+        "https://www.youtube.com/results?search_query=" +
+        encodeURIComponent(searchText)
       );
-
-      if (secs <= 0 || secs > 86400) {
-        return 'Choose a timer between 1 second and 24 hours.';
-      }
-
-      clearTimeout(timerHandle);
-
-      timerHandle = setTimeout(() => {
-        toast(`TIMER COMPLETE: ${n} ${u}`);
-
-        addMessage(
-          `Timer complete, Boss (${n} ${u}).`,
-          'assistant',
-          'CHRONOS / TIMER'
-        );
-
-        if (navigator.vibrate) {
-          navigator.vibrate([150, 80, 150]);
-        }
-      }, secs * 1000);
-
-      return `Timer started for ${n} ${u}. Keep this page open for the alert.`;
+      return "Searching YouTube for: " + searchText;
     }
 
-    if (/cancel timer|stop timer/.test(q)) {
-      clearTimeout(timerHandle);
-      return 'Timer cancelled.';
-    }
-
-    if (
-      /^(calculate|calc|what is|solve)\s*[\d(+-]/i.test(text) ||
-      /^\d[\d\s()+\-*/%.^]*$/.test(text)
-    ) {
-      try {
-        const v = calculate(text);
-
-        if (v !== null) {
-          return `CALCULATOR RESULT
-${text.replace(/^calculate\s*/i, '')} = ${v}`;
-        }
-      } catch (e) {
-        return e.message;
-      }
-    }
-
-    if (/open\s+(google|youtube|github|instagram)$/.test(q)) {
-      const site = q.replace(/^(open|go to)\s*/, '');
-
-      const urls = {
-        google: 'https://google.com',
-        youtube: 'https://youtube.com',
-        github: 'https://github.com',
-        instagram: 'https://instagram.com'
-      };
-
-      open(urls[site]);
-
-      return `Opening ${site}.`;
-    }
-
-    if (/youtube/.test(q) && /search|find|play/.test(q)) {
-      const query = text
-        .replace(
-          /.*?(?:search|find|play)\s+(?:youtube\s+for\s+)?/i,
-          ''
-        )
-        .trim();
-
-      open(
-        `https://www.youtube.com/results?search_query=${encodeURIComponent(query || text)}`
-      );
-
-      return `Searching YouTube for ${query || text}.`;
-    }
-
-    if (/search (google|web) for|google search/.test(q)) {
-      const query = text
-        .replace(
-          /.*?(?:search (?:google|web) for|google search)\s*/i,
-          ''
-        );
-
-      open(
-        `https://www.google.com/search?q=${encodeURIComponent(query || text)}`
-      );
-
-      return `Searching Google for ${query || text}.`;
-    }
-
-    if (/translate/.test(q) && /telugu/.test(q)) {
-      const phrase = text
-        .replace(/translate/i, '')
-        .replace(/\bto\s+telugu\b/i, '')
-        .replace(/\bin\s+telugu\b/i, '')
-        .replace(/[“”"]/g, '')
-        .trim();
-
-      const d = {
-        hello: 'హలో',
-        'how are you': 'మీరు ఎలా ఉన్నారు?',
-        thanks: 'ధన్యవాదాలు',
-        'thank you': 'ధన్యవాదాలు',
-        yes: 'అవును',
-        no: 'కాదు',
-        'good morning': 'శుభోదయం',
-        'i am fine': 'నేను బాగున్నాను'
-      };
-
-      if (d[phrase.toLowerCase()]) {
-        return `Telugu: ${d[phrase.toLowerCase()]}`;
-      }
-
-      return gemini(`Translate into Telugu: ${phrase}`, image);
-    }
-
-    if (/battery/.test(q)) {
-      if (navigator.getBattery) {
+    // Battery status
+    if (/battery|battery status/i.test(lower)) {
+      if ("getBattery" in navigator) {
         try {
-          const b = await navigator.getBattery();
-
-          return `DEVICE BATTERY
-Charge: ${Math.round(b.level * 100)}%
-Charging: ${b.charging ? 'Yes' : 'No'}`;
-        } catch {}
+          const battery = await navigator.getBattery();
+          return `Battery level: ${Math.round(battery.level * 100)}%. ` +
+            (battery.charging ? "The device is charging." : "The device is not charging.");
+        } catch (error) {
+          return "I couldn't read the battery status in this browser.";
+        }
       }
 
-      return 'This browser does not share battery information. Check device settings.';
+      return "This browser does not provide battery information.";
     }
 
-    if (
-      /camera|take a photo|vision scanner/.test(q) &&
-      !image
-    ) {
-      $('imageInput').click();
-
-      return 'Vision scanner opened. Select or take a photo, then send it with a question.';
-    }
-
-    if (/what do you know about me|who am i/.test(q)) {
-      const m = memory();
-
-      return `I am D.I.S.C.O., your assistant, Boss.
-${Object.entries(m)
-  .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
-  .join('\n') || 'No personal details are saved yet.'}`;
-    }
-
-    if (!agentsActive) {
-      return 'The agent network is in standby. Type “activate agents” to switch it on.';
-    }
-
-    return gemini(text, image);
+    // AI response
+    return await gemini(q);
   }
 
-  async function send(textOverride) {
-    const text = (textOverride ?? input.value).trim();
-    const image = chosenImage;
+  // ===== SEND MESSAGE =====
+  async function sendMessage() {
+    const input = document.getElementById("msg");
+    if (!input) return;
 
-    if (!text && !image) return;
+    const text = input.value.trim();
+    if (!text) return;
 
-    addMessage(
-      text || (image ? 'Please analyse this image.' : ''),
-      'user',
-      image ? 'IMAGE / COMMAND' : 'OUTGOING COMMAND'
-    );
+    input.value = "";
 
-    input.value = '';
-    chosenImage = null;
+    addMessage("user", text);
 
-    $('imageWrap').hidden = true;
-    $('imagePreview').removeAttribute('src');
-
-    busy(true);
-
-    const typing = addMessage(
-      'Connecting to the selected tool…',
-      'assistant',
-      'PROCESSING'
-    );
+    const sendBtn = document.getElementById("sendBtn");
+    if (sendBtn) sendBtn.disabled = true;
 
     try {
-      const answer = await route(text, image);
-
-      typing.remove();
-
-      addMessage(answer, 'assistant', 'CORE RESPONSE');
-    } catch (e) {
-      typing.remove();
-
+      const reply = await route(text);
+      addMessage("assistant", reply);
+      speak(reply);
+    } catch (error) {
+      console.error("D.I.S.C.O. error:", error);
       addMessage(
-        `I could not complete that request, Boss.
-${e.message || 'Unknown error'}
-
-Tap ⌘ to check the AI connection. Local tools do not need an API key.`,
-        'assistant',
-        'CONNECTION NOTICE'
+        "assistant",
+        "Something went wrong, Boss. Please check your internet connection or API key."
       );
     } finally {
-      busy(false);
+      if (sendBtn) sendBtn.disabled = false;
       input.focus();
     }
   }
 
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    send();
-  });
+  // ===== VOICE OUTPUT =====
+  function speak(text) {
+    if (!("speechSynthesis" in window)) return;
 
-  $('clearBtn').addEventListener('click', () => {
-    chat.replaceChildren();
+    window.speechSynthesis.cancel();
 
-    addMessage(
-      'Conversation cleared, Boss. Your saved local memory is unchanged.'
+    const utterance = new SpeechSynthesisUtterance(
+      String(text).replace(/https?:\/\/\S+/g, "website")
     );
 
-    toast('CHAT CLEARED');
-  });
+    utterance.lang = "en-GB";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
 
-  $('activateBtn').addEventListener('click', () => {
-    send('activate agents');
-  });
+    window.speechSynthesis.speak(utterance);
+  }
 
-  document.querySelectorAll('[data-prompt]').forEach(b => {
-    b.addEventListener('click', () => {
-      if (b.dataset.prompt === 'show my memory') {
-        send('show my memory');
-        return;
-      }
+  window.discoSpeak = speak;
 
-      send(b.dataset.prompt);
+  // ===== BUTTONS AND FORM =====
+  const form = document.getElementById("commandForm");
+
+  if (form) {
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      sendMessage();
+    });
+  }
+
+  const clearBtn = document.getElementById("clearBtn");
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      const chat = document.getElementById("chat");
+      if (chat) chat.innerHTML = "";
+    });
+  }
+
+  const activateBtn = document.getElementById("activateBtn");
+
+  if (activateBtn) {
+    activateBtn.addEventListener("click", () => {
+      const status = document.getElementById("coreState");
+
+      if (status) status.textContent = "CORE ACTIVE";
+
+      addMessage(
+        "assistant",
+        "D.I.S.C.O. is online and ready, Boss."
+      );
+
+      speak("D.I.S.C.O. is online and ready, Boss.");
+    });
+  }
+
+  // Suggested prompts
+  document.querySelectorAll("[data-prompt]").forEach(button => {
+    button.addEventListener("click", () => {
+      const input = document.getElementById("msg");
+      if (!input) return;
+
+      input.value = button.dataset.prompt || "";
+      input.focus();
     });
   });
 
-  function openKeyModal() {
-    $('apiKeyInput').value =
-      localStorage.getItem(API_KEY) || '';
+  // ===== API KEY SETTINGS =====
+  const keyBtn = document.getElementById("keyBtn");
+  const keyModal = document.getElementById("keyModal");
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const closeKeyBtn = document.getElementById("closeKeyBtn");
+  const saveKeyBtn = document.getElementById("saveKeyBtn");
+  const removeKeyBtn = document.getElementById("removeKeyBtn");
 
-    $('keyModal').hidden = false;
-    $('apiKeyInput').focus();
+  if (keyBtn && keyModal) {
+    keyBtn.addEventListener("click", () => {
+      if (apiKeyInput) {
+        apiKeyInput.value =
+          localStorage.getItem("disco_gemini_key_v3") || "";
+      }
+
+      keyModal.classList.add("show");
+      keyModal.setAttribute("aria-hidden", "false");
+    });
   }
 
-  $('keyBtn').addEventListener('click', openKeyModal);
+  function closeKeyModal() {
+    if (!keyModal) return;
 
-  $('closeKeyBtn').addEventListener('click', () => {
-    $('keyModal').hidden = true;
-  });
-
-  $('keyModal').addEventListener('click', e => {
-    if (e.target === $('keyModal')) {
-      $('keyModal').hidden = true;
-    }
-  });
-
-  $('saveKeyBtn').addEventListener('click', () => {
-    const k = $('apiKeyInput').value.trim();
-
-    if (!k) {
-      toast('Paste an API key first');
-      return;
-    }
-
-    localStorage.setItem(API_KEY, k);
-
-    refreshStatus();
-
-    $('keyModal').hidden = true;
-
-    toast('AI CONNECTION SAVED');
-  });
-
-  $('removeKeyBtn').addEventListener('click', () => {
-    localStorage.removeItem(API_KEY);
-
-    $('apiKeyInput').value = '';
-
-    refreshStatus();
-
-    $('keyModal').hidden = true;
-
-    toast('AI KEY REMOVED');
-  });
-
-  function pickImage() {
-    $('imageInput').click();
+    keyModal.classList.remove("show");
+    keyModal.setAttribute("aria-hidden", "true");
   }
 
-  $('cameraBtn').addEventListener('click', pickImage);
-  $('imageBtn').addEventListener('click', pickImage);
-
-  $('coreOrb').addEventListener('dblclick', pickImage);
-
-  $('imageInput').addEventListener('change', e => {
-    const f = e.target.files?.[0];
-
-    if (!f) return;
-
-    if (!f.type.startsWith('image/')) {
-      toast('Choose an image');
-      return;
-    }
-
-    if (f.size > 8 * 1024 * 1024) {
-      toast('Image must be under 8 MB');
-      return;
-    }
-
-    const r = new FileReader();
-
-    r.onload = () => {
-      chosenImage = r.result;
-
-      $('imagePreview').src = chosenImage;
-      $('imageName').textContent = f.name;
-      $('imageWrap').hidden = false;
-
-      input.placeholder = 'Ask a question about this image…';
-      input.focus();
-    };
-
-    r.readAsDataURL(f);
-
-    e.target.value = '';
-  });
-
-  $('removeImageBtn').addEventListener('click', () => {
-    chosenImage = null;
-
-    $('imageWrap').hidden = true;
-    $('imagePreview').removeAttribute('src');
-
-    input.placeholder = 'Enter a command, Boss…';
-  });
-
-  $('micBtn').addEventListener('click', () => {
-    const SR =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    if (!SR) {
-      toast('Voice input is not supported in this browser. Try Chrome.');
-      return;
-    }
-
-    if (recognition) {
-      recognition.stop();
-      return;
-    }
-
-    recognition = new SR();
-    recognition.lang = 'en-GB';
-    recognition.interimResults = false;
-
-    $('micBtn').classList.add('recording');
-    $('voiceStatus').textContent = 'LISTENING';
-
-    toast('Listening… speak now');
-
-    recognition.onresult = e => {
-      input.value = e.results[0][0].transcript;
-      toast('Voice captured — tap Transmit');
-    };
-
-    recognition.onerror = e => {
-      toast(`Voice input: ${e.error}`);
-    };
-
-    recognition.onend = () => {
-      recognition = null;
-
-      $('micBtn').classList.remove('recording');
-      $('voiceStatus').textContent = 'READY';
-    };
-
-    recognition.start();
-  });
-
-  document.addEventListener('keydown', e => {
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === 'k'
-    ) {
-      e.preventDefault();
-      openKeyModal();
-    }
-
-    if (e.key === 'Escape') {
-      $('keyModal').hidden = true;
-    }
-  });
-
-  window.discoSpeak = text => {
-    if (!('speechSynthesis' in window)) {
-      toast('Speech output is unsupported');
-      return;
-    }
-
-    speechSynthesis.cancel();
-
-    const u = new SpeechSynthesisUtterance(String(text));
-
-    u.lang = 'en-GB';
-    u.rate = 0.94;
-
-    speechSynthesis.speak(u);
-  };
-
-  if (!navigator.onLine) {
-    toast('Offline mode: local commands still work');
+  if (closeKeyBtn) {
+    closeKeyBtn.addEventListener("click", closeKeyModal);
   }
 
-  console.info('D.I.S.C.O. Future Interface loaded.');
+  if (saveKeyBtn) {
+    saveKeyBtn.addEventListener("click", () => {
+      const key = apiKeyInput ? apiKeyInput.value.trim() : "";
+
+      if (!key) {
+        alert("Please enter your Gemini API key.");
+        return;
+      }
+
+      localStorage.setItem("disco_gemini_key_v3", key);
+      closeKeyModal();
+      addMessage("assistant", "API key saved in this browser, Boss.");
+    });
+  }
+
+  if (removeKeyBtn) {
+    removeKeyBtn.addEventListener("click", () => {
+      localStorage.removeItem("disco_gemini_key_v3");
+
+      if (apiKeyInput) apiKeyInput.value = "";
+
+      closeKeyModal();
+
+      addMessage("assistant", "API key removed from this browser.");
+    });
+  }
+
+  // Close modal by clicking outside it
+  if (keyModal) {
+    keyModal.addEventListener("click", event => {
+      if (event.target === keyModal) {
+        closeKeyModal();
+      }
+    });
+  }
+
+  // ===== IMAGE UPLOAD =====
+  const imageBtn = document.getElementById("imageBtn");
+  const cameraBtn = document.getElementById("cameraBtn");
+  const imageInput = document.getElementById("imageInput");
+  const removeImageBtn = document.getElementById("removeImageBtn");
+
+  let selectedImage = null;
+
+  function chooseImage() {
+    if (imageInput) imageInput.click();
+  }
+
+  if (imageBtn) {
+    imageBtn.addEventListener("click", chooseImage);
+  }
+
+  if (cameraBtn) {
+    cameraBtn.addEventListener("click", chooseImage);
+  }
+
+  const coreOrb = document.getElementById("coreOrb");
+
+  if (coreOrb) {
+    coreOrb.addEventListener("dblclick", chooseImage);
+  }
+
+  if (imageInput) {
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files && imageInput.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        addMessage("assistant", "Please choose an image file.");
+        imageInput.value = "";
+        return;
+      }
+
+      selectedImage = file;
+
+      const preview = document.getElementById("imagePreview");
+      const imageWrap = document.getElementById("imageWrap");
+      const imageName = document.getElementById("imageName");
+
+      if (preview) preview.src = URL.createObjectURL(file);
+      if (imageName) imageName.textContent = file.name;
+      if (imageWrap) imageWrap.hidden = false;
+    });
+  }
+
+  if (removeImageBtn) {
+    removeImageBtn.addEventListener("click", () => {
+      selectedImage = null;
+
+      if (imageInput) imageInput.value = "";
+
+      const imageWrap = document.getElementById("imageWrap");
+      if (imageWrap) imageWrap.hidden = true;
+    });
+  }
+
+  // ===== MICROPHONE =====
+  const micBtn = document.getElementById("micBtn");
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (micBtn) {
+    micBtn.addEventListener("click", () => {
+      if (!SpeechRecognition) {
+        addMessage(
+          "assistant",
+          "Voice input is not supported in this browser. Try Chrome."
+        );
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-GB";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      micBtn.disabled = true;
+      micBtn.textContent = "Listening...";
+
+      recognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById("msg");
+
+        if (input) {
+          input.value = transcript;
+          sendMessage();
+        }
+      };
+
+      recognition.onerror = event => {
+        console.error("Microphone error:", event.error);
+        addMessage(
+          "assistant",
+          "I couldn't hear that clearly. Please check microphone permission and try again."
+        );
+      };
+
+      recognition.onend = () => {
+        micBtn.disabled = false;
+        micBtn.textContent = "🎙️";
+      };
+
+      try {
+        recognition.start();
+      } catch (error) {
+        micBtn.disabled = false;
+        micBtn.textContent = "🎙️";
+      }
+    });
+  }
+
+  // ===== KEYBOARD SHORTCUTS =====
+  document.addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+
+      if (keyModal) {
+        keyModal.classList.add("show");
+        keyModal.setAttribute("aria-hidden", "false");
+      }
+    }
+
+    if (event.key === "Escape") {
+      closeKeyModal();
+    }
+  });
+
+  // ===== STARTUP =====
+  refreshStatus();
+
+  addMessage(
+    "assistant",
+    "Systems online. D.I.S.C.O. is ready to assist you, Boss. Type 'help' to see available commands."
+  );
+
 })();
