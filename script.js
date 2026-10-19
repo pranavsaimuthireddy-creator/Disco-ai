@@ -2,494 +2,261 @@
   "use strict";
 
   // ==========================================
-  // D.I.S.C.O. 3000 — CORE SYSTEM
-  // PART 1 OF 2
+  // D.I.S.C.O. — CORE SETTINGS
   // ==========================================
 
-  const $ = (selector) => document.querySelector(selector);
+  const MODEL = "gemini-3.8-flash";
+  const API_URL =
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
+    MODEL +
+    ":generateContent";
 
-  const chat = $("#chat");
-  const form = $("#commandForm");
-  const msgInput = $("#msg");
-  const sendBtn = $("#sendBtn");
-  const clearBtn = $("#clearBtn");
-  const micBtn = $("#micBtn");
-  const imageBtn = $("#imageBtn");
-  const imageInput = $("#imageInput");
-  const imageWrap = $("#imageWrap");
-  const imagePreview = $("#imagePreview");
-  const imageName = $("#imageName");
-  const removeImageBtn = $("#removeImageBtn");
+  const KEY_STORE = "disco_gemini_key_v4";
+  const MEMORY_STORE = "disco_memory_v4";
+  const LANGUAGE_STORE = "disco_language_v1";
 
-  const keyModal = $("#keyModal");
-  const keyBtn = $("#keyBtn");
-  const closeKeyBtn = $("#closeKeyBtn");
-  const apiKeyInput = $("#apiKeyInput");
-  const saveKeyBtn = $("#saveKeyBtn");
-  const removeKeyBtn = $("#removeKeyBtn");
+  const $ = (id) => document.getElementById(id);
 
-  const activateBtn = $("#activateBtn");
-  const coreOrb = $("#coreOrb");
-  const cameraBtn = $("#cameraBtn");
+  const ui = {
+    menu: $("menuBtn"),
+    agents: $("agentBtn"),
+    key: $("keyBtn"),
+    clear: $("clearBtn"),
 
-  const systemStatus = $("#systemStatus");
-  const neuralStatus = $("#neuralStatus");
-  const agentStatus = $("#agentStatus");
-  const memoryStatus = $("#memoryStatus");
-  const voiceStatus = $("#voiceStatus");
-  const coreState = $("#coreState");
-  const networkStatus = $("#networkStatus");
+    status: $("statusText"),
+    agentStatus: $("agentStatus"),
+    welcome: $("welcome"),
+    chatSection: $("chatSection"),
+    chat: $("chat"),
 
-  const clockTime = $("#clockTime");
-  const clockDate = $("#clockDate");
-  const toastElement = $("#toast");
+    message: $("msg"),
+    send: $("sendBtn"),
+    mic: $("micBtn"),
 
-  const MEMORY_KEY = "disco_memory_v3";
-  const API_KEY = "disco_gemini_key_v3";
+    imageBtn: $("imageBtn"),
+    imageInput: $("imageInput"),
+    imageWrap: $("imageWrap"),
+    imagePreview: $("imagePreview"),
+    imageName: $("imageName"),
+    removeImage: $("removeImageBtn"),
+
+    clock: $("clock"),
+
+    modal: $("keyModal"),
+    apiKey: $("apiKeyInput"),
+    saveKey: $("saveKeyBtn"),
+    removeKey: $("removeKeyBtn"),
+    closeKey: $("closeKeyBtn"),
+
+    toast: $("toast")
+  };
+
+  let apiKey = localStorage.getItem(KEY_STORE) || "";
+  let language =
+    localStorage.getItem(LANGUAGE_STORE) || "en";
 
   let agentsActive = true;
   let selectedImage = null;
+  let busy = false;
   let toastTimer = null;
-  let activeTimer = null;
-  let recognition = null;
-  let isListening = false;
+  let timerId = null;
+
+  // Recent conversation used for follow-up questions.
+  const conversation = [];
 
   // ==========================================
-  // SAFE LOCAL STORAGE
+  // SMALL HELPERS
   // ==========================================
 
-  function storageGet(key, fallback = "") {
-    try {
-      return localStorage.getItem(key) ?? fallback;
-    } catch {
-      return fallback;
-    }
+  function showToast(message) {
+    if (!ui.toast) return;
+
+    ui.toast.textContent = message;
+    ui.toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+      ui.toast.classList.remove("show");
+    }, 2600);
   }
 
-  function storageSet(key, value) {
-    try {
-      localStorage.setItem(key, value);
-      return true;
-    } catch {
-      showToast("Browser storage is unavailable.");
-      return false;
+  function setStatus(message) {
+    if (ui.status) {
+      ui.status.textContent = message;
     }
   }
 
   function getMemory() {
     try {
-      const saved = JSON.parse(storageGet(MEMORY_KEY, "{}"));
-
-      if (saved && typeof saved === "object" && !Array.isArray(saved)) {
-        return saved;
-      }
+      return JSON.parse(
+        localStorage.getItem(MEMORY_STORE) || "{}"
+      );
     } catch {
-      // Start with empty memory if saved data is invalid.
+      return {};
     }
-
-    return {};
   }
 
   function saveMemory(memory) {
-    return storageSet(MEMORY_KEY, JSON.stringify(memory));
-  }
-
-  // ==========================================
-  // STATUS AND NOTIFICATIONS
-  // ==========================================
-
-  function setText(element, value) {
-    if (element) {
-      element.textContent = value;
-    }
-  }
-
-  function showToast(message) {
-    if (!toastElement) {
-      console.log(message);
-      return;
-    }
-
-    toastElement.textContent = message;
-    toastElement.classList.add("show");
-
-    clearTimeout(toastTimer);
-
-    toastTimer = setTimeout(() => {
-      toastElement.classList.remove("show");
-    }, 2800);
-  }
-
-  function setSystemState(message) {
-    setText(systemStatus, message);
-    setText(coreState, message);
-  }
-
-  function setNetworkState(message) {
-    setText(networkStatus, "NETWORK: " + message);
-  }
-
-  function setThinking(thinking) {
-    if (sendBtn) {
-      sendBtn.disabled = thinking;
-
-      const label = sendBtn.querySelector("span");
-
-      if (label) {
-        label.textContent = thinking ? "PROCESSING" : "TRANSMIT";
-      }
-    }
-
-    if (msgInput) {
-      msgInput.disabled = thinking;
-    }
-
-    if (thinking) {
-      setSystemState("PROCESSING COMMAND");
-    } else {
-      setSystemState("SYSTEM READY");
-    }
-  }
-
-  // ==========================================
-  // CLOCK — INDIA STANDARD TIME
-  // ==========================================
-
-  function updateClock() {
-    const now = new Date();
-
-    try {
-      setText(
-        clockTime,
-        new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Asia/Kolkata",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false
-        }).format(now)
-      );
-
-      setText(
-        clockDate,
-        new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Asia/Kolkata",
-          weekday: "long",
-          day: "2-digit",
-          month: "short",
-          year: "numeric"
-        }).format(now).toUpperCase()
-      );
-    } catch (error) {
-      setText(clockTime, now.toLocaleTimeString());
-      setText(clockDate, now.toDateString().toUpperCase());
-    }
-  }
-
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // ==========================================
-  // CHAT MESSAGE DISPLAY
-  // ==========================================
-
-  function addMessage(text, sender = "disco") {
-    if (!chat) return;
-
-    const row = document.createElement("div");
-    row.className = "message";
-
-    const avatar = document.createElement("div");
-    avatar.className = "avatar";
-    avatar.textContent = sender === "user" ? "B" : "D";
-
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-
-    const title = document.createElement("span");
-    title.textContent = sender === "user" ? "BOSS" : "D.I.S.C.O.";
-
-    const status = document.createElement("span");
-    status.textContent = sender === "user" ? "COMMAND" : "CORE RESPONSE";
-
-    meta.append(title, status);
-
-    const paragraph = document.createElement("p");
-    paragraph.textContent = String(text);
-
-    bubble.append(meta, paragraph);
-    row.append(avatar, bubble);
-    chat.appendChild(row);
-
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  function clearConversation() {
-    if (!chat) return;
-
-    chat.replaceChildren();
-
-    addMessage(
-      "Conversation cleared, Boss. D.I.S.C.O. is ready for your next command.",
-      "disco"
+    localStorage.setItem(
+      MEMORY_STORE,
+      JSON.stringify(memory)
     );
-
-    showToast("Conversation cleared.");
   }
 
-  // ==========================================
-  // LOCAL MEMORY
-  // ==========================================
-
-  function rememberFact(key, value) {
-    const memory = getMemory();
-
-    memory[key] = value;
-
-    if (saveMemory(memory)) {
-      return `Saved to local memory, Boss: ${key} = ${value}`;
-    }
-
-    return "I couldn't save that to browser memory.";
-  }
-
-  function readMemory() {
+  function showMemory() {
     const memory = getMemory();
     const entries = Object.entries(memory);
 
-    if (entries.length === 0) {
-      return (
-        "Your memory vault is empty, Boss. " +
-        "You can teach me something using: remember favourite colour is black"
-      );
+    if (!entries.length) {
+      return language === "te"
+        ? "ఇంకా ఏమీ గుర్తుంచుకోలేదు. ఉదాహరణకు: Remember my favourite colour is black."
+        : "I haven't saved any memories yet. Try: Remember my favourite colour is black.";
     }
 
-    return (
-      "Here is what I have saved in this browser:\n\n" +
-      entries
-        .map(([key, value]) => `${key}: ${String(value)}`)
-        .join("\n")
+    return entries
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("\n");
+  }
+
+  function setLanguage(nextLanguage) {
+    language = nextLanguage === "te" ? "te" : "en";
+
+    localStorage.setItem(
+      LANGUAGE_STORE,
+      language
+    );
+
+    if (ui.agentStatus) {
+      ui.agentStatus.textContent = agentsActive
+        ? "AGENTS ACTIVE"
+        : "AGENTS PAUSED";
+    }
+
+    showToast(
+      language === "te"
+        ? "ఇకపై తెలుగులో మాట్లాడతాను."
+        : "I'll speak in English."
     );
   }
 
-  function forgetMemory() {
-    try {
-      localStorage.removeItem(MEMORY_KEY);
-      return "Local memory cleared, Boss.";
-    } catch {
-      return "I couldn't clear browser memory.";
+  function detectLanguageCommand(text) {
+    const value = text.toLowerCase().trim();
+
+    const teluguRequests = [
+      "talk to me in telugu",
+      "speak in telugu",
+      "telugu lo maatladu",
+      "telugu lo matladu",
+      "talk in telugu",
+      "తెలుగులో మాట్లాడు",
+      "తెలుగులో మాట్లాడండి"
+    ];
+
+    const englishRequests = [
+      "talk to me in english",
+      "speak in english",
+      "talk in english",
+      "english lo maatladu",
+      "english lo matladu",
+      "ఇంగ్లీషులో మాట్లాడు"
+    ];
+
+    if (
+      teluguRequests.some((item) =>
+        value.includes(item)
+      )
+    ) {
+      setLanguage("te");
+
+      return "సరే! ఇకపై మీతో సహజమైన ఆంధ్ర తెలుగు భాషలో మాట్లాడతాను. మీకు ఏం కావాలో చెప్పండి.";
+    }
+
+    if (
+      englishRequests.some((item) =>
+        value.includes(item)
+      )
+    ) {
+      setLanguage("en");
+
+      return "Of course! I'll speak with you in English from now on.";
+    }
+
+    return null;
+  }
+
+  // ==========================================
+  // CHAT DISPLAY
+  // ==========================================
+
+  function openChat() {
+    if (ui.welcome) {
+      ui.welcome.style.display = "none";
+    }
+
+    if (ui.chatSection) {
+      ui.chatSection.classList.add("active");
     }
   }
 
-  function parseRememberCommand(text) {
-    const match = text.match(
-      /^remember\s+(.+?)\s+(?:is|=|:)\s+(.+)$/i
+  function addMessage(role, text) {
+    openChat();
+
+    const row = document.createElement("div");
+    row.className = `message ${role}`;
+
+    const label = document.createElement("div");
+    label.className = "message-label";
+    label.textContent =
+      role === "user" ? "YOU" : "D.I.S.C.O.";
+
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble";
+
+    // textContent prevents pasted HTML from executing.
+    bubble.textContent = text;
+
+    row.append(label, bubble);
+    ui.chat.appendChild(row);
+
+    // Keep the page lightweight on a phone.
+    while (ui.chat.children.length > 40) {
+      ui.chat.removeChild(ui.chat.firstElementChild);
+    }
+
+    ui.chat.scrollTop = ui.chat.scrollHeight;
+
+    return row;
+  }
+
+  function addTyping() {
+    const row = addMessage("assistant", "Thinking...");
+
+    row.classList.add("typing-message");
+
+    return row;
+  }
+
+  function clearConversation() {
+    conversation.length = 0;
+
+    if (ui.chat) {
+      ui.chat.replaceChildren();
+    }
+
+    if (ui.chatSection) {
+      ui.chatSection.classList.remove("active");
+    }
+
+    if (ui.welcome) {
+      ui.welcome.style.display = "";
+    }
+
+    showToast(
+      language === "te"
+        ? "చాట్ క్లియర్ అయింది."
+        : "Chat cleared."
     );
-
-    if (!match) return null;
-
-    const key = match[1].trim().toLowerCase();
-    const value = match[2].trim();
-
-    if (!key || !value) return null;
-
-    return { key, value };
-  }
-
-  // ==========================================
-  // AGENT STATUS
-  // ==========================================
-
-  function updateAgentStatus() {
-    setText(
-      agentStatus,
-      agentsActive ? "ACTIVE" : "STANDBY"
-    );
-
-    setText(
-      neuralStatus,
-      storageGet(API_KEY) ? "AI CONNECTED" : "LOCAL MODE"
-    );
-
-    setText(
-      memoryStatus,
-      "ONLINE"
-    );
-
-    setText(
-      voiceStatus,
-      "READY"
-    );
-
-    if (activateBtn) {
-      activateBtn.textContent = agentsActive
-        ? "DEACTIVATE AGENTS ↘"
-        : "ACTIVATE AGENTS ↗";
-    }
-  }
-
-  function toggleAgents() {
-    agentsActive = !agentsActive;
-
-    updateAgentStatus();
-
-    if (agentsActive) {
-      setSystemState("AGENTS ACTIVATED");
-      addMessage("All available local agents are active, Boss.");
-      showToast("Agents activated.");
-    } else {
-      setSystemState("AGENTS ON STANDBY");
-      addMessage(
-        "Agents are now on standby. The clock and basic interface remain available."
-      );
-      showToast("Agents on standby.");
-    }
-  }
-
-  // ==========================================
-  // API KEY SETTINGS
-  // ==========================================
-
-  function openKeyModal() {
-    if (!keyModal) return;
-
-    apiKeyInput.value = storageGet(API_KEY);
-    keyModal.hidden = false;
-  }
-
-  function closeKeyModal() {
-    if (!keyModal) return;
-
-    keyModal.hidden = true;
-  }
-
-  function saveApiKey() {
-    const key = apiKeyInput.value.trim();
-
-    if (!key) {
-      showToast("Enter your Gemini API key first.");
-      apiKeyInput.focus();
-      return;
-    }
-
-    if (storageSet(API_KEY, key)) {
-      updateAgentStatus();
-      closeKeyModal();
-      showToast("AI key saved in this browser.");
-      addMessage(
-        "AI connection settings saved. I will try the AI service when you send a question."
-      );
-    }
-  }
-
-  function deleteApiKey() {
-    try {
-      localStorage.removeItem(API_KEY);
-    } catch {
-      // Nothing else to do.
-    }
-
-    if (apiKeyInput) {
-      apiKeyInput.value = "";
-    }
-
-    updateAgentStatus();
-    showToast("AI key removed.");
-  }
-
-  // ==========================================
-  // TEXT NORMALISATION
-  // ==========================================
-
-  function normalise(text) {
-    return String(text)
-      .toLowerCase()
-      .trim()
-      .replace(/[’‘]/g, "'")
-      .replace(/\s+/g, " ");
-  }
-
-  function hasAny(text, phrases) {
-    return phrases.some((phrase) => text.includes(phrase));
-  }
-
-  // ==========================================
-  // BASIC CALCULATOR
-  // ==========================================
-
-  function calculateExpression(expression) {
-    const cleaned = expression
-      .replace(/^calculate\s+/i, "")
-      .replace(/^what\s+is\s+/i, "")
-      .replace(/\?+$/, "")
-      .trim();
-
-    if (!cleaned) return null;
-
-    // Only allow numbers and basic arithmetic symbols.
-    if (!/^[\d\s()+\-*/%.]+$/.test(cleaned)) {
-      return null;
-    }
-
-    if (!/\d/.test(cleaned)) {
-      return null;
-    }
-
-    try {
-      const result = Function(
-        '"use strict"; return (' + cleaned + ');'
-      )();
-
-      if (typeof result !== "number" || !Number.isFinite(result)) {
-        return "That calculation does not produce a valid number.";
-      }
-
-      return `${cleaned} = ${result}`;
-    } catch {
-      return null;
-    }
-  }
-
-  // ==========================================
-  // TIMER
-  // ==========================================
-
-  function startTimer(text) {
-    const match = text.match(
-      /(?:timer\s+for|set\s+(?:a\s+)?timer\s+for)\s+(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)/i
-    );
-
-    if (!match) return null;
-
-    const amount = Number(match[1]);
-    const unit = match[2].toLowerCase();
-
-    let multiplier = 1000;
-
-    if (unit.startsWith("min") || unit.startsWith("m")) {
-      multiplier = 60 * 1000;
-    } else if (unit.startsWith("hour") || unit.startsWith("hr")) {
-      multiplier = 60 * 60 * 1000;
-    }
-
-    const milliseconds = amount * multiplier;
-
-    if (amount <= 0 || milliseconds > 24 * 60 * 60 * 1000) {
-      return "Please choose a timer between 1 second and 24 hours.";
-    }
-
-    clearTimeout(activeTimer);
-
-    activeTimer = setTimeout(() => {
-      showToast("⏰ Timer finished, Boss!");
-      addMessage("Your timer has finished, Boss.");
-      speak("Boss, your timer has finished.");
-    }, milliseconds);
-
-    return `Timer started for ${amount} ${unit}, Boss.`;
   }
 
   // ==========================================
@@ -501,790 +268,826 @@
       return;
     }
 
-    try {
-      window.speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(String(text));
-      utterance.lang = "en-GB";
-      utterance.rate = 0.92;
-      utterance.pitch = 0.95;
-
-      window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.warn("Voice output unavailable:", error);
-    }
-  }
-
-  // Part 2 continues below.
-   // ==========================================
-  // WEATHER — OPEN-METEO
-  // ==========================================
-
-  async function getWeather() {
-    try {
-      const geoUrl =
-        "https://geocoding-api.open-meteo.com/v1/search" +
-        "?name=Visakhapatnam&count=1&language=en&format=json";
-
-      const geoResponse = await fetch(geoUrl);
-
-      if (!geoResponse.ok) {
-        throw new Error("Location search failed.");
-      }
-
-      const geoData = await geoResponse.json();
-      const place = geoData.results && geoData.results[0];
-
-      if (!place) {
-        throw new Error("Location not found.");
-      }
-
-      const weatherUrl =
-        "https://api.open-meteo.com/v1/forecast" +
-        `?latitude=${place.latitude}` +
-        `&longitude=${place.longitude}` +
-        "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code" +
-        "&timezone=Asia%2FKolkata";
-
-      const weatherResponse = await fetch(weatherUrl);
-
-      if (!weatherResponse.ok) {
-        throw new Error("Weather service unavailable.");
-      }
-
-      const weatherData = await weatherResponse.json();
-      const current = weatherData.current;
-
-      const descriptions = {
-        0: "Clear sky",
-        1: "Mainly clear",
-        2: "Partly cloudy",
-        3: "Overcast",
-        45: "Fog",
-        48: "Depositing rime fog",
-        51: "Light drizzle",
-        53: "Moderate drizzle",
-        55: "Dense drizzle",
-        61: "Slight rain",
-        63: "Moderate rain",
-        65: "Heavy rain",
-        71: "Slight snowfall",
-        73: "Moderate snowfall",
-        75: "Heavy snowfall",
-        80: "Rain showers",
-        81: "Moderate rain showers",
-        82: "Heavy rain showers",
-        95: "Thunderstorm"
-      };
-
-      const condition =
-        descriptions[current.weather_code] || "Current conditions";
-
-      return (
-        `Current weather in ${place.name}, Boss:\n` +
-        `Condition: ${condition}\n` +
-        `Temperature: ${current.temperature_2m}°C\n` +
-        `Feels like: ${current.apparent_temperature}°C\n` +
-        `Humidity: ${current.relative_humidity_2m}%\n` +
-        `Wind speed: ${current.wind_speed_10m} km/h`
-      );
-    } catch (error) {
-      console.error(error);
-
-      return (
-        "I couldn't retrieve the live weather just now. " +
-        "Please check your internet connection and try again."
-      );
-    }
-  }
-
-  // ==========================================
-  // OPEN WEBSITES AND SEARCH
-  // ==========================================
-
-  function openWebsite(text) {
-    const query = text
-      .replace(/^(please\s+)?(open|launch|go to)\s+/i, "")
-      .trim();
-
-    const sites = [
-      {
-        words: ["youtube"],
-        url: "https://www.youtube.com/"
-      },
-      {
-        words: ["google"],
-        url: "https://www.google.com/"
-      },
-      {
-        words: ["github"],
-        url: "https://github.com/"
-      },
-      {
-        words: ["instagram"],
-        url: "https://www.instagram.com/"
-      },
-      {
-        words: ["whatsapp"],
-        url: "https://web.whatsapp.com/"
-      },
-      {
-        words: ["gmail"],
-        url: "https://mail.google.com/"
-      }
-    ];
-
-    const found = sites.find((site) =>
-      site.words.some((word) => query.includes(word))
+    const utterance = new SpeechSynthesisUtterance(
+      text.slice(0, 1800)
     );
 
-    if (found) {
-      window.open(found.url, "_blank", "noopener,noreferrer");
-      return `Opening ${query}, Boss.`;
-    }
+    utterance.lang =
+      language === "te" ? "te-IN" : "en-GB";
 
-    if (/^search\s+/i.test(text)) {
-      const searchQuery = text.replace(/^search\s+/i, "").trim();
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
 
-      if (searchQuery) {
-        window.open(
-          "https://www.google.com/search?q=" +
-            encodeURIComponent(searchQuery),
-          "_blank",
-          "noopener,noreferrer"
-        );
-
-        return `Searching the web for "${searchQuery}", Boss.`;
-      }
-    }
-
-    return null;
+    window.speechSynthesis.speak(utterance);
   }
 
   // ==========================================
-  // GEMINI AI CONNECTION
+  // CLOCK
   // ==========================================
 
-  async function askGemini(prompt, imageData = null) {
-    const key = storageGet(API_KEY).trim();
+  function updateClock() {
+    if (!ui.clock) return;
 
-    if (!key) {
-      return (
-        "I can handle basic local commands, Boss, but AI chat needs a Gemini API key. " +
-        "Tap the ⌘ button at the top to configure it."
-      );
-    }
-
-    const parts = [{ text: String(prompt) }];
-
-    if (imageData) {
-      parts.push({
-        inline_data: {
-          mime_type: imageData.mimeType,
-          data: imageData.base64
-        }
-      });
-    }
-
-    const endpoint =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      "gemini-2.5-flash:generateContent?key=" +
-      encodeURIComponent(key);
-
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts
-            }
-          ],
-          system_instruction: {
-            parts: [
-              {
-                text:
-                  "You are D.I.S.C.O., a helpful personal AI assistant. " +
-                  "Address the user as Boss. Use clear, simple British English. " +
-                  "Be friendly, accurate, concise, and honest. " +
-                  "Never claim to have performed an action you did not perform."
-              }
-            ]
-          },
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 900
-          }
-        })
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const apiMessage =
-          data.error && data.error.message
-            ? data.error.message
-            : `HTTP ${response.status}`;
-
-        if (response.status === 429) {
-          return (
-            "The Gemini service has reached its current request limit, Boss. " +
-            "Please wait a little and try again."
-          );
-        }
-
-        if (response.status === 400 || response.status === 403) {
-          return (
-            "Gemini rejected the request. Check that your API key is correct, " +
-            "that the model is available to your account, and that the key has the required access. " +
-            `Details: ${apiMessage}`
-          );
-        }
-
-        return `The AI service returned an error: ${apiMessage}`;
-      }
-
-      const answer = data.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text || "")
-        .join("\n")
-        .trim();
-
-      if (!answer) {
-        return "The AI service returned an empty answer. Please try again, Boss.";
-      }
-
-      return answer;
-    } catch (error) {
-      console.error("Gemini request failed:", error);
-
-      return (
-        "I couldn't reach the AI service, Boss. " +
-        "Check your internet connection and try again."
-      );
-    }
+    ui.clock.textContent =
+      new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date());
   }
+
+  updateClock();
+
+  // Update once per minute to save resources.
+  setInterval(updateClock, 60000);
 
   // ==========================================
   // IMAGE PREVIEW
   // ==========================================
 
-  function clearSelectedImage() {
+  function removeSelectedImage() {
     selectedImage = null;
 
-    if (imageInput) {
-      imageInput.value = "";
+    if (ui.imageInput) {
+      ui.imageInput.value = "";
     }
 
-    if (imagePreview) {
-      imagePreview.removeAttribute("src");
+    if (ui.imagePreview) {
+      ui.imagePreview.removeAttribute("src");
     }
 
-    if (imageName) {
-      imageName.textContent = "";
+    if (ui.imageName) {
+      ui.imageName.textContent = "";
     }
 
-    if (imageWrap) {
-      imageWrap.hidden = true;
+    if (ui.imageWrap) {
+      ui.imageWrap.hidden = true;
     }
   }
 
-  function readImage(file) {
-    if (!file) return;
+  if (ui.imageBtn && ui.imageInput) {
+    ui.imageBtn.addEventListener("click", () => {
+      ui.imageInput.click();
+    });
+  }
 
-    if (!file.type.startsWith("image/")) {
-      showToast("Please select an image file.");
-      return;
-    }
+  if (ui.imageInput) {
+    ui.imageInput.addEventListener("change", () => {
+      const file = ui.imageInput.files?.[0];
 
-    const maximumSize = 4 * 1024 * 1024;
+      if (!file) return;
 
-    if (file.size > maximumSize) {
-      showToast("Please choose an image smaller than 4 MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const dataUrl = String(reader.result);
-      const commaIndex = dataUrl.indexOf(",");
-
-      if (commaIndex < 0) {
-        showToast("Couldn't read that image.");
+      if (!file.type.startsWith("image/")) {
+        showToast("Please select an image.");
+        removeSelectedImage();
         return;
       }
 
-      selectedImage = {
-        mimeType: file.type,
-        base64: dataUrl.slice(commaIndex + 1)
+      // Avoid sending huge images from a phone.
+      if (file.size > 4 * 1024 * 1024) {
+        showToast("Choose an image smaller than 4 MB.");
+        removeSelectedImage();
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const dataUrl = String(reader.result || "");
+        const base64 = dataUrl.split(",")[1];
+
+        if (!base64) {
+          showToast("Could not load that image.");
+          return;
+        }
+
+        selectedImage = {
+          mimeType: file.type,
+          data: base64
+        };
+
+        if (ui.imagePreview) {
+          ui.imagePreview.src = dataUrl;
+        }
+
+        if (ui.imageName) {
+          ui.imageName.textContent = file.name;
+        }
+
+        if (ui.imageWrap) {
+          ui.imageWrap.hidden = false;
+        }
       };
 
-      if (imagePreview) {
-        imagePreview.src = dataUrl;
-      }
+      reader.onerror = () => {
+        showToast("Could not read that image.");
+      };
 
-      if (imageName) {
-        imageName.textContent = file.name;
-      }
+      reader.readAsDataURL(file);
+    });
+  }
 
-      if (imageWrap) {
-        imageWrap.hidden = false;
-      }
-
-      showToast("Image ready to send, Boss.");
-    };
-
-    reader.onerror = () => {
-      showToast("Couldn't read that image.");
-    };
-
-    reader.readAsDataURL(file);
+  if (ui.removeImage) {
+    ui.removeImage.addEventListener(
+      "click",
+      removeSelectedImage
+    );
   }
 
   // ==========================================
-  // LOCAL COMMAND ROUTER
+  // API KEY SETTINGS
   // ==========================================
 
-  async function runLocalCommand(originalText) {
-    const text = normalise(originalText);
+  function openKeyModal() {
+    if (!ui.modal) return;
 
-    if (!text) return null;
+    ui.apiKey.value = apiKey;
+    ui.modal.hidden = false;
+    ui.apiKey.focus();
+  }
 
-    // Remember something.
-    const memoryCommand = parseRememberCommand(originalText);
-
-    if (memoryCommand) {
-      return rememberFact(memoryCommand.key, memoryCommand.value);
+  function closeKeyModal() {
+    if (ui.modal) {
+      ui.modal.hidden = true;
     }
+  }
 
-    // Read saved memory.
-    if (
-      hasAny(text, [
-        "show my memory",
-        "read my memory",
-        "memory vault",
-        "what do you remember",
-        "show memory"
-      ])
-    ) {
-      return readMemory();
-    }
+  if (ui.key) {
+    ui.key.addEventListener("click", openKeyModal);
+  }
 
-    // Clear saved memory.
-    if (
-      text === "forget everything" ||
-      text === "clear memory" ||
-      text === "delete memory"
-    ) {
-      return forgetMemory();
-    }
+  if (ui.closeKey) {
+    ui.closeKey.addEventListener(
+      "click",
+      closeKeyModal
+    );
+  }
 
-    // Greetings.
-    if (
-      /^(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(text)
-    ) {
-      return "Hello, Boss. D.I.S.C.O. is online. What shall we work on?";
-    }
-
-    // Identity.
-    if (
-      hasAny(text, [
-        "who are you",
-        "your name",
-        "what is disco"
-      ])
-    ) {
-      return "I am D.I.S.C.O. — your Digital Intelligence System Control Operator, Boss.";
-    }
-
-    // Date and time.
-    if (
-      hasAny(text, [
-        "what time",
-        "current time",
-        "time now",
-        "what is the date",
-        "today's date",
-        "current date"
-      ])
-    ) {
-      const now = new Date();
-
-      return (
-        "Current India time: " +
-        new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Asia/Kolkata",
-          dateStyle: "full",
-          timeStyle: "medium"
-        }).format(now)
-      );
-    }
-
-    // Weather.
-    if (hasAny(text, ["weather", "forecast"])) {
-      return await getWeather();
-    }
-
-    // Timer.
-    if (text.includes("timer")) {
-      return startTimer(text) ||
-        "Try a command such as: set a timer for 5 minutes";
-    }
-
-    // Calculator.
-    if (
-      text.startsWith("calculate ") ||
-      text.startsWith("what is ") ||
-      text.startsWith("what's ")
-    ) {
-      const expression = calculateExpression(
-        originalText.replace(/^what's\s+/i, "what is ")
-      );
-
-      if (expression) {
-        return expression;
+  if (ui.modal) {
+    ui.modal.addEventListener("click", (event) => {
+      if (event.target === ui.modal) {
+        closeKeyModal();
       }
-    }
+    });
+  }
 
-    // Agent control.
-    if (
-      text === "activate agents" ||
-      text === "turn on agents"
-    ) {
-      if (!agentsActive) {
-        agentsActive = true;
-        updateAgentStatus();
+  if (ui.saveKey) {
+    ui.saveKey.addEventListener("click", () => {
+      const value = ui.apiKey.value.trim();
+
+      if (!value) {
+        showToast("Paste your Gemini API key first.");
+        return;
       }
 
-      return "All available agents are activated, Boss.";
+      apiKey = value;
+
+      localStorage.setItem(KEY_STORE, apiKey);
+
+      closeKeyModal();
+      showToast("API key saved in this browser.");
+      setStatus("AI KEY SAVED");
+    });
+  }
+
+  if (ui.removeKey) {
+    ui.removeKey.addEventListener("click", () => {
+      apiKey = "";
+
+      localStorage.removeItem(KEY_STORE);
+
+      if (ui.apiKey) {
+        ui.apiKey.value = "";
+      }
+
+      showToast("API key removed.");
+      setStatus("API KEY REQUIRED");
+    });
+  }
+
+  // Note: a browser-stored API key is not secret
+  // from people who can access this website/browser.
+    // ==========================================
+  // MEMORY COMMANDS
+  // ==========================================
+
+  function handleMemoryCommand(text) {
+    const value = text.trim();
+
+    const rememberMatch = value.match(
+      /^remember\s+(?:that\s+)?(.+?)\s+(?:is|are|=)\s+(.+)$/i
+    );
+
+    if (rememberMatch) {
+      const key = rememberMatch[1].trim();
+      const memoryValue = rememberMatch[2].trim();
+
+      const memory = getMemory();
+      memory[key] = memoryValue;
+      saveMemory(memory);
+
+      return language === "te"
+        ? `సరే! "${key}" గురించి గుర్తుంచుకున్నాను.`
+        : `Got it! I'll remember ${key}: ${memoryValue}.`;
     }
 
     if (
-      text === "deactivate agents" ||
-      text === "turn off agents"
+      /^(show|view|check)\s+(my\s+)?memory$/i.test(value) ||
+      /^(what do you remember|show my memories)$/i.test(value)
     ) {
-      if (agentsActive) {
-        agentsActive = false;
-        updateAgentStatus();
-      }
-
-      return "Agents are now on standby, Boss.";
+      return showMemory();
     }
 
-    // Battery.
-    if (text.includes("battery")) {
-      if ("getBattery" in navigator) {
-        try {
-          const battery = await navigator.getBattery();
-          const percentage = Math.round(battery.level * 100);
+    if (/^(clear|delete|forget)\s+(all\s+)?memory$/i.test(value)) {
+      saveMemory({});
 
-          return (
-            `Battery level: ${percentage}%. ` +
-            (battery.charging ? "The device is charging." : "The device is not charging.")
-          );
-        } catch {
-          return "Your browser does not allow me to read the battery level.";
-        }
-      }
-
-      return "Battery information is not available in this browser.";
-    }
-
-    // Website opening and search.
-    const websiteResult = openWebsite(text);
-
-    if (websiteResult) {
-      return websiteResult;
-    }
-
-    // Study / planning shortcuts.
-    if (text.includes("plan tomorrow")) {
-      return (
-        "Tomorrow's planning template, Boss:\n\n" +
-        "1. Choose your three most important tasks.\n" +
-        "2. Start with the hardest task while fresh.\n" +
-        "3. Work in focused 25-minute sessions.\n" +
-        "4. Take short breaks between sessions.\n" +
-        "5. Review what you completed in the evening.\n\n" +
-        "Tell me your tasks and I can help organise them."
-      );
+      return language === "te"
+        ? "సేవ్ చేసిన జ్ఞాపకాలను క్లియర్ చేశాను."
+        : "Saved memories cleared.";
     }
 
     return null;
   }
 
   // ==========================================
-  // SEND COMMAND
+  // SIMPLE CALCULATOR
   // ==========================================
 
-  async function sendCommand(text) {
-    const command = String(text || "").trim();
+  function calculate(text) {
+    let expression = text.trim();
 
-    if (!command && !selectedImage) {
-      showToast("Enter a command first, Boss.");
-      return;
+    expression = expression.replace(
+      /^(calculate|calc|what is)\s+/i,
+      ""
+    );
+
+    expression = expression.replace(/[×x]/g, "*");
+    expression = expression.replace(/÷/g, "/");
+
+    // Accept arithmetic only, never arbitrary JavaScript.
+    if (!/^[\d+\-*/().%\s]+$/.test(expression)) {
+      return null;
     }
 
-    if (!agentsActive) {
-      showToast("Activate agents to process commands.");
-      return;
+    if (!/\d/.test(expression)) {
+      return null;
     }
 
-    if (command) {
-      addMessage(command, "user");
-    } else {
-      addMessage("Please analyse this image.", "user");
+    try {
+      const result = Function(
+        '"use strict"; return (' + expression + ');'
+      )();
+
+      if (
+        typeof result !== "number" ||
+        !Number.isFinite(result)
+      ) {
+        return "That calculation has no finite result.";
+      }
+
+      return `${expression} = ${result}`;
+    } catch {
+      return null;
+    }
+  }
+
+  // ==========================================
+  // WEATHER — VISAKHAPATNAM
+  // ==========================================
+
+  async function getWeather() {
+    const url =
+      "https://api.open-meteo.com/v1/forecast" +
+      "?latitude=17.6868" +
+      "&longitude=83.2185" +
+      "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m" +
+      "&timezone=Asia%2FKolkata";
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Weather service unavailable.");
+    }
+
+    const data = await response.json();
+    const current = data.current;
+
+    const weatherNames = {
+      0: "Clear sky",
+      1: "Mainly clear",
+      2: "Partly cloudy",
+      3: "Overcast",
+      45: "Fog",
+      48: "Depositing rime fog",
+      51: "Light drizzle",
+      53: "Moderate drizzle",
+      55: "Dense drizzle",
+      61: "Slight rain",
+      63: "Moderate rain",
+      65: "Heavy rain",
+      71: "Slight snowfall",
+      73: "Moderate snowfall",
+      75: "Heavy snowfall",
+      80: "Rain showers",
+      81: "Moderate rain showers",
+      82: "Violent rain showers",
+      95: "Thunderstorm"
+    };
+
+    return [
+      "Weather in Visakhapatnam:",
+      `Conditions: ${weatherNames[current.weather_code] || "Unknown"}`,
+      `Temperature: ${current.temperature_2m}°C`,
+      `Feels like: ${current.apparent_temperature}°C`,
+      `Humidity: ${current.relative_humidity_2m}%`,
+      `Wind: ${current.wind_speed_10m} km/h`
+    ].join("\n");
+  }
+
+  // ==========================================
+  // LOCAL COMMANDS
+  // Unknown questions go to Gemini.
+  // ==========================================
+
+  async function localCommand(text) {
+    const value = text.trim();
+    const lower = value.toLowerCase();
+
+    const languageReply = detectLanguageCommand(value);
+
+    if (languageReply) {
+      return languageReply;
+    }
+
+    const memoryReply = handleMemoryCommand(value);
+
+    if (memoryReply !== null) {
+      return memoryReply;
+    }
+
+    if (
+      /^(what time is it|current time|time now|clock)$/i.test(value)
+    ) {
+      return new Date().toLocaleTimeString(
+        "en-GB",
+        { hour: "2-digit", minute: "2-digit" }
+      );
+    }
+
+    if (
+      /^(what is the date|today's date|current date|date today)$/i.test(value)
+    ) {
+      return new Date().toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    if (
+      lower.includes("weather") &&
+      (
+        lower.includes("visakhapatnam") ||
+        lower.includes("vizag") ||
+        lower.includes("weather")
+      )
+    ) {
+      try {
+        return await getWeather();
+      } catch {
+        return language === "te"
+          ? "క్షమించండి, ప్రస్తుతం వాతావరణ వివరాలు పొందలేకపోయాను."
+          : "Sorry, I couldn't retrieve the weather right now. Please try again later.";
+      }
+    }
+
+    if (/^(open )?youtube$/i.test(value)) {
+      window.open("https://www.youtube.com/", "_blank", "noopener");
+      return "Opening YouTube.";
+    }
+
+    if (/^(open )?google$/i.test(value)) {
+      window.open("https://www.google.com/", "_blank", "noopener");
+      return "Opening Google.";
+    }
+
+    if (/^(open )?github$/i.test(value)) {
+      window.open("https://github.com/", "_blank", "noopener");
+      return "Opening GitHub.";
+    }
+
+    if (/^(open )?instagram$/i.test(value)) {
+      window.open("https://www.instagram.com/", "_blank", "noopener");
+      return "Opening Instagram.";
+    }
+
+    if (/^search\s+(.+)$/i.test(value)) {
+      const query = value.replace(/^search\s+/i, "");
+
+      window.open(
+        "https://www.google.com/search?q=" +
+          encodeURIComponent(query),
+        "_blank",
+        "noopener"
+      );
+
+      return `Searching the web for: ${query}`;
+    }
+
+    if (/^(activate|enable)\s+agents$/i.test(value)) {
+      agentsActive = true;
+
+      if (ui.agentStatus) {
+        ui.agentStatus.textContent = "AGENTS ACTIVE";
+      }
+
+      return "Agents activated.";
+    }
+
+    if (/^(deactivate|disable|pause)\s+agents$/i.test(value)) {
+      agentsActive = false;
+
+      if (ui.agentStatus) {
+        ui.agentStatus.textContent = "AGENTS PAUSED";
+      }
+
+      return "Agents paused.";
+    }
+
+    const mathResult = calculate(
+      value.replace(/^calculate\s+/i, "")
+    );
+
+    if (mathResult !== null) {
+      return mathResult;
+    }
+
+    return null;
+  }
+
+  // ==========================================
+  // GEMINI AI
+  // ==========================================
+
+  function systemInstruction() {
+    const memoryText = showMemory();
+
+    const languageInstruction = language === "te"
+      ? "Reply in natural Andhra Pradesh Telugu. Use clear, everyday Telugu. Keep technical terms in English when useful, and explain them simply."
+      : "Reply in clear, simple British English. Avoid unnecessary complicated words.";
+
+    return [
+      "You are D.I.S.C.O., a helpful personal AI assistant.",
+      "Be friendly, practical, honest, and concise.",
+      "Call the user Boss occasionally, not in every sentence.",
+      languageInstruction,
+      "Do not claim you performed actions you did not perform.",
+      "If you are unsure about a fact, say so.",
+      "Use the saved user memory only when relevant.",
+      "Saved memories:",
+      memoryText
+    ].join("\n");
+  }
+
+  async function askGemini(text, image) {
+    if (!apiKey) {
+      openKeyModal();
+
+      throw new Error(
+        "Add your Gemini API key using the key button first."
+      );
+    }
+
+    const parts = [{ text }];
+
+    if (image) {
+      parts.push({
+        inline_data: {
+          mime_type: image.mimeType,
+          data: image.data
+        }
+      });
+    }
+
+    const contents = conversation.slice(-10).map((item) => ({
+      role: item.role,
+      parts: [{ text: item.text }]
+    }));
+
+    contents.push({
+      role: "user",
+      parts
+    });
+
+    const response = await fetch(
+      `${API_URL}?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{
+              text: systemInstruction()
+            }]
+          },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 800
+          }
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const apiMessage =
+        data?.error?.message ||
+        `Request failed (${response.status}).`;
+
+      throw new Error(apiMessage);
+    }
+
+    const answer =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || "")
+        .join("")
+        .trim();
+
+    if (!answer) {
+      throw new Error(
+        "Gemini returned no text. Please try again."
+      );
+    }
+
+    conversation.push(
+      { role: "user", text },
+      { role: "model", text: answer }
+    );
+
+    // Keep only the most recent exchanges.
+    if (conversation.length > 20) {
+      conversation.splice(
+        0,
+        conversation.length - 20
+      );
+    }
+
+    return answer;
+  }
+
+  // ==========================================
+  // SEND MESSAGE
+  // ==========================================
+
+  async function sendMessage(forcedText) {
+    if (busy) return;
+
+    const text = (
+      typeof forcedText === "string"
+        ? forcedText
+        : ui.message.value
+    ).trim();
+
+    if (!text && !selectedImage) return;
+
+    if (ui.message) {
+      ui.message.value = "";
+      ui.message.style.height = "auto";
     }
 
     const imageForRequest = selectedImage;
 
-    clearSelectedImage();
-    msgInput.value = "";
+    addMessage(
+      "user",
+      text || "Please describe this image."
+    );
 
-    setThinking(true);
+    removeSelectedImage();
+
+    busy = true;
+    ui.send.disabled = true;
+
+    const typing = addTyping();
 
     try {
-      let answer = await runLocalCommand(command);
+      const reply = await localCommand(text);
 
-      if (answer === null || imageForRequest) {
+      let answer;
+
+      if (reply !== null) {
+        answer = reply;
+      } else {
         answer = await askGemini(
-          command || "Describe this image clearly.",
+          text || "Please describe this image.",
           imageForRequest
         );
       }
 
-      addMessage(answer, "disco");
-    } catch (error) {
-      console.error(error);
+      typing.remove();
 
-      addMessage(
-        "Something went wrong while processing that command. Please try again, Boss.",
-        "disco"
-      );
+      addMessage("assistant", answer);
+
+      // Speak AI responses only when voice output is supported.
+      // The mic button can still be used for speech input.
+      if ("speechSynthesis" in window) {
+        // Voice output is intentionally not automatic.
+        // Use your device's read-aloud feature if preferred.
+      }
+    } catch (error) {
+      typing.remove();
+
+      let message = error?.message || "Something went wrong.";
+
+      if (
+        /model|not found|not supported|permission|api key|invalid/i.test(message)
+      ) {
+        message +=
+          "\n\nCheck that your Gemini API key is valid and that the selected model is available to your account.";
+      }
+
+      addMessage("assistant", message);
     } finally {
-      setThinking(false);
+      busy = false;
 
-      if (msgInput) {
-        msgInput.focus();
+      if (ui.send) {
+        ui.send.disabled = false;
+      }
+
+      if (ui.message) {
+        ui.message.focus();
       }
     }
   }
 
   // ==========================================
-  // MICROPHONE INPUT
+  // INPUT EVENTS
   // ==========================================
 
-  function setupMicrophone() {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setText(voiceStatus, "UNAVAILABLE");
-      showToast("Voice input is not supported by this browser.");
-      return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = "en-GB";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      isListening = true;
-
-      if (micBtn) {
-        micBtn.classList.add("listening");
-      }
-
-      setText(voiceStatus, "LISTENING");
-      showToast("Listening, Boss…");
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results?.[0]?.[0]?.transcript;
-
-      if (transcript && msgInput) {
-        msgInput.value = transcript;
-        msgInput.focus();
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.warn("Microphone error:", event.error);
-
-      if (event.error === "not-allowed") {
-        showToast("Allow microphone permission in your browser settings.");
-      } else {
-        showToast("Voice input stopped. Please try again.");
-      }
-    };
-
-    recognition.onend = () => {
-      isListening = false;
-
-      if (micBtn) {
-        micBtn.classList.remove("listening");
-      }
-
-      setText(voiceStatus, "READY");
-    };
-  }
-
-  function toggleMicrophone() {
-    if (!recognition) {
-      setupMicrophone();
-    }
-
-    if (!recognition) return;
-
-    try {
-      if (isListening) {
-        recognition.stop();
-      } else {
-        recognition.start();
-      }
-    } catch (error) {
-      console.warn("Microphone could not start:", error);
-      showToast("Please wait a moment and try the microphone again.");
-    }
-  }
-
-  // ==========================================
-  // EVENT LISTENERS
-  // ==========================================
-
-  if (form) {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      sendCommand(msgInput.value);
+  if (ui.send) {
+    ui.send.addEventListener("click", () => {
+      sendMessage();
     });
   }
 
-  if (clearBtn) {
-    clearBtn.addEventListener("click", clearConversation);
-  }
-
-  if (activateBtn) {
-    activateBtn.addEventListener("click", toggleAgents);
-  }
-
-  if (coreOrb) {
-    coreOrb.addEventListener("click", () => {
-      showToast("D.I.S.C.O. core is online, Boss.");
-    });
-
-    coreOrb.addEventListener("dblclick", openKeyModal);
-  }
-
-  if (keyBtn) {
-    keyBtn.addEventListener("click", openKeyModal);
-  }
-
-  if (closeKeyBtn) {
-    closeKeyBtn.addEventListener("click", closeKeyModal);
-  }
-
-  if (saveKeyBtn) {
-    saveKeyBtn.addEventListener("click", saveApiKey);
-  }
-
-  if (removeKeyBtn) {
-    removeKeyBtn.addEventListener("click", deleteApiKey);
-  }
-
-  if (keyModal) {
-    keyModal.addEventListener("click", (event) => {
-      if (event.target === keyModal) {
-        closeKeyModal();
+  if (ui.message) {
+    ui.message.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        !event.isComposing
+      ) {
+        event.preventDefault();
+        sendMessage();
       }
     });
-  }
 
-  if (apiKeyInput) {
-    apiKeyInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        saveApiKey();
-      }
+    ui.message.addEventListener("input", () => {
+      ui.message.style.height = "auto";
+
+      ui.message.style.height =
+        Math.min(ui.message.scrollHeight, 140) + "px";
     });
-  }
-
-  if (micBtn) {
-    micBtn.addEventListener("click", toggleMicrophone);
-  }
-
-  if (imageBtn && imageInput) {
-    imageBtn.addEventListener("click", () => {
-      imageInput.click();
-    });
-  }
-
-  if (cameraBtn && imageInput) {
-    cameraBtn.addEventListener("click", () => {
-      imageInput.click();
-    });
-  }
-
-  if (imageInput) {
-    imageInput.addEventListener("change", () => {
-      const file = imageInput.files?.[0];
-
-      if (file) {
-        readImage(file);
-      }
-    });
-  }
-
-  if (removeImageBtn) {
-    removeImageBtn.addEventListener("click", clearSelectedImage);
   }
 
   document.querySelectorAll("[data-prompt]").forEach((button) => {
     button.addEventListener("click", () => {
-      const prompt = button.getAttribute("data-prompt");
-
-      if (prompt) {
-        sendCommand(prompt);
-      }
+      sendMessage(button.dataset.prompt || "");
     });
   });
 
-  document.addEventListener("keydown", (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      openKeyModal();
-    }
+  if (ui.clear) {
+    ui.clear.addEventListener("click", clearConversation);
+  }
 
+  if (ui.agents) {
+    ui.agents.addEventListener("click", () => {
+      agentsActive = !agentsActive;
+
+      if (ui.agentStatus) {
+        ui.agentStatus.textContent = agentsActive
+          ? "AGENTS ACTIVE"
+          : "AGENTS PAUSED";
+      }
+
+      showToast(
+        agentsActive
+          ? "Agents activated."
+          : "Agents paused."
+      );
+    });
+  }
+
+  if (ui.menu) {
+    ui.menu.addEventListener("click", () => {
+      showToast(
+        "D.I.S.C.O. · Personal AI assistant"
+      );
+    });
+  }
+
+  // ==========================================
+  // VOICE INPUT
+  // ==========================================
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (ui.mic) {
+    if (!SpeechRecognition) {
+      ui.mic.addEventListener("click", () => {
+        showToast(
+          "Speech input is not supported in this browser."
+        );
+      });
+    } else {
+      const recognition = new SpeechRecognition();
+
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        ui.mic.classList.add("listening");
+
+        showToast(
+          language === "te"
+            ? "వింటున్నాను…"
+            : "Listening…"
+        );
+      };
+
+      recognition.onresult = (event) => {
+        const transcript =
+          event.results?.[0]?.[0]?.transcript || "";
+
+        if (ui.message) {
+          ui.message.value = transcript;
+          ui.message.dispatchEvent(
+            new Event("input", { bubbles: true })
+          );
+        }
+      };
+
+      recognition.onerror = () => {
+        showToast(
+          "Microphone unavailable. Check browser permission."
+        );
+      };
+
+      recognition.onend = () => {
+        ui.mic.classList.remove("listening");
+      };
+
+      ui.mic.addEventListener("click", () => {
+        recognition.lang =
+          language === "te" ? "te-IN" : "en-IN";
+
+        try {
+          recognition.start();
+        } catch {
+          showToast("Please wait, then tap the microphone again.");
+        }
+      });
+    }
+  }
+
+  // ==========================================
+  // KEYBOARD SHORTCUTS & NETWORK STATUS
+  // ==========================================
+
+  document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeKeyModal();
     }
   });
 
-  // ==========================================
-  // STARTUP
-  // ==========================================
-
-  updateAgentStatus();
-
-  setNetworkState(navigator.onLine ? "ONLINE" : "OFFLINE");
+  window.addEventListener("offline", () => {
+    setStatus("NETWORK OFFLINE");
+  });
 
   window.addEventListener("online", () => {
-    setNetworkState("ONLINE");
+    setStatus("SYSTEM READY");
   });
 
-  window.addEventListener("offline", () => {
-    setNetworkState("OFFLINE");
-  });
+  // ==========================================
+  // INITIAL STATE
+  // ==========================================
 
-  // Optional voice output function for browser console use.
-  window.discoSpeak = speak;
+  if (ui.agentStatus) {
+    ui.agentStatus.textContent = agentsActive
+      ? "AGENTS ACTIVE"
+      : "AGENTS PAUSED";
+  }
 
-  setSystemState("SYSTEM READY");
+  setStatus(
+    apiKey ? "AI KEY SAVED" : "SYSTEM READY"
+  );
 
-  console.log("D.I.S.C.O. 3000 initialised successfully.");
+  console.log("D.I.S.C.O. initialised.");
 })();
+ 
