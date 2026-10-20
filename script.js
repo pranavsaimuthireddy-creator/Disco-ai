@@ -402,7 +402,7 @@
       throw new Error("Add your Gemini API key using the 🔑 button.");
     }
 
-    const model = "gemini-2.5-flash";
+    const model = "gemini-3.8-flash";
 
     const parts = [{ text: message }];
 
