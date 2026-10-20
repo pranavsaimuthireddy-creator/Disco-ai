@@ -2,192 +2,119 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#08070d">
-  <title>D.I.S.C.O. | Personal AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080812">
+  <title>D.I.S.C.O AI</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-  <main class="app">
-
-    <!-- TOP BAR -->
+  <div class="app">
     <header class="topbar">
-      <button class="menu-button" id="menuBtn"
-              aria-label="Open menu">☰</button>
-
       <div class="brand">
-        <span class="brand-icon">D</span>
+        <div class="logo">D</div>
         <div>
-          <h1>D.I.S.C.O.</h1>
-          <p>YOUR PERSONAL AI</p>
+          <h1>D.I.S.C.O</h1>
+          <p><span class="dot"></span> AI SYSTEM ONLINE</p>
         </div>
       </div>
 
-      <div class="top-actions">
-        <button id="agentBtn" class="icon-button"
-                title="Activate or deactivate agents"
-                aria-label="Activate agents">◈</button>
-
-        <button id="keyBtn" class="icon-button"
-                title="AI connection settings"
-                aria-label="API key settings">⌘</button>
-
-        <button id="clearBtn" class="icon-button"
-                title="Clear conversation"
-                aria-label="Clear conversation">♲</button>
-      </div>
+      <button id="keyBtn" class="icon-btn" title="API settings">🔑</button>
     </header>
 
-    <!-- CONNECTION STATUS -->
-    <div class="connection-row">
-      <span class="status-dot"></span>
-      <span id="statusText">SYSTEM READY</span>
-      <span class="connection-right" id="agentStatus">
-        AGENTS ACTIVE
-      </span>
-    </div>
-
-    <!-- WELCOME -->
-    <section id="welcome" class="welcome">
-      <div class="welcome-orb">
-        <span>D</span>
-        <i></i>
+    <section class="dashboard">
+      <div class="status-card">
+        <span>🕒 INDIA TIME</span>
+        <strong id="clock">Loading...</strong>
+        <small id="date"></small>
       </div>
 
-      <p class="eyebrow">YOUR PERSONAL AI</p>
-      <h2>How can I help today?</h2>
+      <div class="status-card">
+        <span>🌦️ WEATHER</span>
+        <strong id="temperature">Loading...</strong>
+        <small id="weatherText">Visakhapatnam</small>
+        <button id="weatherBtn" class="small-btn">Refresh weather</button>
+      </div>
 
-      <p class="welcome-description">
-        A personal assistant for your ideas, questions and everyday tasks.
-      </p>
+      <div class="status-card">
+        <span>💱 USD / INR</span>
+        <strong id="exchange">Loading...</strong>
+        <small id="reverseExchange">Getting exchange rate</small>
+      </div>
 
-      <div class="suggestions">
-        <button class="suggestion" data-prompt="Tell me about yourself">
-          <span class="suggestion-icon">✦</span>
-          <span>
-            <b>Meet D.I.S.C.O.</b>
-            <small>Discover your AI assistant</small>
-          </span>
-          <span class="arrow">›</span>
-        </button>
-
-        <button class="suggestion" data-prompt="Check the weather in Visakhapatnam">
-          <span class="suggestion-icon">☼</span>
-          <span>
-            <b>Check the weather</b>
-            <small>Get a local weather report</small>
-          </span>
-          <span class="arrow">›</span>
-        </button>
-
-        <button class="suggestion" data-prompt="Help me plan my day">
-          <span class="suggestion-icon">▦</span>
-          <span>
-            <b>Plan my day</b>
-            <small>Organise your daily tasks</small>
-          </span>
-          <span class="arrow">›</span>
-        </button>
-
-        <button class="suggestion" data-prompt="Talk to me in Telugu">
-          <span class="suggestion-icon">文</span>
-          <span>
-            <b>Telugu conversation</b>
-            <small>Switch to natural Telugu</small>
-          </span>
-          <span class="arrow">›</span>
-        </button>
+      <div class="status-card">
+        <span>🥇 GOLD RATE</span>
+        <strong id="gold24">Not loaded</strong>
+        <small id="gold22">Configure a gold API key</small>
+        <button id="goldBtn" class="small-btn">Refresh gold</button>
       </div>
     </section>
 
-    <!-- CHAT -->
-    <section id="chatSection" class="chat-section">
-      <div id="chat" class="messages" aria-live="polite"></div>
-    </section>
-
-    <!-- IMAGE PREVIEW -->
-    <div id="imageWrap" class="image-wrap" hidden>
-      <img id="imagePreview" alt="Selected image">
-      <span id="imageName"></span>
-      <button id="removeImageBtn" aria-label="Remove image"
-              type="button">×</button>
-    </div>
-
-    <!-- INPUT -->
-    <footer class="input-area">
-      <div class="input-box">
-        <button id="imageBtn" class="input-icon"
-                type="button" aria-label="Attach image">＋</button>
-
-        <textarea id="msg"
-                  rows="1"
-                  placeholder="Message D.I.S.C.O..."
-                  aria-label="Message D.I.S.C.O."></textarea>
-
-        <button id="micBtn" class="input-icon"
-                type="button" aria-label="Voice input">🎙</button>
-
-        <button id="sendBtn" class="send-button"
-                type="button" aria-label="Send message">↑</button>
+    <main class="chat-panel">
+      <div class="chat-heading">
+        <div>
+          <h2>AI Assistant</h2>
+          <p>Ask anything. Explore everything.</p>
+        </div>
+        <button id="clearBtn" class="icon-btn" title="Clear chat">🗑️</button>
       </div>
 
-      <div class="input-caption">
-        <span id="clock">--:--</span>
-        <span>AI CAN MAKE MISTAKES · VERIFY IMPORTANT FACTS</span>
+      <div id="chat" class="chat">
+        <div class="message bot">
+          <strong>D.I.S.C.O</strong>
+          <p>Systems online. How may I assist you?</p>
+        </div>
       </div>
+
+      <div id="imagePreview" class="image-preview hidden">
+        <span id="imageName">Image selected</span>
+        <button id="removeImageBtn">✕</button>
+      </div>
+
+      <div class="input-area">
+        <button id="imageBtn" class="icon-btn" title="Attach image">🖼️</button>
+        <input id="imageInput" type="file" accept="image/*" hidden>
+
+        <textarea id="msg" rows="1"
+          placeholder="Message D.I.S.C.O..."></textarea>
+
+        <button id="micBtn" class="icon-btn" title="Voice input">🎙️</button>
+        <button id="sendBtn" class="send-btn">➤</button>
+      </div>
+
+      <p class="hint">Enter to send · Shift + Enter for a new line</p>
+      <p id="statusText" class="status-text">Ready</p>
+    </main>
+
+    <footer>
+      D.I.S.C.O AI · Independent learning project
     </footer>
-
-  </main>
-
-  <!-- IMAGE SELECTOR -->
-  <input id="imageInput" type="file"
-         accept="image/*" hidden>
-
-  <!-- API KEY SETTINGS -->
-  <div id="keyModal" class="modal-backdrop" hidden>
-    <section class="modal" role="dialog"
-             aria-modal="true" aria-labelledby="modalTitle">
-
-      <button id="closeKeyBtn" class="modal-close"
-              type="button" aria-label="Close">×</button>
-
-      <div class="modal-symbol">⌘</div>
-
-      <p class="eyebrow">NEURAL LINK</p>
-      <h2 id="modalTitle">Connect your AI</h2>
-
-      <p class="modal-description">
-        Enter your Gemini API key to enable AI-powered conversations.
-        Basic interface features work without a key.
-      </p>
-
-      <label for="apiKeyInput">GEMINI API KEY</label>
-
-      <input id="apiKeyInput"
-             type="password"
-             placeholder="Paste your API key"
-             autocomplete="off">
-
-      <div class="modal-actions">
-        <button id="removeKeyBtn" class="secondary-button"
-                type="button">REMOVE</button>
-
-        <button id="saveKeyBtn" class="primary-button"
-                type="button">SAVE KEY</button>
-      </div>
-
-      <p class="security-note">
-        A key stored in your browser is not secret.
-        Do not publish or share your API key.
-      </p>
-    </section>
   </div>
 
-  <!-- NOTIFICATIONS -->
-  <div id="toast" class="toast" role="status"
-       aria-live="polite"></div>
+  <div id="keyModal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeKeyBtn" class="close-btn">✕</button>
+      <h2>⚙️ API Settings</h2>
+      <p>Enter your Gemini API key to enable AI responses.</p>
+
+      <label for="apiKeyInput">Gemini API key</label>
+      <input id="apiKeyInput" type="password"
+        placeholder="Paste API key">
+
+      <label for="goldKeyInput">Gold API key (optional)</label>
+      <input id="goldKeyInput" type="password"
+        placeholder="Paste GoldAPI key">
+
+      <button id="saveKeyBtn" class="primary-btn">Save keys</button>
+      <button id="removeKeyBtn" class="secondary-btn">Remove saved keys</button>
+
+      <p class="warning">
+        Keys saved in browser storage may be accessible to anyone who can
+        use your browser. Do not use this setup for a public production site.
+      </p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
 
   <script src="script.js"></script>
 </body>
