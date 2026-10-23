@@ -1,290 +1,253 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-  <link rel="manifest" href="./manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0d12">
-  <meta name="description" content="SHADOW personal AI assistant">
-  <title>SHADOW — Personal AI</title>
-
-  <link rel="stylesheet" href="style.css?v=jarvis-stage-grid-scroll-v8-20260930-final">
-
-  <script src="https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/orbs@latest/dist/orbs.css">
-
-  <style>
-    #shadow-core-container {
-      width: 150px;
-      height: 150px;
-      margin: 0 auto 20px auto;
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #shadow-core-container canvas {
-      border-radius: 50%;
-      box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
-      filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));
-    }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <title>SHADOW AI</title>
+  <link rel="stylesheet" href="style.css?v=shadow-fixed-1">
 </head>
-
 <body>
   <div class="app-shell">
-
-    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
-      <div class="sidebar-top">
-        <a class="brand" href="./" aria-label="SHADOW home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15"/>
-              <path d="M18 7v22M7 18h22M10.2 10.2l15.6 15.6M25.8 10.2 10.2 25.8"/>
-              <circle cx="18" cy="18" r="4"/>
-            </svg>
-          </span>
-          <span class="brand-copy">
-            <strong>SHADOW</strong>
-            <small>PERSONAL AI</small>
-          </span>
-        </a>
-
-        <button class="icon-button sidebar-collapse" id="sidebar-toggle"
-          type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div>
+          <strong>SHADOW</strong>
+          <small>AI ASSISTANT</small>
+        </div>
       </div>
 
-      <button class="new-chat" id="new-chat" type="button">
-        <span class="new-chat-icon" aria-hidden="true">+</span>
-        <span>New chat</span>
+      <button class="side-action" id="new-chat-btn" type="button">
+        ＋ <span>New chat</span>
       </button>
 
-      <div class="history-heading">
-        <span>RECENT</span>
-        <span class="history-count" id="history-count"></span>
-      </div>
+      <div class="side-label">YOUR SPACE</div>
 
-      <div class="history-list" id="history-list"
-        role="group" aria-label="Conversation history"></div>
+      <button class="side-link active" id="home-btn" type="button">
+        ⌂ <span>Home</span>
+      </button>
 
-      <div class="sidebar-spacer"></div>
+      <button class="side-link" id="memory-btn" type="button">
+        ◈ <span>Memory</span>
+      </button>
 
-      <div class="sidebar-footer">
-        <button class="sidebar-link" id="settings-open" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/>
-            <path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/>
-          </svg>
-          <span>Settings</span>
+      <div class="sidebar-bottom">
+        <div class="connection">
+          <span class="status-dot"></span>
+          <span id="connection-label">Ready to connect</span>
+        </div>
+
+        <button class="side-link" id="api-key-btn" type="button">
+          ⚿ <span>Gemini API key</span>
         </button>
 
-        <div class="profile-row">
-          <span class="profile-avatar">V</span>
-          <span class="profile-name">Vamshi</span>
-          <span class="profile-label">PERSONAL</span>
-        </div>
+        <button class="side-link" id="theme-btn" type="button">
+          ◐ <span>Change theme</span>
+        </button>
       </div>
     </aside>
 
-    <button class="sidebar-backdrop" id="sidebar-backdrop"
-      type="button" aria-label="Close navigation" hidden></button>
-
-    <main class="main-area">
+    <main class="main">
       <header class="topbar">
-        <button class="icon-button menu-button" id="menu-btn"
-          type="button" aria-label="Open navigation" title="Open navigation">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
+        <button
+          class="icon-button menu-button"
+          id="menu-btn"
+          type="button"
+          aria-label="Toggle menu"
+        >☰</button>
 
-        <div class="topbar-title">
-          <span>SHADOW</span>
-          <span class="topbar-divider">/</span>
-          <span class="topbar-subtitle">Personal assistant</span>
+        <div class="top-title">
+          <span class="mini-orb"></span>
+          <span>
+            SHADOW
+            <small>CORE ONLINE</small>
+          </span>
         </div>
 
-        <div class="topbar-actions">
-          <span class="ready-badge">
-            <span class="ready-dot"></span> READY
-          </span>
-
-          <button class="icon-button wake-button" id="wake-btn"
-            type="button" aria-label="Toggle Wake Word"
-            title="Listen for 'Hey Shadow'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="22"/>
-            </svg>
-          </button>
-
-          <span id="wake-status"
-            style="font-size:0.7rem;color:#888;margin-right:5px;">
-            WAKE: OFF
-          </span>
-
-          <button class="icon-button clear-button" id="clear-btn"
-            type="button" aria-label="Clear current conversation"
-            title="Clear current conversation">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 3v6m4-6v6"/>
-            </svg>
-          </button>
-        </div>
+        <button
+          class="icon-button"
+          id="voice-toggle-btn"
+          type="button"
+          aria-label="Toggle voice replies"
+          title="Toggle voice replies"
+        >🔊</button>
       </header>
 
-      <section class="conversation-stage" id="conversation-stage"
-        aria-label="Conversation" tabindex="0">
-
+      <section class="chat-area" id="chat-area" aria-live="polite">
         <div class="welcome" id="welcome">
-          <div id="shadow-core-container" aria-hidden="true"></div>
-
-          <div class="welcome-copy">
-            <p class="eyebrow"><span></span> YOUR PERSONAL AI</p>
-            <h1>How can I help today?</h1>
-            <p class="welcome-subtitle">
-              A thoughtful assistant for ideas, answers and everyday tasks.
-            </p>
+          <div class="core-wrap">
+            <div class="core-ring ring-one"></div>
+            <div class="core-ring ring-two"></div>
+            <div class="core-orb">S</div>
           </div>
 
-          <div class="prompt-grid" aria-label="Suggested prompts">
-            <button class="prompt-card" type="button"
-              data-prompt="Shadow, give me my morning briefing">
-              <span class="prompt-icon">✦</span>
-              <span><strong>Morning briefing</strong><small>Start your day informed</small></span>
-              <span class="prompt-arrow">↗</span>
+          <p class="eyebrow">PERSONAL AI SYSTEM</p>
+
+          <h1>
+            What shall we
+            <span>build today?</span>
+          </h1>
+
+          <p class="welcome-copy">
+            I’m SHADOW. Ask a question, learn something new,
+            or work on a project.
+          </p>
+
+          <div class="prompt-grid">
+            <button
+              class="prompt-card"
+              type="button"
+              data-prompt="Teach me Python from the beginning, step by step."
+            >
+              <b>⌘</b>
+              <span>
+                <strong>Learn Python</strong>
+                <small>Simple, step-by-step lessons</small>
+              </span>
+              <i>↗</i>
             </button>
 
-            <button class="prompt-card" type="button"
-              data-prompt="What is the weather today?">
-              <span class="prompt-icon">◌</span>
-              <span><strong>Check the weather</strong><small>Get a local forecast</small></span>
-              <span class="prompt-arrow">↗</span>
+            <button
+              class="prompt-card"
+              type="button"
+              data-prompt="Give me a practical AI project I can build as an ECE student."
+            >
+              <b>⌁</b>
+              <span>
+                <strong>Build a project</strong>
+                <small>Turn an idea into a plan</small>
+              </span>
+              <i>↗</i>
             </button>
 
-            <button class="prompt-card" type="button"
-              data-prompt="What is the current Bitcoin price?">
-              <span class="prompt-icon">◇</span>
-              <span><strong>Market snapshot</strong><small>Check Bitcoin today</small></span>
-              <span class="prompt-arrow">↗</span>
+            <button
+              class="prompt-card"
+              type="button"
+              data-prompt="Explain this topic in simple English with an example."
+            >
+              <b>◉</b>
+              <span>
+                <strong>Explain a topic</strong>
+                <small>Understand difficult concepts</small>
+              </span>
+              <i>↗</i>
             </button>
 
-            <button class="prompt-card" type="button"
-              data-prompt="Tell me a useful idea for today">
-              <span class="prompt-icon">⌁</span>
-              <span><strong>Explore an idea</strong><small>Think something through</small></span>
-              <span class="prompt-arrow">↗</span>
+            <button
+              class="prompt-card"
+              type="button"
+              data-prompt="Help me plan a focused one-hour study session."
+            >
+              <b>◷</b>
+              <span>
+                <strong>Plan my day</strong>
+                <small>Make a realistic study plan</small>
+              </span>
+              <i>↗</i>
             </button>
           </div>
         </div>
 
-        <div class="chat" id="chat" role="log"
-          aria-label="Chat messages" aria-live="polite"
-          aria-relevant="additions text" tabindex="0"></div>
+        <div id="messages" class="messages"></div>
       </section>
 
-      <footer class="composer-dock">
-        <div class="thinking-status" id="thinking-status"
-          aria-live="polite" hidden>
-          <span class="thinking-orb" aria-hidden="true">
-            <i class="thinking-ring"></i>
-            <i class="thinking-core"></i>
-          </span>
-          <span id="thinking-label">SHADOW is thinking</span>
-          <span class="thinking-dots" aria-hidden="true">
-            <i></i><i></i><i></i>
-          </span>
-        </div>
+      <footer class="composer-area">
+        <div class="composer" id="composer">
+          <textarea
+            id="chat-input"
+            rows="1"
+            placeholder="Message SHADOW…"
+            aria-label="Message SHADOW"
+          ></textarea>
 
-        <div class="composer-shell">
-          <button class="composer-tool" id="cam-btn" type="button"
-            aria-label="Analyze image" title="Attach an image">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 8.5h3l1.4-2h7.2l1.4 2h3v10H4z"/>
-              <circle cx="12" cy="13.5" r="3.2"/>
-            </svg>
-          </button>
+          <div class="composer-tools">
+            <div class="tool-left">
+              <button
+                class="tool-button"
+                id="mic-btn"
+                type="button"
+                title="Speak your message"
+                aria-label="Speak your message"
+              >🎙</button>
 
-          <textarea id="msg" rows="1"
-            placeholder="Message SHADOW..."
-            aria-label="Message SHADOW"></textarea>
+              <span class="hint" id="mic-status">
+                Enter to send · Shift+Enter for a new line
+              </span>
+            </div>
 
-          <input id="img-input" type="file" accept="image/*" hidden>
-
-          <div class="composer-actions">
-            <button class="composer-tool voice-button" id="mic-btn"
-              type="button" aria-label="Activate voice input"
-              title="Voice input">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="3" width="6" height="12" rx="3"/>
-                <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8"/>
-              </svg>
-            </button>
-
-            <button class="send-button" id="send" type="button"
-              aria-label="Send message" title="Send message">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 19V5m-6 6 6-6 6 6"/>
-              </svg>
+            <button class="send-button" id="send-btn" type="button">
+              <span>Send</span>
+              <b>↑</b>
             </button>
           </div>
         </div>
 
-        <p class="composer-note">
-          ENTER TO SEND <span>·</span>
-          SHIFT + ENTER FOR A NEW LINE
-          <span class="note-separator">·</span>
-          SHADOW can make mistakes
-        </p>
+        <div class="footer-note">
+          SHADOW can make mistakes. Check important information.
+        </div>
       </footer>
     </main>
-
-    <div class="settings-scrim" id="settings-scrim" hidden></div>
-
-    <aside class="settings-panel" id="settings-panel"
-      aria-labelledby="settings-title" aria-modal="true"
-      role="dialog" hidden>
-
-      <div class="settings-header">
-        <div>
-          <p class="eyebrow">PREFERENCES</p>
-          <h2 id="settings-title">Settings</h2>
-        </div>
-        <button class="icon-button" id="settings-close"
-          type="button" aria-label="Close settings">×</button>
-      </div>
-
-      <div class="settings-group">
-        <label for="theme-select">Appearance</label>
-        <p>Set the tone of your workspace.</p>
-        <select id="theme-select">
-          <option value="dark">Midnight · dark</option>
-          <option value="light">Silver · light</option>
-        </select>
-      </div>
-
-      <div class="settings-group">
-        <strong>Conversation history</strong>
-        <p>Your conversations are saved in this browser profile.</p>
-      </div>
-
-      <div class="settings-bottom">
-        <button class="danger-button" id="clear-memory-setting"
-          type="button">Clear current conversation</button>
-        <p>SHADOW · Personal AI</p>
-      </div>
-    </aside>
   </div>
 
-  <script src="script.js?v=gemini38-wake-loop-20261007-r5"></script>
+  <!-- Gemini API key settings -->
+  <div class="modal-backdrop" id="key-modal" hidden>
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="key-title"
+    >
+      <button
+        class="modal-close"
+        id="close-key-modal"
+        type="button"
+        aria-label="Close"
+      >×</button>
+
+      <div class="modal-icon">⚿</div>
+
+      <h2 id="key-title">Connect Gemini</h2>
+
+      <p>
+        Paste your Gemini API key to enable AI replies.
+        It is stored in this browser only.
+      </p>
+
+      <label for="api-key-input">API key</label>
+
+      <input
+        id="api-key-input"
+        type="password"
+        placeholder="Paste your API key"
+        autocomplete="off"
+      >
+
+      <div class="modal-actions">
+        <button
+          id="remove-key-btn"
+          class="secondary-button"
+          type="button"
+        >Remove key</button>
+
+        <button
+          id="save-key-btn"
+          class="send-button"
+          type="button"
+        >Save key</button>
+      </div>
+
+      <small class="security-note">
+        A key used in a public GitHub Pages website can be exposed
+        to visitors. Restrict your key and avoid using a valuable
+        or private key here.
+      </small>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <!-- Load JavaScript after the page elements -->
+  <script src="script.js?v=shadow-fixed-1"></script>
 </body>
 </html>
